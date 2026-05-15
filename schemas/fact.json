@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "required": ["fact_id", "version", "content", "source", "timestamp", "domain"],
+  "properties": {
+    "fact_id": {
+      "type": "string",
+      "description": "Unique identifier for the fact (UUID-like format: date+random)"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version number of this fact (increments when fact is updated)"
+    },
+    "content": {
+      "type": "string",
+      "description": "The actual fact content"
+    },
+    "source": {
+      "type": "string",
+      "description": "Where this fact originated (e.g., discovery-call, audit-log, client-feedback)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when fact was recorded"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Category/domain this fact belongs to (e.g., communication, mortgage-lending, compliance)"
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "description": "ID of a previous fact this one replaces (tracks fact evolution)"
+    },
+    "project": {
+      "type": "string",
+      "description": "Project name or ID this fact originated from"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Confidence level (0-1) in this fact's accuracy"
+    }
+  }
+}

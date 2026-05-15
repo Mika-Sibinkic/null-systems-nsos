@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "QA Report Schema",
+  "description": "Validates QA phase completion and go/no-go decision",
+  "required": [
+    "quality_report",
+    "all_critical_high_fixed",
+    "go_nogo_recommendation",
+    "acceptance_criteria_matrix",
+    "regression_clear"
+  ],
+  "properties": {
+    "quality_report": {
+      "type": "string",
+      "minLength": 100,
+      "description": "Comprehensive summary of testing results"
+    },
+    "all_critical_high_fixed": {
+      "type": "boolean",
+      "description": "All critical and high-severity defects resolved"
+    },
+    "go_nogo_recommendation": {
+      "type": "string",
+      "enum": ["GO", "NO_GO", "GO_WITH_CAVEATS"],
+      "description": "Recommendation for deployment"
+    },
+    "caveats": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "If GO_WITH_CAVEATS, describe conditions"
+    },
+    "acceptance_criteria_matrix": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["criterion", "status"],
+        "properties": {
+          "criterion": {"type": "string"},
+          "status": {"type": "string", "enum": ["pass", "fail", "conditional"]},
+          "evidence": {"type": "string"},
+          "notes": {"type": "string"}
+        }
+      }
+    },
+    "regression_clear": {
+      "type": "boolean",
+      "description": "No regression in previously working functionality"
+    },
+    "defect_summary": {
+      "type": "object",
+      "properties": {
+        "critical": {"type": "integer", "minimum": 0},
+        "high": {"type": "integer", "minimum": 0},
+        "medium": {"type": "integer", "minimum": 0},
+        "low": {"type": "integer", "minimum": 0}
+      }
+    },
+    "test_execution_summary": {
+      "type": "object",
+      "properties": {
+        "total_tests": {"type": "integer", "minimum": 1},
+        "passed": {"type": "integer", "minimum": 0},
+        "failed": {"type": "integer", "minimum": 0},
+        "skipped": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

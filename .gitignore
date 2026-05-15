@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+.env
+.env.*
+client/snapshots/*/
+!client/snapshots/.gitkeep
+runs/
+data/
+*.log
+.DS_Store
+.nsos-mirror/
+node_modules/
+dist/
+build/

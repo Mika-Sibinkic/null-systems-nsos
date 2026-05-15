@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Drift Event Schema",
+  "description": "Records drift detection and correction events for SLA tracking",
+  "required": [
+    "task_id",
+    "drift_score",
+    "evaluation_timestamp",
+    "worker_id",
+    "prd_section",
+    "correction_applied"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Task ID where drift was detected"
+    },
+    "drift_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Severity of drift (0=none, 1=critical)"
+    },
+    "evaluation_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When drift was evaluated"
+    },
+    "detection_delay_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Seconds elapsed since task completion"
+    },
+    "worker_id": {
+      "type": "string",
+      "description": "ID or name of worker that produced drift"
+    },
+    "prd_section": {
+      "type": "string",
+      "description": "Reference to PRD section governing this task"
+    },
+    "drift_type": {
+      "type": "string",
+      "enum": ["client_lens", "output_deterministic", "context_integrity", "other"],
+      "description": "Which evaluation lens detected the drift"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "description": "What went wrong"
+    },
+    "correction_applied": {
+      "type": "boolean",
+      "description": "Whether correction was successfully dispatched"
+    },
+    "correction_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When correction was applied"
+    },
+    "correction_sla_met": {
+      "type": "boolean",
+      "description": "Was correction applied within 1-hour SLA"
+    },
+    "correction_details": {
+      "type": "string",
+      "description": "What was done to fix it"
+    },
+    "escalated_to_tier_2": {
+      "type": "boolean",
+      "description": "Whether this required Mika's input"
+    }
+  }
+}

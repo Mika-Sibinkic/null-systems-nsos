@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Handoff Package Schema",
+  "description": "Validates handoff phase completeness for client delivery",
+  "required": [
+    "executive_summary",
+    "system_documentation",
+    "operational_runbook",
+    "quality_evidence",
+    "hosting_configured",
+    "delivery_email_draft",
+    "irl_instructions",
+    "follow_up_schedule"
+  ],
+  "properties": {
+    "executive_summary": {
+      "type": "string",
+      "minLength": 150,
+      "description": "Non-technical summary of what was delivered and why"
+    },
+    "system_documentation": {
+      "type": "object",
+      "required": ["architecture", "api_reference", "data_model"],
+      "properties": {
+        "architecture": {"type": "string", "minLength": 50},
+        "api_reference": {"type": "string", "minLength": 50},
+        "data_model": {"type": "string", "minLength": 50},
+        "deployment_guide": {"type": "string"},
+        "troubleshooting": {"type": "string"}
+      }
+    },
+    "operational_runbook": {
+      "type": "object",
+      "required": ["startup", "monitoring", "maintenance"],
+      "properties": {
+        "startup": {"type": "string", "minLength": 50},
+        "monitoring": {"type": "string", "minLength": 50},
+        "maintenance": {"type": "string", "minLength": 50},
+        "common_issues": {"type": "array", "items": {"type": "string"}},
+        "support_contacts": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "quality_evidence": {
+      "type": "object",
+      "required": ["test_results", "acceptance_sign_off"],
+      "properties": {
+        "test_results": {"type": "string"},
+        "acceptance_sign_off": {"type": "string"},
+        "performance_metrics": {"type": "string"},
+        "security_review": {"type": "string"}
+      }
+    },
+    "hosting_configured": {
+      "type": "boolean",
+      "description": "Infrastructure is live and ready for client access"
+    },
+    "hosting_details": {
+      "type": "object",
+      "properties": {
+        "url": {"type": "string"},
+        "access_credentials": {"type": "string", "description": "If needed — how to access"},
+        "monitoring_dashboard": {"type": "string"}
+      }
+    },
+    "delivery_email_draft": {
+      "type": "string",
+      "minLength": 100,
+      "description": "Draft email for client announcing delivery (Mika sends)"
+    },
+    "irl_instructions": {
+      "type": "object",
+      "required": ["go_live_steps", "rollback_plan"],
+      "properties": {
+        "go_live_steps": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Step-by-step what client must do to go live"
+        },
+        "rollback_plan": {
+          "type": "string",
+          "description": "If something goes wrong, how to revert"
+        },
+        "timing": {"type": "string", "description": "Recommended time window for go-live"}
+      }
+    },
+    "follow_up_schedule": {
+      "type": "object",
+      "required": ["support_period", "check_in_cadence"],
+      "properties": {
+        "support_period": {
+          "type": "string",
+          "description": "How long post-launch support is included"
+        },
+        "check_in_cadence": {
+          "type": "string",
+          "description": "When Mika will check in with client"
+        },
+        "escalation_contacts": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

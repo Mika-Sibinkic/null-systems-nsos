@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "required": ["content_hash", "checkpoint_timestamp", "phase", "task_queue_snapshot", "active_constraints", "referenced_files"],
+  "properties": {
+    "content_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the full checkpoint content for integrity verification"
+    },
+    "checkpoint_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when checkpoint was created"
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["discovery", "prd", "build", "qa", "deploy", "handoff"],
+      "description": "Current project phase"
+    },
+    "task_queue_snapshot": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "task_id": {"type": "string"},
+          "status": {"type": "string", "enum": ["pending", "in_progress", "completed", "blocked"]},
+          "assigned_to": {"type": "string"}
+        }
+      },
+      "description": "Snapshot of pending and in-flight tasks"
+    },
+    "active_constraints": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "List of active architectural constraints and decision rules"
+    },
+    "referenced_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {"type": "string"},
+          "hash_at_checkpoint_time": {"type": "string"},
+          "role": {"type": "string", "enum": ["primary", "secondary", "reference"]}
+        },
+        "required": ["path", "hash_at_checkpoint_time", "role"]
+      },
+      "description": "Array of files referenced in checkpoint with their state hashes"
+    }
+  }
+}

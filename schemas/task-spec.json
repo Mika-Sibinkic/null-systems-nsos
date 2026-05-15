@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Task Specification Schema",
+  "description": "Validates atomic task decomposition for workers",
+  "required": [
+    "task_id",
+    "estimated_minutes",
+    "file_scope",
+    "acceptance_criteria",
+    "prd_reference",
+    "content_source"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Unique task identifier"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "description": "What the task accomplishes"
+    },
+    "estimated_minutes": {
+      "type": "number",
+      "maximum": 5,
+      "minimum": 1,
+      "description": "Expected execution time — max 5 minutes"
+    },
+    "file_scope": {
+      "type": "array",
+      "maxItems": 1,
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "description": "Absolute path to the ONE file this task modifies"
+      }
+    },
+    "file_scope_mode": {
+      "type": "string",
+      "enum": ["read_only", "read_write"],
+      "description": "Whether task modifies the file"
+    },
+    "acceptance_criteria": {
+      "type": "object",
+      "required": ["pass", "fail"],
+      "properties": {
+        "pass": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Condition for task success"
+        },
+        "fail": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Condition for task failure"
+        }
+      }
+    },
+    "prd_reference": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Section/page of PRD this implements"
+    },
+    "content_source": {
+      "type": "string",
+      "enum": ["trusted", "untrusted"],
+      "description": "Is source material verified (trusted) or unvetted (untrusted)"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Task IDs that must complete first"
+    },
+    "blocked_on": {
+      "type": "string",
+      "description": "If blocked, what is blocking it"
+    }
+  }
+}

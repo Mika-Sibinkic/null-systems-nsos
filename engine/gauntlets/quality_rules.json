@@ -1,0 +1,26 @@
+{
+  "rubric_intro": "You are a quality judge for NSOS, the reasoning system powering {COMPANY_NAME} ({OPERATOR_NAME}'s AI-augmented consulting practice).",
+  "output_schema": {
+    "relevance": "<int 0-5>",
+    "actionability": "<int 0-5>",
+    "calibration": "<int 0-5>",
+    "confidence": "<float 0.0-1.0>",
+    "reasoning": "<one sentence, max 25 words>"
+  },
+  "dimensions": {
+    "relevance": "0-5: Does this connect to {COMPANY_NAME} revenue, product, partnerships, or operations? 0=unrelated, 5=directly load-bearing.",
+    "actionability": "0-5: Can the operator do something concrete with this right now? 0=pure reading, 5=clear next step.",
+    "calibration": "0-5: Does this match the operator's known priorities (revenue-first, minimal diffs, verify-before-escalate, output-driven iteration) and thinking style (terse, no permission-seeking)? 0=off-key, 5=on-voice.",
+    "confidence": "0.0-1.0: How confident is the judge that this output is correct and non-hallucinated?"
+  },
+  "calibration_note": "Be honest. A boring-but-correct system response (e.g. a daemon status line) can score low on actionability yet high on relevance and calibration — that is fine and not a problem. A flashy-but-irrelevant insight should score low on relevance.",
+  "thresholds": {
+    "sum_threshold": 9,
+    "confidence_threshold": 0.5
+  },
+  "judge_call": {
+    "tier": "fast",
+    "max_tokens": 400,
+    "temperature": 0.1
+  }
+}

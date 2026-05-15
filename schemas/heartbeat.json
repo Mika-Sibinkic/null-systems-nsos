@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "required": ["instance_id", "timestamp", "task_id", "status", "circuit_state"],
+  "properties": {
+    "instance_id": {
+      "type": "string",
+      "description": "Unique identifier for the instance"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when heartbeat was written"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Current task being executed"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["healthy", "degraded", "failed"],
+      "description": "Health status of the instance"
+    },
+    "circuit_state": {
+      "type": "string",
+      "enum": ["closed", "open", "half-open"],
+      "description": "Circuit breaker state for this instance"
+    }
+  }
+}
