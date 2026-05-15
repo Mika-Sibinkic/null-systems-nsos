@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "required": ["finding_id", "content", "source_project", "source_date", "domain", "relevance_score"],
+  "properties": {
+    "finding_id": {
+      "type": "string",
+      "description": "Unique identifier for this domain finding"
+    },
+    "content": {
+      "type": "string",
+      "description": "The actual knowledge finding"
+    },
+    "source_project": {
+      "type": "string",
+      "description": "Project where this knowledge was discovered"
+    },
+    "source_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when this knowledge was first captured"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain this knowledge belongs to (e.g., mortgage-lending, saas-architecture)"
+    },
+    "relevance_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "How relevant this finding is to the domain (0-1)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for easy categorization (e.g., compliance, performance, integration)"
+    },
+    "verified": {
+      "type": "boolean",
+      "description": "Whether this knowledge has been verified in a subsequent project"
+    },
+    "last_verified_date": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "Last date this knowledge was verified to be accurate"
+    }
+  }
+}

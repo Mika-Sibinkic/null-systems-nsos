@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "required": ["timestamp", "failure_mode", "severity", "detection_signal", "recovery_action", "resolved"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the failure was detected"
+    },
+    "failure_mode": {
+      "type": "string",
+      "enum": [
+        "agent_crash",
+        "hallucination_drift",
+        "goal_hijacking",
+        "scope_violation",
+        "deadlock",
+        "stale_context",
+        "cascade_failure",
+        "phase_gate_failure",
+        "token_exhaustion",
+        "tool_call_failure",
+        "coordination_conflict",
+        "approval_timeout"
+      ],
+      "description": "Type of failure from the 12-mode taxonomy"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Impact severity"
+    },
+    "detection_signal": {
+      "type": "string",
+      "description": "Specific observable that triggered detection"
+    },
+    "recovery_action": {
+      "type": "string",
+      "description": "Action taken to recover"
+    },
+    "resolved": {
+      "type": "boolean",
+      "description": "Whether the failure has been resolved"
+    },
+    "instance_id": {
+      "type": "string",
+      "description": "Instance ID if applicable"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Task ID if applicable"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional context or analysis"
+    }
+  }
+}

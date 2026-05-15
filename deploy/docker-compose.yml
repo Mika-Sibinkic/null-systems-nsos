@@ -1,0 +1,42 @@
+version: "3.9"
+services:
+  nsos-engine:
+    build: ../
+    image: nsos-engine:dev
+    environment:
+      NSOS_DATA_DIR: /data
+      NSOS_OPERATOR_NAME: "Operator"
+      NSOS_COMPANY_NAME: "the firm"
+      NIM_API_KEY: "${NIM_API_KEY}"
+      GROQ_API_KEY: "${GROQ_API_KEY}"
+      CEREBRAS_API_KEY: "${CEREBRAS_API_KEY}"
+    volumes:
+      - ./data:/data
+      - ../client/snapshots:/snapshots:ro
+    depends_on:
+      - nsos-vector
+
+  nsos-vector:
+    image: ankane/pgvector:latest
+    environment:
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: nsos
+    volumes:
+      - vector-data:/var/lib/postgresql/data
+
+  nsos-correction-mcp:
+    build: ../mcp-servers/correction-server
+    image: nsos-correction-mcp:dev
+    ports:
+      - "9301:9301"
+
+  nsos-mcp:
+    build: ../mcp-servers/nsos-server
+    image: nsos-mcp:dev
+    ports:
+      - "9302:9302"
+    depends_on:
+      - nsos-engine
+
+volumes:
+  vector-data:

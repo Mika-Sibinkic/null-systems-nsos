@@ -1,0 +1,66 @@
+{
+  "type": "object",
+  "required": ["timestamp", "event_type", "phase", "agent_id", "severity"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when event occurred"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "process_audit",
+        "output_audit",
+        "regression_test",
+        "alignment_check",
+        "decision_record",
+        "drift_event",
+        "security_event",
+        "phase_transition",
+        "failure_event"
+      ],
+      "description": "Category of audit event"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "discovery",
+        "prd",
+        "build",
+        "qa",
+        "deploy",
+        "handoff",
+        "continuous"
+      ],
+      "description": "Project phase during which event occurred"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "ID of the agent or system component that triggered the event"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "warning", "error", "critical"],
+      "description": "Severity level of the event"
+    },
+    "details": {
+      "type": "object",
+      "description": "Event-specific details and findings",
+      "properties": {
+        "finding": {"type": "string"},
+        "metric": {"type": "number"},
+        "threshold": {"type": "number"},
+        "component": {"type": "string"}
+      }
+    },
+    "related_prd_section": {
+      "type": "string",
+      "description": "PRD section reference if applicable (e.g., 'Feature X - Requirement 2.1')"
+    },
+    "resolution": {
+      "type": "string",
+      "description": "Resolution or action taken to address the event"
+    }
+  }
+}

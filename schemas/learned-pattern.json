@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "required": ["pattern_id", "pattern_description", "source_decisions", "occurrence_count", "outcome_scores"],
+  "properties": {
+    "pattern_id": {
+      "type": "string",
+      "description": "Unique identifier for this pattern (e.g., mika-instinct-001)"
+    },
+    "pattern_description": {
+      "type": "string",
+      "description": "Human-readable description of what this pattern is"
+    },
+    "source_decisions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of decision record IDs that established this pattern"
+    },
+    "occurrence_count": {
+      "type": "integer",
+      "description": "How many times this pattern has been observed"
+    },
+    "outcome_scores": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "description": "Array of outcome scores (0-1) for each occurrence"
+    },
+    "avg_outcome_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Average of all outcome_scores"
+    },
+    "promoted_to_tier1": {
+      "type": "boolean",
+      "description": "Whether this pattern has been promoted to Tier 1 autonomous rule"
+    },
+    "promotion_blocked_reason": {
+      "type": ["string", "null"],
+      "description": "If not promoted, reason blocking promotion (e.g., low outcome score, needs more evidence)"
+    }
+  }
+}

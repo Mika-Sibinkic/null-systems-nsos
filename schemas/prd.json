@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "PRD Schema",
+  "description": "Validates PRD completeness and buildability",
+  "required": [
+    "end_state_description",
+    "architecture_overview",
+    "acceptance_criteria",
+    "micro_task_decomposition",
+    "error_handling_spec",
+    "deployment_target",
+    "risk_register",
+    "parallelization_map",
+    "test_strategy"
+  ],
+  "properties": {
+    "end_state_description": {
+      "type": "string",
+      "minLength": 150,
+      "description": "Precise description of the final working system"
+    },
+    "architecture_overview": {
+      "type": "string",
+      "minLength": 100,
+      "description": "Component topology and data flow"
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["criterion", "how_to_verify"],
+        "properties": {
+          "criterion": {"type": "string"},
+          "how_to_verify": {"type": "string"},
+          "priority": {"type": "string", "enum": ["critical", "high", "medium"]}
+        }
+      }
+    },
+    "micro_task_decomposition": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["task_id", "description", "estimated_minutes", "file_scope"],
+        "properties": {
+          "task_id": {"type": "string"},
+          "description": {"type": "string"},
+          "estimated_minutes": {"type": "number", "maximum": 5},
+          "file_scope": {"type": "array", "maxItems": 1},
+          "prd_reference": {"type": "string"},
+          "acceptance_criteria": {
+            "type": "object",
+            "required": ["pass", "fail"],
+            "properties": {
+              "pass": {"type": "string"},
+              "fail": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "error_handling_spec": {
+      "type": "string",
+      "minLength": 50,
+      "description": "Error paths, retry logic, and failure modes"
+    },
+    "deployment_target": {
+      "type": "object",
+      "required": ["environment", "platform"],
+      "properties": {
+        "environment": {"type": "string"},
+        "platform": {"type": "string"},
+        "requirements": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "risk_register": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["risk", "probability", "mitigation"],
+        "properties": {
+          "risk": {"type": "string"},
+          "probability": {"type": "string", "enum": ["high", "medium", "low"]},
+          "impact": {"type": "string", "enum": ["critical", "high", "medium"]},
+          "mitigation": {"type": "string"}
+        }
+      }
+    },
+    "parallelization_map": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["lane", "tasks"],
+        "properties": {
+          "lane": {"type": "string"},
+          "tasks": {"type": "array", "items": {"type": "string"}},
+          "dependencies": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "test_strategy": {
+      "type": "object",
+      "required": ["unit_tests", "integration_tests", "acceptance_tests"],
+      "properties": {
+        "unit_tests": {"type": "string"},
+        "integration_tests": {"type": "string"},
+        "acceptance_tests": {"type": "string"},
+        "performance_benchmarks": {"type": "string"},
+        "smoke_tests": {"type": "string"}
+      }
+    }
+  }
+}

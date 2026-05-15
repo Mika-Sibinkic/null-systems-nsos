@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "required": ["timestamp", "agent_id", "metric", "value"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when metric was recorded"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Unique identifier for the agent"
+    },
+    "metric": {
+      "type": "string",
+      "enum": [
+        "task_completion_rate",
+        "tool_call_success_rate",
+        "avg_task_duration",
+        "drift_score_avg",
+        "checkpoint_freshness"
+      ],
+      "description": "Type of metric being recorded"
+    },
+    "value": {
+      "type": "number",
+      "description": "Numeric value of the metric"
+    },
+    "context": {
+      "type": "object",
+      "description": "Optional contextual metadata",
+      "properties": {
+        "phase": {"type": "string"},
+        "tasks_processed": {"type": "integer"},
+        "estimated_duration_sec": {"type": "number"},
+        "actual_duration_sec": {"type": "number"}
+      }
+    }
+  }
+}

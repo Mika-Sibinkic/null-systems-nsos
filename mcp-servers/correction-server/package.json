@@ -1,0 +1,15 @@
+{
+  "name": "null-systems-corrections",
+  "version": "1.0.0",
+  "description": "MCP server for Null Systems correction retrieval — RAG-style learning from past sessions",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "index-session": "node -e \"import('./session-parser.js').then(m => m.indexSessionFromCLI())\"",
+    "seed": "node -e \"import('./corrections-store.js').then(m => m.seedFromFile('seed-corrections.json'))\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}

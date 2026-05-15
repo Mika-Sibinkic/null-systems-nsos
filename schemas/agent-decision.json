@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "required": ["timestamp", "agent_id", "tier", "category", "decision", "rationale", "expected_outcome"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when decision was made"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "ID of the agent making the decision"
+    },
+    "tier": {
+      "type": "integer",
+      "enum": [1],
+      "description": "Decision tier (1 = autonomous Tier 1 decisions)"
+    },
+    "category": {
+      "type": "string",
+      "description": "Decision category from DECISION_TIERS.md (e.g., 'code_architecture', 'tool_selection', 'testing_approach')"
+    },
+    "decision": {
+      "type": "string",
+      "description": "The specific decision made"
+    },
+    "alternatives": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Alternative options that were considered"
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Reasoning for the decision choice"
+    },
+    "expected_outcome": {
+      "type": "string",
+      "description": "What result or behavior is expected from this decision"
+    },
+    "actual_outcome": {
+      "type": ["string", "null"],
+      "description": "Actual result observed (recorded later when known)"
+    },
+    "outcome_match": {
+      "type": ["boolean", "null"],
+      "description": "Whether actual outcome matched expected outcome"
+    }
+  }
+}

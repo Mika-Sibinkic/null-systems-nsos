@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Build Output Schema",
+  "description": "Validates build phase completion and readiness for QA",
+  "required": [
+    "all_micro_tasks_complete",
+    "all_tests_passing",
+    "git_history_clean",
+    "drift_log_clear",
+    "no_open_blockers",
+    "deployment_ready"
+  ],
+  "properties": {
+    "all_micro_tasks_complete": {
+      "type": "boolean",
+      "description": "All PRD micro-tasks have been implemented"
+    },
+    "all_tests_passing": {
+      "type": "boolean",
+      "description": "All unit, integration, and acceptance tests pass"
+    },
+    "git_history_clean": {
+      "type": "boolean",
+      "description": "Git log shows clear, logical commits aligned with tasks"
+    },
+    "drift_log_clear": {
+      "type": "boolean",
+      "description": "No outstanding drift events or corrections in progress"
+    },
+    "no_open_blockers": {
+      "type": "boolean",
+      "description": "No tasks marked as blocked or waiting for external input"
+    },
+    "deployment_ready": {
+      "type": "boolean",
+      "description": "Code passes all linters, builds without errors, dependencies resolved"
+    },
+    "test_coverage": {
+      "type": "object",
+      "properties": {
+        "lines": {"type": "number", "minimum": 0, "maximum": 100},
+        "branches": {"type": "number", "minimum": 0, "maximum": 100},
+        "functions": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    },
+    "build_summary": {
+      "type": "string",
+      "description": "Human-readable summary of what was built"
+    },
+    "known_limitations": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Any deviations from PRD with rationale"
+    }
+  }
+}

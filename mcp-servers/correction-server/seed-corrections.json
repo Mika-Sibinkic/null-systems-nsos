@@ -1,0 +1,103 @@
+[
+  {
+    "id": "corr_2026-03-27_001",
+    "timestamp": "2026-03-27T14:00:00Z",
+    "session_id": "3-27-session",
+    "pattern_id": 1,
+    "pattern_name": "permission-seeking",
+    "context": "After fixing 8 bug cases in v4 contact extraction pipeline, model asked permission to run full batch",
+    "what_model_did": "Asked 'Want me to run the full batch now?' after all targeted fixes passed",
+    "what_mika_wanted": "Run the full batch automatically — the answer was obviously yes",
+    "mika_exact_words": "Go ahead",
+    "detection_rule": "If action is the obvious next step and all targeted tests pass, execute without asking",
+    "severity": "medium"
+  },
+  {
+    "id": "corr_2026-03-27_002",
+    "timestamp": "2026-03-27T14:30:00Z",
+    "session_id": "3-27-session",
+    "pattern_id": 1,
+    "pattern_name": "permission-seeking",
+    "context": "After identifying regressions from full batch, model asked if it should fix them",
+    "what_model_did": "Asked 'Should I fix these regressions?' when regressions are by definition must-fix",
+    "what_mika_wanted": "Fix all regressions without asking — regressions are never optional",
+    "mika_exact_words": "Fix everything necessary",
+    "detection_rule": "Regressions, bugs, and test failures are always fix-immediately items. Never ask permission for obvious fixes.",
+    "severity": "high"
+  },  {
+    "id": "corr_2026-03-27_003",
+    "timestamp": "2026-03-27T15:00:00Z",
+    "session_id": "3-27-session",
+    "pattern_id": 2,
+    "pattern_name": "memory-neglect",
+    "context": "3+ hours into complex v4 pipeline work without updating checkpoint or memory files",
+    "what_model_did": "Completed extensive debugging and deployment work without updating checkpoint.md",
+    "what_mika_wanted": "Checkpoint and memory files updated after every major milestone",
+    "mika_exact_words": "Is the log updated?",
+    "detection_rule": "Update checkpoint.md after every deploy, test batch completion, or 30+ minutes of work. This is automatic, not voluntary.",
+    "severity": "high"
+  },
+  {
+    "id": "corr_2026-03-27_004",
+    "timestamp": "2026-03-27T13:30:00Z",
+    "session_id": "3-27-session",
+    "pattern_id": 3,
+    "pattern_name": "prompt-over-code",
+    "context": "Model spent 4 rounds tweaking AI prompt to fix company extraction when a regex filter would have worked",
+    "what_model_did": "Iterated on AI prompt instructions trying to get it to reject taglines, titles, and slogans",
+    "what_mika_wanted": "Deterministic code filter (regex/blacklist) that catches bad extractions reliably",
+    "mika_exact_words": "(Implicit — model self-corrected after 4 rounds)",
+    "detection_rule": "If a fix depends on the AI model following an instruction reliably, write deterministic code instead. Prompts for judgment calls only.",
+    "severity": "high"
+  },  {
+    "id": "corr_2026-03-27_005",
+    "timestamp": "2026-03-27T15:30:00Z",
+    "session_id": "3-27-session",
+    "pattern_id": 4,
+    "pattern_name": "premature-victory",
+    "context": "Model reported '0 regressions' based on testing 8 targeted cases, not the full 26-contact corpus",
+    "what_model_did": "Declared victory after subset passed, didn't run full batch until prompted",
+    "what_mika_wanted": "Clear labeling: '8/8 targeted cases pass. Full batch pending.' Then run the full batch.",
+    "mika_exact_words": "(Implicit — regressions appeared in full batch that targeted tests missed)",
+    "detection_rule": "Label partial results as partial. Always run full corpus before declaring victory. '8/8 targeted' ≠ 'no regressions'.",
+    "severity": "high"
+  },
+  {
+    "id": "corr_2026-03-27_006",
+    "timestamp": "2026-03-27T16:00:00Z",
+    "session_id": "3-27-session",
+    "pattern_id": 5,
+    "pattern_name": "passive-waiting",
+    "context": "Model chained 'sleep 30 && check' commands 3 times waiting for n8n webhook processing",
+    "what_model_did": "Used manual sleep-and-check loops instead of building proper async polling",
+    "what_mika_wanted": "Build a polling mechanism once. Never chain sleep commands.",
+    "mika_exact_words": "(Implicit — model wasted ~5 minutes in sleep chains)",
+    "detection_rule": "On 2nd sleep command for the same task, stop and build async polling. Never chain sleep commands.",
+    "severity": "medium"
+  },  {
+    "id": "corr_2026-03-27_007",
+    "timestamp": "2026-03-27T13:00:00Z",
+    "session_id": "3-27-session",
+    "pattern_id": 6,
+    "pattern_name": "fix-before-trace",
+    "context": "Model started writing fix code for company extraction bug without first tracing which pipeline stage produced the error",
+    "what_model_did": "Jumped to modifying the AI prompt without checking if the bug was in extraction, normalization, or validation",
+    "what_mika_wanted": "Trace execution data through each stage, identify exact failure point, then fix",
+    "mika_exact_words": "(Implicit — fix targeted wrong stage initially)",
+    "detection_rule": "Pull execution data. Trace each stage. Identify the exact failure point. THEN write fix code.",
+    "severity": "high"
+  },
+  {
+    "id": "corr_2026-03-27_008",
+    "timestamp": "2026-03-27T16:30:00Z",
+    "session_id": "3-27-session",
+    "pattern_id": 7,
+    "pattern_name": "incomplete-reporting",
+    "context": "Model presented batch results while some contacts were still processing",
+    "what_model_did": "Showed results table without distinguishing verified vs pending vs unknown items",
+    "what_mika_wanted": "Every item labeled with its status. Clear distinction between verified, pending, unknown.",
+    "mika_exact_words": "Tell me then, what IS left to do?",
+    "detection_rule": "Label every result with its status. Never frame partial data as final. '20/26 complete, 6 pending' not 'FINAL RESULTS'.",
+    "severity": "medium"
+  }
+]
