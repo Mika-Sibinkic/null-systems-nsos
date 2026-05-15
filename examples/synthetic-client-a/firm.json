@@ -1,0 +1,25 @@
+{
+  "tenant_id": "synth-acme-services",
+  "firm_name": "Acme Services",
+  "industry": "Mid-market professional services",
+  "employees": 142,
+  "annual_revenue_usd": 28000000,
+  "ceo_name": "Jane Doe",
+  "engagement_arrived_at": "2026-05-15",
+  "stated_objectives": [
+    {"text": "raise net retention from 92% to 105% within 18 months", "weight": 1.0},
+    {"text": "cut average proposal turnaround from 14 days to 5", "weight": 0.85},
+    {"text": "evaluate AI initiative scoped at $1.2M for ROI", "weight": 0.75},
+    {"text": "find one supplier dependency to reduce", "weight": 0.5}
+  ],
+  "known_baseline": [
+    {"text": "we already know our CRM data hygiene is bad and we have a project to fix it"},
+    {"text": "we know proposal templates are inconsistent across partners"}
+  ],
+  "connected_sources": [
+    {"type": "accounting", "system": "QuickBooks", "snapshot_at": "2026-05-15T08:00:00Z"},
+    {"type": "crm", "system": "HubSpot", "snapshot_at": "2026-05-15T08:00:00Z"},
+    {"type": "comms", "system": "Slack", "snapshot_at": "2026-05-15T08:00:00Z"},
+    {"type": "interview_transcript", "system": "Pocket AI", "files": ["int-1.txt", "int-2.txt", "int-3.txt"]}
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "required": ["timestamp", "source_type", "domain", "time_to_useful_output_minutes", "quality_of_output"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this learning event occurred"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": ["documentation", "video_tutorial", "github_repo", "experiment", "stackoverflow", "official_docs", "community_forum"],
+      "description": "Type of learning source"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain this learning applies to (e.g., database-optimization, api-design)"
+    },
+    "time_to_useful_output_minutes": {
+      "type": "number",
+      "description": "How long it took from starting learning to getting usable knowledge (minutes)"
+    },
+    "quality_of_output": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "How useful/actionable the learned knowledge was (1-5 scale)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional context about the learning (e.g., source URL, observations)"
+    }
+  }
+}

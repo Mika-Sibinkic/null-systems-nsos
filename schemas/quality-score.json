@@ -1,0 +1,70 @@
+{
+  "type": "object",
+  "required": ["timestamp", "artifact_type", "artifact_path", "scores", "overall_score"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when quality was scored"
+    },
+    "artifact_type": {
+      "type": "string",
+      "enum": [
+        "discovery_brief",
+        "prd",
+        "build_output",
+        "qa_report",
+        "handoff_package"
+      ],
+      "description": "Type of artifact being scored"
+    },
+    "artifact_path": {
+      "type": "string",
+      "description": "File path to the artifact being scored"
+    },
+    "scores": {
+      "type": "object",
+      "required": ["completeness", "coherence", "specificity", "alignment"],
+      "properties": {
+        "completeness": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "How complete is the artifact (1=incomplete, 5=comprehensive)"
+        },
+        "coherence": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "How logically coherent and well-organized (1=disjointed, 5=excellent flow)"
+        },
+        "specificity": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "How specific and actionable (1=vague, 5=highly specific)"
+        },
+        "alignment": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "How well-aligned with project goals (1=misaligned, 5=perfectly aligned)"
+        }
+      }
+    },
+    "overall_score": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Average of the four dimension scores"
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Brief explanation of the scores and key findings"
+    },
+    "flagged_for_review": {
+      "type": "boolean",
+      "description": "True if any dimension is <3.0 or overall score needs Mika review"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "required": ["playbook_id", "execution_timestamp", "quality_score", "rework_required", "actual_duration_minutes", "estimated_duration_minutes"],
+  "properties": {
+    "playbook_id": {
+      "type": "string",
+      "description": "ID of the playbook that was executed"
+    },
+    "execution_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this playbook execution occurred"
+    },
+    "quality_score": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Quality of the output (1-5 scale)"
+    },
+    "rework_required": {
+      "type": "boolean",
+      "description": "Whether the output required rework before it was acceptable"
+    },
+    "actual_duration_minutes": {
+      "type": "number",
+      "description": "How long the playbook actually took to execute (minutes)"
+    },
+    "estimated_duration_minutes": {
+      "type": "number",
+      "description": "How long the playbook was estimated to take (minutes)"
+    }
+  }
+}
