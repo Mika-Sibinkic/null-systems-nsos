@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Null Systems Diagnostic SaaS — Product Map</title>
+<style>
+  :root {
+    --bg: #0b1020; --fg: #e5e7eb; --muted: #94a3b8;
+    --panel: #111827; --border: #1f2937; --accent: #10b981;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", Segoe UI, system-ui, sans-serif; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
+  header .sub { color: var(--muted); font-size: 12px; margin-left: 10px; }
+  header .controls { display: flex; gap: 8px; }
+  header button {
+    background: #0f172a; color: var(--fg); border: 1px solid var(--border);
+    padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;
+  }
+  header button:hover { border-color: var(--accent); color: var(--accent); }
+  #legend {
+    display: flex; gap: 14px; padding: 8px 16px; font-size: 11px; color: var(--muted);
+    border-bottom: 1px solid var(--border); background: var(--panel); flex-wrap: wrap;
+  }
+  #legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+    margin-right: 5px; vertical-align: middle; }
+  #legend .hint { color: var(--accent); }
+  .built { background: #065f46; } .partial { background: #78350f; }
+  .planned { background: #7f1d1d; } .external { background: #1e3a8a; }
+  #viewport {
+    width: 100vw; height: calc(100vh - 78px); overflow: auto; position: relative;
+    background: radial-gradient(circle at 30% 20%, #0f172a 0%, #0b1020 55%);
+  }
+  #stage { transform-origin: 0 0; padding: 24px; min-width: fit-content; }
+  #stage svg { max-width: none !important; height: auto; }
+  .mermaid { font-family: inherit; }
+  .mermaid .node { cursor: pointer; }
+  footer {
+    position: fixed; right: 16px; bottom: 12px; color: var(--muted); font-size: 11px;
+    background: rgba(17,24,39,0.85); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);
+  }
+  /* doc panels the nodes jump to */
+  #docs { padding: 28px 16px 120px; max-width: 880px; margin: 0 auto; }
+  #docs section { border-top: 1px solid var(--border); padding: 22px 0 8px; }
+  #docs h2 { font-size: 16px; margin: 0 0 6px; color: var(--accent); scroll-margin-top: 90px; }
+  #docs section { scroll-margin-top: 90px; }
+  #docs p { color: #cbd5e1; margin: 6px 0; }
+  #docs a { color: var(--accent); }
+  #docs .file { color: var(--muted); font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+  .backtop { display:inline-block; margin-top:8px; font-size:12px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Null Systems Diagnostic SaaS — Product Map</h1>
+    <span class="sub">"Vinny" · click any node to jump to its description · generated 2026-05-28</span>
+  </div>
+  <div class="controls">
+    <button onclick="zoomBy(1.2)">+</button>
+    <button onclick="zoomBy(1/1.2)">−</button>
+    <button onclick="resetZoom()">reset</button>
+    <button onclick="fitToScreen()">fit</button>
+  </div>
+</header>
+
+<div id="legend">
+  <span><span class="dot built"></span>built &amp; verified</span>
+  <span><span class="dot partial"></span>partial / not wired</span>
+  <span><span class="dot planned"></span>planned</span>
+  <span><span class="dot external"></span>external</span>
+  <span class="hint">→ nodes are clickable</span>
+</div>
+
+<div id="viewport">
+  <div id="stage">
+    <pre class="mermaid">
+flowchart TB
+    classDef built    fill:#065f46,stroke:#10b981,color:#fff
+    classDef partial  fill:#78350f,stroke:#f59e0b,color:#fff
+    classDef planned  fill:#7f1d1d,stroke:#ef4444,color:#fff
+    classDef external fill:#1e3a8a,stroke:#3b82f6,color:#fff
+
+    subgraph ONB_BOX["1 · Onboarding — client/ + web/"]
+        WEB[Next.js / Vercel<br/>web surface]:::planned
+        ONB[onboarding flow]:::planned
+        ADQB[QuickBooks adapter]:::planned
+        ADX[HubSpot · Slack · Pocket<br/>adapters]:::planned
+        SNAP[(baseline.json<br/>tenant snapshot)]:::planned
+        TEASER[&lt;1h teaser signal]:::planned
+    end
+
+    subgraph DIAG_BOX["2 · Diagnostic — engine/meta-levels"]
+        FIN[financial team]:::planned
+        OPS[operational]:::planned
+        ORG[organizational]:::planned
+        CUST[customer]:::planned
+        TECH[technology]:::planned
+        STRAT[strategic]:::planned
+        GNT[gauntlet question battery]:::partial
+        GATE[grounded-numbers gate<br/>source-trace + confidence]:::planned
+        QJ[quality_judge<br/>FDE-review gate]:::partial
+        FND[(findings.jsonl<br/>$ / hrs + evidence)]:::planned
+    end
+
+    subgraph CORE_BOX["Engine core — lifted, built"]
+        REAS[reasoning_engine.py]:::built
+        NIM[nim_client.py<br/>NIM-only]:::built
+        CASC[cascade_handler.py]:::built
+    end
+
+    subgraph COUN_BOX["3 · Council — engine/council"]
+        COUN[council.py<br/>pairwise judge + debate]:::built
+        RW[recursive_weights.py<br/>prio·novelty·corrob·impact]:::built
+    end
+
+    subgraph SOW_BOX["4 · SOW scoring — the decision bridge"]
+        ASM[SOW assembly<br/>2–3 candidates]:::planned
+        WWMD[WWMD predict<br/>consultant-would-push]:::partial
+        PILLAR[5-pillar grade<br/>deployable?]:::planned
+        SOW[(2–3 scored SOWs<br/>+ success metrics)]:::planned
+    end
+
+    subgraph PRES_BOX["Presentation + choice — presentation/"]
+        RPT[report_generator.py]:::partial
+        SBS[side-by-side / narrative]:::planned
+        CHOICE[operator chooses SOW]:::planned
+        FDE[FDE handoff packet]:::planned
+    end
+
+    subgraph FLY_BOX["5 · Outcome flywheel — learning/ (the moat)"]
+        FB[feedback<br/>predicted vs realized]:::planned
+        MON[monitoring / recurring tier]:::planned
+        EVAL[(eval set / signaling IP)]:::partial
+    end
+
+    subgraph GOV_BOX["CI / governance — the spine"]
+        PG[promotion_gate.py<br/>5-gate]:::built
+        EVH[eval_harness.py<br/>A/B]:::built
+        CI[GitHub Actions]:::partial
+    end
+
+    %% client flow
+    WEB --> ONB --> ADQB --> SNAP
+    ONB --> ADX --> SNAP
+    SNAP --> TEASER
+    SNAP --> FIN & OPS & ORG & CUST & TECH & STRAT
+    GNT --> FIN
+    FIN & OPS & ORG & CUST & TECH & STRAT --> GATE
+    GATE --> QJ --> FND
+
+    %% teams use engine core
+    FIN -.-> REAS
+    REAS --> NIM
+    NIM -.-> CASC
+
+    %% findings -> council -> scoring
+    FND --> COUN --> RW --> ASM
+    ASM --> WWMD
+    ASM --> PILLAR
+    WWMD --> SOW
+    PILLAR --> SOW
+    REAS -. predict .-> WWMD
+
+    %% presentation + choice + handoff
+    SOW --> RPT --> SBS --> CHOICE --> FDE
+
+    %% flywheel
+    FDE --> FB --> MON
+    FB -. realized outcomes .-> EVAL
+    EVAL -. labels .-> GNT
+    EVAL -. labels .-> WWMD
+
+    %% governance gates everything that merges
+    PG -. gates merge .-> CI
+    EVH -. no-regression .-> PG
+    CI -. blocks bad merge .-> SOW
+
+    %% --- clickable: jump to description panels ---
+    click WEB "#surface" "Web surface"
+    click ONB "#onboarding" "Onboarding"
+    click ADQB "#onboarding" "QuickBooks adapter"
+    click ADX "#onboarding" "Connectors"
+    click SNAP "#onboarding" "Tenant snapshot"
+    click TEASER "#onboarding" "<1h teaser"
+    click FIN "#diagnostic" "Financial meta-team"
+    click OPS "#diagnostic" "Meta-teams"
+    click ORG "#diagnostic" "Meta-teams"
+    click CUST "#diagnostic" "Meta-teams"
+    click TECH "#diagnostic" "Meta-teams"
+    click STRAT "#diagnostic" "Meta-teams"
+    click GNT "#diagnostic" "Gauntlet battery"
+    click GATE "#diagnostic" "Grounded-numbers gate"
+    click QJ "#diagnostic" "Quality-judge gate"
+    click FND "#diagnostic" "Findings"
+    click COUN "#council" "Council"
+    click RW "#council" "Recursive-weight scoring"
+    click ASM "#sow" "SOW assembly"
+    click WWMD "#sow" "WWMD scoring"
+    click PILLAR "#sow" "5-pillar grade"
+    click SOW "#sow" "Scored SOWs"
+    click RPT "#sow" "Report generator"
+    click SBS "#sow" "Side-by-side"
+    click CHOICE "#sow" "Operator choice"
+    click FDE "#handoff" "FDE handoff"
+    click FB "#flywheel" "Feedback loop"
+    click MON "#flywheel" "Recurring tier"
+    click EVAL "#flywheel" "Eval set IP"
+    click PG "#governance" "Promotion gate"
+    click EVH "#governance" "Eval harness"
+    click CI "#governance" "CI"
+    click REAS "#governance" "Engine core"
+    click NIM "#governance" "NIM-only router"
+    click CASC "#governance" "Cascade handler"
+    </pre>
+  </div>
+</div>
+
+<footer>scroll to pan · ⌘/ctrl + scroll to zoom · click a node → description below</footer>
+
+<div id="docs">
+  <section id="onboarding">
+    <h2>1 · Seamless onboarding</h2>
+    <p>Operator connects existing infra (accounting/ERP, CRM, comms). Secrets stored <b>server-side
+    only</b>; the web holds a scoped short-lived token. Each source is read via a provider adapter and
+    snapshotted to <span class="file">client/snapshots/{tenant_id}/baseline.json</span>. A &lt;1h
+    <b>teaser</b> surfaces one high-signal finding to hook the operator while the full run proceeds async.</p>
+    <p class="file">client/onboarding · client/adapters · client/snapshots · web/ &nbsp;|&nbsp; status: 🔴 planned (MVP work)</p>
+    <p><a href="../PRODUCT.md#onboarding">PRODUCT.md → onboarding</a> · <a href="../STATE.md#client">STATE.md → client</a> · <a href="../ROADMAP.md#phase1">ROADMAP → Phase 1</a></p>
+    <a class="backtop" href="#top">↑ back to map</a>
+  </section>
+
+  <section id="diagnostic">
+    <h2>2 · The diagnostic (6 meta-teams → quantified findings)</h2>
+    <p>Six teams (financial, operational, organizational, customer, technology, strategic) each run a
+    gauntlet of executive-grade questions against the snapshot, producing findings with quantified
+    <span class="file">impact_usd</span> / <span class="file">impact_hours</span> / bottleneck.
+    <b>Every number traces to source data</b> (invoice line, timesheet, CRM event, benchmark) + a
+    confidence band — the LLM narrates, the math computes. Below-threshold findings route to FDE review
+    before the client sees them (autonomy slider).</p>
+    <p class="file">engine/meta-levels/* · engine/gauntlets · status: 🔴 empty (financial sample only) — the single missing core</p>
+    <p><a href="../PRODUCT.md#diagnostic">PRODUCT.md → diagnostic</a> · <a href="../STATE.md#engine">STATE.md → engine</a> · <a href="../ROADMAP.md#phase2">ROADMAP → Phase 2</a></p>
+    <a class="backtop" href="#top">↑ back to map</a>
+  </section>
+
+  <section id="council">
+    <h2>3 · Council ranking</h2>
+    <p>Findings reconvene in a council weighted by recursive context — alignment with the CEO's stated
+    priorities, novelty vs known baseline, cross-team corroboration, projected $/hours impact. Pairwise
+    LLM-judge tournament + debate, not scalar scoring. <b>Works today.</b></p>
+    <p class="file">engine/council/council.py · recursive_weights.py · status: 🟢 built (tests pass)</p>
+    <p><a href="../PRODUCT.md#council">PRODUCT.md → council</a> · <a href="../docs/COUNCIL-PROTOCOL.md">COUNCIL-PROTOCOL.md</a></p>
+    <a class="backtop" href="#top">↑ back to map</a>
+  </section>
+
+  <section id="sow">
+    <h2>4 · Two or three scored SOWs (the decision bridge)</h2>
+    <p>Ranked findings bundle into 2–3 coherent <b>SOW candidates</b>. Each is scored by the bridge:
+    <b>WWMD</b> predicts whether a Null Systems consultant would push it (+ confidence + gaps); the
+    <b>5-pillar engineering bar</b> grades deployability. Each SOW carries quantified success metrics
+    (EBITDA +X%/yr, N hrs/yr, payback M months) so the operator chooses on evidence + their own sense
+    of priority.</p>
+    <p class="file">presentation/exec-report (🟡 finding-list today) · SOW assembly + WWMD×5-pillar scoring: 🔴 planned</p>
+    <p><a href="../PRODUCT.md#sow">PRODUCT.md → SOWs</a> · <a href="../STATE.md#sow">STATE.md → sow</a> · <a href="../ROADMAP.md#phase3">ROADMAP → Phase 3–4</a></p>
+    <a class="backtop" href="#top">↑ back to map</a>
+  </section>
+
+  <section id="handoff">
+    <h2>5 · FDE handoff</h2>
+    <p>The chosen SOW exports as an FDE handoff packet — confirmed scope to Null Systems' delivery side.
+    NSOS keeps watching; outcomes feed the flywheel.</p>
+    <p class="file">presentation/ · status: 🔴 planned (Phase 4)</p>
+    <p><a href="../PRODUCT.md#handoff">PRODUCT.md → handoff</a></p>
+    <a class="backtop" href="#top">↑ back to map</a>
+  </section>
+
+  <section id="flywheel">
+    <h2>Outcome flywheel — the moat</h2>
+    <p><b>Predicted vs realized</b> impact per shipped SOW feeds back, compounding diagnostic accuracy
+    and powering a <b>monitoring/recurring tier</b> (land-and-expand). Anyone can call an LLM; nobody else
+    has the realized-outcome dataset. The eval set / consulting signaling is versioned as crown-jewel IP,
+    cold-started from Null Systems' prior engagements.</p>
+    <p class="file">learning/feedback · learning/rl · status: 🔴 empty (the moat, currently unbuilt)</p>
+    <p><a href="../PRODUCT.md#moat">PRODUCT.md → moat</a> · <a href="../STATE.md#flywheel">STATE.md → flywheel</a> · <a href="../GTM.md#eval">GTM → eval set</a> · <a href="../ROADMAP.md#phase5">ROADMAP → Phase 5</a></p>
+    <a class="backtop" href="#top">↑ back to map</a>
+  </section>
+
+  <section id="surface">
+    <h2>Web surface</h2>
+    <p>Next.js/Vercel <span class="file">web/</span> ↔ Python <span class="file">engine/</span> over an
+    HTTP/MCP boundary. Auth, tool-auth tiers, and connector-flow patterns lifted from Vinnie
+    (re-implemented, not ported). Multi-tenant isolation by <span class="file">tenant_id</span>.</p>
+    <p class="file">web/ · status: 🔴 net-new (Phase 1)</p>
+    <p><a href="../PRODUCT.md#surface">PRODUCT.md → surface</a> · <a href="../STATE.md#surface">STATE.md → surface</a></p>
+    <a class="backtop" href="#top">↑ back to map</a>
+  </section>
+
+  <section id="governance">
+    <h2>CI / governance + engine core</h2>
+    <p>The spine: <span class="file">promotion_gate.py</span> (5-gate: regression + gauntlet ±5 + perf +
+    council corroboration + Mika checkbox) and <span class="file">eval_harness.py</span> (A/B,
+    net-positive-on-all-metrics) gate every merge; GitHub Actions adds lint/typecheck/test. Engine core
+    (reasoning_engine, NIM-only router, cascade_handler) is lifted and built.</p>
+    <p class="file">learning/promotion-gate · engine/gauntlets · engine/reasoning · engine/router · status: 🟢 built (CI 🟡 scaffolded)</p>
+    <p><a href="../STATE.md#harness">STATE.md → harness</a> · <a href="../STATE.md#engine">STATE.md → engine</a> · <a href="../decisions/2026-05-28-saas-conglomeration-architecture.md">decision record</a></p>
+    <a class="backtop" href="#top">↑ back to map</a>
+  </section>
+</div>
+
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "dark",
+    themeVariables: {
+      darkMode: true, background: "#0b1020", primaryColor: "#111827",
+      primaryTextColor: "#e5e7eb", primaryBorderColor: "#374151", lineColor: "#64748b",
+      fontFamily: "-apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    },
+    flowchart: { htmlLabels: true, curve: "basis" },
+    securityLevel: "loose",
+  });
+</script>
+
+<script>
+  let scale = 1;
+  const stage = document.getElementById("stage");
+  function applyScale() { stage.style.transform = `scale(${scale})`; }
+  function zoomBy(f) { scale = Math.max(0.2, Math.min(4, scale * f)); applyScale(); }
+  function resetZoom() { scale = 1; applyScale(); }
+  function fitToScreen() {
+    const svg = stage.querySelector("svg"); if (!svg) return;
+    const vp = document.getElementById("viewport");
+    const sw = svg.getBoundingClientRect().width / scale;
+    const sh = svg.getBoundingClientRect().height / scale;
+    scale = Math.min((vp.clientWidth - 48) / sw, (vp.clientHeight - 48) / sh, 1); applyScale();
+  }
+  window.zoomBy = zoomBy; window.resetZoom = resetZoom; window.fitToScreen = fitToScreen;
+  document.getElementById("viewport").addEventListener("wheel", (e) => {
+    if (e.ctrlKey || e.metaKey) { e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1); }
+  }, { passive: false });
+</script>
+
+</body>
+</html>
