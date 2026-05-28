@@ -8,7 +8,7 @@
 
 ## Required sections (in order)
 
-1. **Cover** — Firm name. Date. "Diagnostic by Null Systems."
+1. **Cover** — Firm name. Date. "Prepared by Vinny · A Null Systems product."
 2. **Executive summary (1 paragraph)** — The 1-line headline of each top-3 opportunity, totaled in $/hours saved per year.
 3. **The three opportunities, ranked** — One section each. Per opportunity:
    - **Headline** — verb-led, 12-word max, time/cost framing.

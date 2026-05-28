@@ -1,6 +1,6 @@
 # {{firm_name}} — Diagnostic Summary
 
-*Prepared by Null Systems · {{date}}*
+*Prepared by Vinny · A Null Systems product · {{date}}*
 
 ---
 

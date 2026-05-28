@@ -1,10 +1,12 @@
-# NSOS — Null Systems Diagnostic Platform
+# Vinny — Diagnostic Platform by Null Systems
 
-> The consultation arm of Null Systems. Runs *before* engineering execution.
+> Client-facing brand: **Vinny**. Internal engine name: NSOS. Both refer to the same codebase; we use "Vinny" externally and "NSOS" in implementation.
+
+The consultation arm of Null Systems. Runs *before* engineering execution.
 
 ## What it does (client view)
 
-A CEO connects their firm's data sources — accounting, CRM, ops dashboards, comms tools, plus a few exec interviews. Within 24–72 hours, NSOS returns a 3–5 page diagnostic written in time/cost language:
+A CEO connects their firm's data sources — accounting, CRM, ops dashboards, comms tools, plus a few exec interviews. Within 24–72 hours, Vinny returns a 3–5 page diagnostic written in time/cost language:
 
 > *"Three opportunities ranked by impact. (1) Restructuring how proposals get assembled saves an estimated $180k/year and 11 hours of partner time per week. (2) Switching one supplier dependency saves $42k/year. (3) Your current AI initiative as scoped would cost $1.2M and save $400k/year — here's the side-by-side with a leaner version that costs $230k and saves the same. Confirm any of these and Null Systems will scope an FDE engagement to execute."*
 

@@ -32,7 +32,7 @@ def render_executive_report(
     lines = []
     lines.append(f"# {firm['firm_name']} — Diagnostic Summary")
     lines.append("")
-    lines.append(f"*Prepared by Null Systems · {firm.get('engagement_arrived_at', '')}*")
+    lines.append(f"*Prepared by Vinny · A Null Systems product · {firm.get('engagement_arrived_at', '')}*")
     lines.append("\n---\n")
     lines.append("## Executive summary\n")
     lines.append(

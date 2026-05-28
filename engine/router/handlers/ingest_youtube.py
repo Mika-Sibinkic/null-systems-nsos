@@ -9,7 +9,7 @@ Transcript extraction order (fastest → slowest):
      Covers ~80% of videos, instant, no auth needed.
   2. yt-dlp + openai-whisper (base model, CPU) — for videos without
      captions. Slow (1-2h per 30-min video on CPU) but acceptable for
-     background batch on Dell. These entries are flagged "slow-transcribe".
+     background batch on the host machine. These entries are flagged "slow-transcribe".
 
 Long-form transcripts are chunked into ~3000-token segments before NIM
 extraction, then a final consolidation pass merges per-chunk insights.
