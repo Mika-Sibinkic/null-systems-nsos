@@ -1,9 +1,9 @@
 """
 take — natural-language wrapper for `take_care`.
 
-The router parses the first whitespace-delimited token as the verb. Mika
-naturally types "take care of microscout" — first token is "take" — so
-we land here. If the body starts with "care", we delegate to take_care.
+The router parses the first whitespace-delimited token as the verb. The
+operator naturally types "take care of <project>" — first token is "take" —
+so we land here. If the body starts with "care", we delegate to take_care.
 Otherwise we return a usage hint pointing at the canonical verbs.
 
 This is a thin shim. All real logic lives in handlers/take_care.py.

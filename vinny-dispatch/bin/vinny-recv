@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# vinny-recv — SSH-forced-command entry point.
+# Mac side: ssh dell '/home/mika/vinny-dispatch/bin/vinny-recv' "<command>"
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Load .env if present
+if [[ -f "$ROOT/.env" ]]; then
+  set -a; source "$ROOT/.env"; set +a
+fi
+# Also load personal NSOS .env for NIM_API_KEY if Vinny .env doesn't set it
+if [[ -z "${NIM_API_KEY:-}" && -f "/home/mika/nsos/repo/Active Projects/NSOS/.env" ]]; then
+  set -a; source "/home/mika/nsos/repo/Active Projects/NSOS/.env"; set +a
+fi
+exec python3 "$ROOT/channels/cli_listener.py" "$@"

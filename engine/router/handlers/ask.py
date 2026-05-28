@@ -1,7 +1,7 @@
 """
 ask — natural-language Q&A grounded in NSOS's actual state.
 
-    nsos ask "what's the latest on jetloan"
+    nsos ask "what's the latest on <project>"
 
 Fallback handler for NL channels (email, telegram, imessage) when the
 first word isn't a registered verb. Before asking the LLM, this pulls a
@@ -9,12 +9,13 @@ compact state snapshot from predictions.jsonl, gaps.jsonl, MEMORY.md,
 and any available project checkpoint/memory files — so the model
 ANSWERS FROM EVIDENCE instead of inventing plausible-sounding status.
 
-SKIP_JUDGE is True: the judge adds a second LLM call (~15s on free NIM)
-for a gating decision that's low-value on conversational NL. Mika can
-correct in-thread and the correction feeds the learning loop.
+SKIP_JUDGE is True: the judge adds a second LLM call for a gating
+decision that's low-value on conversational NL. The operator can correct
+in-thread and the correction feeds the learning loop.
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -24,16 +25,38 @@ SKIP_JUDGE = True
 
 NSOS_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = NSOS_DIR.parent.parent
+PROJECTS_DIR = Path(os.environ.get("NSOS_PROJECTS_DIR", str(PROJECT_ROOT / "projects")))
 sys.path.insert(0, str(NSOS_DIR))
 
+# Identity (parameterized — defaults to generic strings)
+OPERATOR_NAME = os.environ.get("OPERATOR_NAME", "the operator")
+COMPANY_NAME = os.environ.get("COMPANY_NAME", "the firm")
 
-ASK_SYSTEM = """You are NSOS — the reasoning system behind Null Systems, Mika Sibinkic's solo AI-augmented consulting practice.
 
-Answer Mika's question in his voice: terse, no permission-seeking, no hedging, no filler. Two-to-five sentences max unless the question explicitly needs more.
+def _load_project_keywords() -> Dict[str, str]:
+    """Load lowercased keyword -> project folder map from knowledge/project_map.json."""
+    custom = NSOS_DIR / "knowledge" / "project_map.json"
+    if custom.exists():
+        try:
+            with open(custom) as f:
+                data = json.load(f)
+            if isinstance(data, dict) and data:
+                return {str(k).lower(): str(v) for k, v in data.items()}
+        except (json.JSONDecodeError, IOError):
+            pass
+    return {}
+
+
+PROJECT_KEYWORDS = _load_project_keywords()
+
+
+ASK_SYSTEM = f"""You are NSOS — the reasoning system behind {COMPANY_NAME}, {OPERATOR_NAME}'s AI-augmented consulting practice.
+
+Answer the operator's question in their voice: terse, no permission-seeking, no hedging, no filler. Two-to-five sentences max unless the question explicitly needs more.
 
 CRITICAL: Only state facts that appear in the EVIDENCE block below. If the evidence doesn't cover the question, say "I don't have current data on that — last checkpoint was [date] and only covers [list]." Do NOT invent project status, built features, client conversations, dates, or numbers. Uncertainty is fine; hallucination is a failure.
 
-Be specific when grounded. Reference real projects (JetLoan, Microscout, SAVA, Adrema, Sourcing Specialist, Whistle, AJM, Aperture/Branch Cam, AI Flat-Filler) by name when they apply. Never use words like "thrilled", "excited", "delighted". Never open with "I".
+Be specific when grounded. Reference real projects by their folder names when they apply. Never use words like "thrilled", "excited", "delighted". Never open with "I".
 
 If the question is a follow-up ("what about X?", "done yet?") use the thread context to resolve it."""
 
@@ -68,24 +91,8 @@ def _safe_read(path: Path, max_chars: int) -> str:
 def _detect_projects(question: str) -> List[str]:
     """Return real project-folder names mentioned in the question."""
     q = question.lower()
-    mapping = {
-        "jetloan": "JetLoan Capital",
-        "microscout": "Microscout",
-        "sava": "SAVA",
-        "adrema": "Adrema",
-        "sourcing": "Sourcing Specialist",
-        "whistle": "Whistle",
-        "ajm": "AJM",
-        "aperture": "Branch Cam Testing",
-        "branch cam": "Branch Cam Testing",
-        "branch-cam": "Branch Cam Testing",
-        "flat-filler": "AI Flat-Filler",
-        "flat filler": "AI Flat-Filler",
-        "tunedrop": "TuneDropAI",
-        "nsos": "NSOS",
-    }
     found: List[str] = []
-    for kw, proj in mapping.items():
+    for kw, proj in PROJECT_KEYWORDS.items():
         if kw in q and proj not in found:
             found.append(proj)
     return found
@@ -93,7 +100,7 @@ def _detect_projects(question: str) -> List[str]:
 
 def _project_state_snippet(project: str, max_chars: int = 1400) -> str:
     """Read the most recent checkpoint/CLAUDE.md/HANDOFF from a project folder."""
-    base = PROJECT_ROOT / "Active Projects" / project
+    base = PROJECTS_DIR / project
     if not base.exists():
         return ""
     candidates = [
@@ -122,7 +129,7 @@ def _global_state_snippet(max_chars: int = 1200) -> str:
     # Most recent gap predictions
     preds = _load_jsonl_tail(NSOS_DIR / "predictions.jsonl", 3)
     if preds:
-        lines = ["RECENT NSOS PREDICTIONS (what the model thought Mika would want):"]
+        lines = ["RECENT NSOS PREDICTIONS (what the model thought the operator would want):"]
         for p in preds:
             ts = (p.get("timestamp") or "")[:10]
             q = (p.get("situation") or p.get("question") or "")[:120]
@@ -140,14 +147,18 @@ def _global_state_snippet(max_chars: int = 1200) -> str:
             lines.append(f"  - {g.get('category','?')}: {g.get('description','')[:160]}")
         parts.append("\n".join(lines))
 
-    # Framework-level memory index (titles only)
-    mem_index = PROJECT_ROOT / ".claude" / "memory" / "MEMORY.md"
-    if not mem_index.exists():
-        mem_index = Path.home() / ".claude" / "projects" / "-Users-mihajlosibinkic-Desktop-Null-Systems-business-framework" / "memory" / "MEMORY.md"
-    if mem_index.exists():
-        mem = _safe_read(mem_index, 800)
-        if mem:
-            parts.append("MEMORY INDEX:\n" + mem)
+    # Framework-level memory index (titles only). Override via NSOS_MEMORY_PATHS.
+    env_paths = os.environ.get("NSOS_MEMORY_PATHS", "")
+    candidates = [Path(p) for p in env_paths.split(":") if p.strip()] or [
+        PROJECT_ROOT / ".claude" / "memory" / "MEMORY.md",
+        NSOS_DIR / "memory" / "MEMORY.md",
+    ]
+    for mem_index in candidates:
+        if mem_index.exists():
+            mem = _safe_read(mem_index, 800)
+            if mem:
+                parts.append("MEMORY INDEX:\n" + mem)
+                break
 
     full = "\n\n".join(parts)
     return full[:max_chars]
@@ -195,7 +206,7 @@ def handle(envelope: dict) -> str:
             user = (t.get("user_text") or "").strip().replace("\n", " ")[:200]
             resp = (t.get("response") or "").strip().replace("\n", " ")[:300]
             if user:
-                lines.append(f"Mika: {user}")
+                lines.append(f"Operator: {user}")
             if resp:
                 lines.append(f"NSOS: {resp}")
         context_block = "RECENT CONVERSATION ON THIS CHANNEL:\n" + "\n".join(lines) + "\n\n"

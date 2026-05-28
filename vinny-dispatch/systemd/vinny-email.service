@@ -1,0 +1,19 @@
+[Unit]
+Description=Vinny email dispatch poller (Gmail [DISPATCH])
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mika
+WorkingDirectory=/home/mika/vinny-dispatch
+EnvironmentFile=/home/mika/vinny-dispatch/.env
+EnvironmentFile=-/home/mika/nsos/repo/Active Projects/NSOS/.env
+ExecStart=/usr/bin/python3 /home/mika/vinny-dispatch/channels/email_poller.py
+Restart=always
+RestartSec=15
+StandardOutput=append:/home/mika/vinny-dispatch/logs/email.log
+StandardError=append:/home/mika/vinny-dispatch/logs/email.log
+
+[Install]
+WantedBy=default.target

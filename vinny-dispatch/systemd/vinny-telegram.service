@@ -1,0 +1,19 @@
+[Unit]
+Description=Vinny Telegram dispatch bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mika
+WorkingDirectory=/home/mika/vinny-dispatch
+EnvironmentFile=/home/mika/vinny-dispatch/.env
+EnvironmentFile=-/home/mika/nsos/repo/Active Projects/NSOS/.env
+ExecStart=/usr/bin/python3 /home/mika/vinny-dispatch/channels/telegram_bot.py
+Restart=always
+RestartSec=15
+StandardOutput=append:/home/mika/vinny-dispatch/logs/telegram.log
+StandardError=append:/home/mika/vinny-dispatch/logs/telegram.log
+
+[Install]
+WantedBy=default.target

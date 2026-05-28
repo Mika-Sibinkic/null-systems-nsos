@@ -349,7 +349,7 @@ Focus on high-impact changes: retiring failing agents, optimizing slow paths, or
             return {"error": f"LLM analysis failed: {str(e)}"}
 
     def generate_report(self, days: int = 7) -> str:
-        """Generate a weekly agent performance report for Mika."""
+        """Generate a weekly agent performance report for the operator."""
         stats = self.get_agent_stats(days=days)
         slowest = self.get_slowest_agents(n=3)
         failing = self.get_failing_agents(min_failure_rate=0.1)

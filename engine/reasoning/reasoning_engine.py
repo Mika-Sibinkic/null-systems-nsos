@@ -413,17 +413,17 @@ def compare(prediction_id: str, actual_outcome: str) -> Dict[str, Any]:
 
 def extract_pattern(correction_data: Dict[str, Any]) -> Pattern:
     """
-    Extract pattern from Mika correction.
+    Extract pattern from operator correction.
 
     Args:
-        correction_data: {pattern_name, context, what_model_did, what_mika_wanted, ...}
+        correction_data: {pattern_name, context, what_model_did, what_operator_wanted, ...}
 
     Returns:
         Pattern object
     """
     pattern_id = gen_id()
     name = correction_data.get("pattern_name", f"pattern-{pattern_id}")
-    rule = correction_data.get("what_mika_wanted", "")
+    rule = correction_data.get("what_operator_wanted", "")
     domain = correction_data.get("domain", "general")
     category = correction_data.get("category", "decision-making")
 
