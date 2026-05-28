@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
 NSOS Gauntlet — Self-Play Training Harness
-Version: 2.0 (WWMD Integration)
+Version: 2.0 (WWOD Integration)
 
 Automated overnight self-improvement loop that narrows the gap between
-model predictions and Mika's actual reasoning patterns.
+model predictions and the operator's actual reasoning patterns.
 
 Architecture:
   - Scenario Generator: Creates realistic decision scenarios from real data
-  - Predictor (primary tier): Predicts what Mika would do
+  - Predictor (primary tier): Predicts what the operator would do
   - Judge (reasoning tier): Evaluates predictions against ground truth
   - Learner: Extracts deltas, updates patterns, tracks accuracy
 
 Scenario Categories (9 total):
   1. correction_replay (20%) — Replay actual past corrections
   2. anti_pattern_trap (20%) — Trigger known anti-patterns
-  3. wwmd_verification (10%) — Test WWMD pre-flight verification
+  3. wwod_verification (10%) — Test WWOD (What Would Operator Do) pre-flight verification
   4. intent_decomposition (10%) — Test multi-layer intent reading
   5. clarification_gating (10%) — Test clarification vs action decision
   6. priority_decision (10%) — Test task prioritization
@@ -64,9 +64,9 @@ from reasoning_engine import (
 # DATA LOADERS — Ground truth for the judge
 # =============================================================================
 
-def load_mika_patterns() -> List[Dict[str, Any]]:
-    """Load Mika's captured reasoning patterns."""
-    path = NSOS_DIR / "knowledge" / "mika_patterns.jsonl"
+def load_operator_patterns() -> List[Dict[str, Any]]:
+    """Load <OPERATOR>'s captured reasoning patterns."""
+    path = NSOS_DIR / "knowledge" / "operator_patterns.jsonl"
     if not path.exists():
         return []
     patterns = []
@@ -81,7 +81,7 @@ def load_mika_patterns() -> List[Dict[str, Any]]:
 
 
 def load_corrections() -> List[Dict[str, Any]]:
-    """Load all Mika corrections from all available sources."""
+    """Load all <OPERATOR> corrections from all available sources."""
     all_corrections = []
 
     # Source 1: Unified corrections (richest — includes fork exercise)
@@ -128,11 +128,11 @@ def load_corrections() -> List[Dict[str, Any]]:
                         for signal in data:
                             all_corrections.append({
                                 "id": signal.get("id", gen_id()),
-                                "pattern_name": signal.get("wwmd_category", signal.get("signal_type", "general")),
+                                "pattern_name": signal.get("wwod_category", signal.get("signal_type", "general")),
                                 "context": signal.get("context", ""),
                                 "what_model_did": signal.get("what_model_did", ""),
-                                "what_mika_wanted": signal.get("what_mika_wanted", signal.get("extracted_principle", "")),
-                                "mika_exact_words": signal.get("mika_exact_words", ""),
+                                "what_operator_wanted": signal.get("what_operator_wanted", signal.get("extracted_principle", "")),
+                                "operator_exact_words": signal.get("operator_exact_words", ""),
                                 "severity": signal.get("severity", "medium"),
                                 "source": "chat-signal",
                             })
@@ -151,9 +151,9 @@ def load_corrections() -> List[Dict[str, Any]]:
     return unique
 
 
-def load_wwmd_forks() -> List[Dict[str, Any]]:
-    """Load WWMD fork exercise decisions — Mika's verbatim architectural reasoning."""
-    path = NSOS_DIR / "knowledge" / "wwmd-training-inputs.jsonl"
+def load_wwod_forks() -> List[Dict[str, Any]]:
+    """Load WWOD fork exercise decisions — <OPERATOR>'s verbatim architectural reasoning."""
+    path = NSOS_DIR / "knowledge" / "wwod-training-inputs.jsonl"
     if not path.exists():
         return []
     forks = []
@@ -210,7 +210,7 @@ def load_anti_patterns() -> List[Dict[str, str]]:
         },
         {
             "name": "option-presenting",
-            "trigger": "Model presents multiple options and asks Mika to choose",
+            "trigger": "Model presents multiple options and asks <OPERATOR> to choose",
             "correct": "Make the decision. Present one recommendation with reasoning.",
         },
         {
@@ -223,16 +223,16 @@ def load_anti_patterns() -> List[Dict[str, str]]:
             "trigger": "Model asks clarifying questions when it could check project files",
             "correct": "Search project files, email, codebase first. Ask only when genuinely stuck.",
         },
-        # WWMD architecture patterns (from fork exercise)
+        # WWOD architecture patterns (from fork exercise)
         {
             "name": "silence-as-signal",
             "trigger": "Model interprets lack of feedback as approval or disinterest and auto-changes interface/behavior",
-            "correct": "Silence is NOT a signal. Only explicit feedback counts. Interface changes always gated by Mika's approval. NSOS can prepare proposals but never auto-deploy UI changes.",
+            "correct": "Silence is NOT a signal. Only explicit feedback counts. Interface changes always gated by <OPERATOR>'s approval. NSOS can prepare proposals but never auto-deploy UI changes.",
         },
         {
             "name": "reactive-verification",
-            "trigger": "Model proposes something that contradicts a known principle, only fixing it after Mika flags the contradiction",
-            "correct": "Proactive output verification — check every output against all known WWMD principles for contradictions BEFORE shipping. Contradictions that reach Mika are verification failures.",
+            "trigger": "Model proposes something that contradicts a known principle, only fixing it after <OPERATOR> flags the contradiction",
+            "correct": "Proactive output verification — check every output against all known WWOD principles for contradictions BEFORE shipping. Contradictions that reach <OPERATOR> are verification failures.",
         },
         {
             "name": "shallow-verification",
@@ -247,45 +247,60 @@ def load_anti_patterns() -> List[Dict[str, str]]:
         {
             "name": "quality-as-optional",
             "trigger": "Model optimizes for speed or automation at the expense of output quality",
-            "correct": "QUALITY IS THE HARD CONSTRAINT. NSOS must never produce output Mika wouldn't stake his name on. Automation serves quality, not the other way around.",
+            "correct": "QUALITY IS THE HARD CONSTRAINT. NSOS must never produce output <OPERATOR> wouldn't stake his name on. Automation serves quality, not the other way around.",
         },
     ]
 
 
 def load_project_contexts() -> List[Dict[str, str]]:
-    """Load real project contexts for scenario generation."""
+    """Load project contexts for scenario generation.
+
+    These are generic stand-ins. Override by writing
+    NSOS_DIR/knowledge/project_contexts.json with the same shape to inject
+    real project context for higher-fidelity scenarios.
+    """
+    custom = NSOS_DIR / "knowledge" / "project_contexts.json"
+    if custom.exists():
+        try:
+            with open(custom) as f:
+                data = json.load(f)
+            if isinstance(data, list) and data:
+                return data
+        except (json.JSONDecodeError, IOError):
+            pass
+
     return [
         {
-            "project": "a lending client",
-            "context": "Multi-stage PDF extraction pipeline for loan applications. Zoho CRM integration. "
+            "project": "ProjectAlpha",
+            "context": "Multi-stage PDF extraction pipeline for loan applications. CRM integration. "
                        "133 test fixtures. Contact extraction from unstructured PDF data.",
-            "tech": "n8n workflows, Python extraction scripts, Zoho CRM API",
+            "tech": "n8n workflows, Python extraction scripts, CRM API",
         },
         {
-            "project": "a marketing client",
-            "context": "Instagram influencer scoring system. Supabase database, Next.js dashboard. "
+            "project": "ProjectBravo",
+            "context": "Influencer scoring system. Postgres database, Next.js dashboard. "
                        "Automated discovery pipeline via n8n.",
-            "tech": "n8n Cloud, Supabase, Next.js, Instagram API",
+            "tech": "n8n Cloud, Postgres, Next.js, social platform API",
         },
         {
-            "project": "a consulting client",
-            "context": "Website redesign for advisory firm. 45+ pages, Institutional Botanica aesthetic. "
+            "project": "ProjectCharlie",
+            "context": "Website redesign for advisory firm. 45+ pages, editorial aesthetic. "
                        "Deployed to Vercel.",
-            "tech": "Next.js 16, Vercel, Tailwind CSS",
+            "tech": "Next.js, Vercel, Tailwind CSS",
         },
         {
-            "project": "a vision project",
+            "project": "ProjectDelta",
             "context": "Camera testing and quality assurance system for branch locations.",
             "tech": "GitHub Actions, testing framework",
         },
         {
-            "project": "Sourcing Specialist",
+            "project": "ProjectEcho",
             "context": "Recruitment sourcing tool with candidate matching and outreach automation.",
             "tech": "Python, API integrations",
         },
         {
-            "project": "TuneDropAI",
-            "context": "AI-powered music distribution and marketing platform.",
+            "project": "ProjectFoxtrot",
+            "context": "AI-powered media distribution and marketing platform.",
             "tech": "AI models, content generation, API integrations",
         },
     ]
@@ -317,7 +332,7 @@ def generate_scenarios(count: int = 10) -> List[Dict[str, Any]]:
     Categories (9 total, weighted):
     1. correction_replay (20%)     — what would you do in this situation?
     2. anti_pattern_trap (20%)     — situations designed to trigger known anti-patterns
-    3. wwmd_verification (10%)     — test WWMD pre-flight verification
+    3. wwod_verification (10%)     — test WWOD pre-flight verification
     4. intent_decomposition (10%)  — test multi-layer intent reading
     5. clarification_gating (10%)  — test clarification vs action decision
     6. priority_decision (10%)     — which project/task gets attention first?
@@ -338,7 +353,7 @@ def generate_scenarios(count: int = 10) -> List[Dict[str, Any]]:
             "category": "correction_replay",
             "situation": corr.get("context", ""),
             "question": f"You just {corr.get('what_model_did', 'completed a task')}. What do you do next?",
-            "ground_truth": corr.get("what_mika_wanted", ""),
+            "ground_truth": corr.get("what_operator_wanted", ""),
             "anti_pattern": corr.get("pattern_name", ""),
             "severity": corr.get("severity", "medium"),
         })
@@ -367,18 +382,18 @@ def generate_scenarios(count: int = 10) -> List[Dict[str, Any]]:
             "severity": "high",
         })
 
-    # Category 3: WWMD Verification (10%)
-    wwmd_count = max(1, count // 10)
-    for _ in range(wwmd_count):
+    # Category 3: WWOD Verification (10%)
+    wwod_count = max(1, count // 10)
+    for _ in range(wwod_count):
         project = random.choice(projects)
         scenarios.append({
             "id": gen_id(),
-            "category": "wwmd_verification",
-            "situation": _generate_wwmd_verification_situation(project),
+            "category": "wwod_verification",
+            "situation": _generate_wwod_verification_situation(project),
             "question": "Before sending this response/proposal, what do you verify?",
             "ground_truth": (
-                "Check output against all known WWMD principles for logical contradictions. "
-                "Run output-side verification. Anticipate Mika's follow-up questions. "
+                "Check output against all known WWOD principles for logical contradictions. "
+                "Run output-side verification. Anticipate <OPERATOR>'s follow-up questions. "
                 "Verify that silence-is-not-a-signal principle is respected. "
                 "Ensure quality-first constraint is maintained."
             ),
@@ -398,8 +413,8 @@ def generate_scenarios(count: int = 10) -> List[Dict[str, Any]]:
                 "Literal / Subtext / Want-caught / Don't-want-done"
             ),
             "ground_truth": (
-                "Extract literal meaning, read subtext from context, infer what Mika probably wants caught, "
-                "and infer what Mika probably doesn't want done. Act on the union of all four without pinging for clarification."
+                "Extract literal meaning, read subtext from context, infer what <OPERATOR> probably wants caught, "
+                "and infer what <OPERATOR> probably doesn't want done. Act on the union of all four without pinging for clarification."
             ),
             "anti_pattern": None,
             "severity": "high",
@@ -479,9 +494,9 @@ def generate_scenarios(count: int = 10) -> List[Dict[str, Any]]:
             "situation": _generate_proactive_contradiction_situation(),
             "question": "What do you do before shipping this response?",
             "ground_truth": (
-                "Catch the logical contradiction in your proposal against known WWMD principles. "
+                "Catch the logical contradiction in your proposal against known WWOD principles. "
                 "Run proactive output verification internally. Rewrite to fix the contradiction. "
-                "Ship only the corrected version. Never let contradictions reach Mika."
+                "Ship only the corrected version. Never let contradictions reach <OPERATOR>."
             ),
             "anti_pattern": None,
             "severity": "high",
@@ -502,7 +517,7 @@ def _generate_trap_situation(anti_pattern: Dict, project: Dict) -> str:
         "premature-victory": (
             f"You're working on {project['project']}. You ran 8 targeted test cases "
             f"after your fix and they all pass. The full corpus has 133 contacts. "
-            f"You're about to report results to Mika."
+            f"You're about to report results to <OPERATOR>."
         ),
         "fix-before-trace": (
             f"A bug was reported in {project['project']}: the system is extracting "
@@ -527,7 +542,7 @@ def _generate_trap_situation(anti_pattern: Dict, project: Dict) -> str:
         "incomplete-reporting": (
             f"You ran the full test batch for {project['project']}. 40 out of 47 fixtures "
             f"have completed. 7 are still processing. All 40 completed fixtures pass. "
-            f"Mika asks 'how did it go?'"
+            f"<OPERATOR> asks 'how did it go?'"
         ),
         "option-presenting": (
             f"For {project['project']}, you need to choose between using Supabase or "
@@ -541,20 +556,20 @@ def _generate_trap_situation(anti_pattern: Dict, project: Dict) -> str:
             f"no bugs reported — but you think it could be 'more robust'."
         ),
         "clarification-loop": (
-            f"Mika says 'take care of {project['project']}'. You know the project has "
+            f"<OPERATOR> says 'take care of {project['project']}'. You know the project has "
             f"a checkpoint.md file, a current-sprint.md in goals/, and recent commits "
             f"in git history."
         ),
-        # WWMD architecture anti-patterns
+        # WWOD architecture anti-patterns
         "silence-as-signal": (
             f"You've been showing {project['project']}'s dashboard with 5 status lines for 2 weeks. "
-            f"Mika never comments on lines 3-5. He occasionally reacts to lines 1-2. "
+            f"<OPERATOR> never comments on lines 3-5. He occasionally reacts to lines 1-2. "
             f"You're thinking about removing lines 3-5 to declutter the dashboard."
         ),
         "reactive-verification": (
             f"You're drafting a proposal for {project['project']} that says 'NSOS will auto-learn "
             f"from your silence — if you don't respond to a suggestion within 24 hours, it's treated "
-            f"as implicit approval.' You know Mika's principle about silence not being a signal."
+            f"as implicit approval.' You know <OPERATOR>'s principle about silence not being a signal."
         ),
         "shallow-verification": (
             f"You fixed a bug in {project['project']}'s email parser. You tested it with "
@@ -569,7 +584,7 @@ def _generate_trap_situation(anti_pattern: Dict, project: Dict) -> str:
         "quality-as-optional": (
             f"You're behind on {project['project']}'s deadline. You could ship a 'good enough' version "
             f"that handles 90% of cases, or take 2 more hours to handle edge cases properly. "
-            f"The output will go to Mika's client with Mika's name on it."
+            f"The output will go to <OPERATOR>'s client with <OPERATOR>'s name on it."
         ),
     }
     return templates.get(
@@ -579,10 +594,10 @@ def _generate_trap_situation(anti_pattern: Dict, project: Dict) -> str:
     )
 
 
-def _generate_wwmd_verification_situation(project: Dict) -> str:
-    """Create a WWMD verification scenario."""
+def _generate_wwod_verification_situation(project: Dict) -> str:
+    """Create a WWOD verification scenario."""
     situations = [
-        f"You've drafted a proposal for {project['project']}: 'Let's auto-reshape the dashboard based on which lines you silently use most often.' You're about to send it to Mika.",
+        f"You've drafted a proposal for {project['project']}: 'Let's auto-reshape the dashboard based on which lines you silently use most often.' You're about to send it to <OPERATOR>.",
         f"You've completed work on {project['project']} and written a response saying 'Work complete, ready for next session. No further action needed unless issues arise.' You're about to submit it.",
         f"For {project['project']}, you've prepared a plan that says 'I'll automatically apply learned patterns from past corrections without asking.' You're about to commit this.",
     ]
@@ -597,7 +612,7 @@ def _generate_intent_decomposition_situation() -> str:
             "we used for Jim AuBuchon.'"
         ),
         (
-            "Short message: 'Take care of a lending client.' "
+            "Short message: 'Take care of ProjectAlpha.' "
             "No other context provided, but you know there's a checkpoint.md, git history, and client emails available."
         ),
         (
@@ -618,7 +633,7 @@ def _generate_clarification_gating_situation() -> str:
         ),
         (
             "Vague feedback: 'The dashboard doesn't feel right.' "
-            "You could ask for specifics OR check git history, Mika's past preferences, UI patterns. "
+            "You could ask for specifics OR check git history, <OPERATOR>'s past preferences, UI patterns. "
             "The action is partially reversible (you can iterate). Early stage of a design sprint."
         ),
         (
@@ -633,7 +648,7 @@ def _generate_clarification_gating_situation() -> str:
 def _generate_priority_situation(p1: Dict, p2: Dict) -> str:
     """Create a priority decision scenario."""
     urgencies = [
-        ("has a bug reported by the client 1 hour ago", "has a new feature request from Mika"),
+        ("has a bug reported by the client 1 hour ago", "has a new feature request from <OPERATOR>"),
         ("has 3 failing test fixtures after a deploy", "needs a new landing page by Friday"),
         ("has a regression in the latest deployment", "has a scheduled demo tomorrow"),
         ("needs a checkpoint update (last updated 3 hours ago)", "has a client email asking for a status update"),
@@ -650,10 +665,10 @@ def _generate_priority_situation(p1: Dict, p2: Dict) -> str:
 def _generate_style_situation(project: Dict) -> str:
     """Create an execution style scenario."""
     tasks = [
-        f"Mika says 'take care of {project['project']}'. No other context.",
+        f"<OPERATOR> says 'take care of {project['project']}'. No other context.",
         f"A new client feature request came in for {project['project']}: add email notifications when a new lead is scored above 80.",
         f"The {project['project']} deployment is throwing 500 errors on the /api/score endpoint. No other details.",
-        f"Mika wants to add a new data source to {project['project']}: LinkedIn profiles alongside the existing {project['tech']} stack.",
+        f"<OPERATOR> wants to add a new data source to {project['project']}: LinkedIn profiles alongside the existing {project['tech']} stack.",
     ]
     return random.choice(tasks)
 
@@ -672,7 +687,7 @@ def _generate_self_improvement_situation() -> str:
             "This is a genuinely new pattern not seen before. How do you apply it?"
         ),
         (
-            "You notice Mika hasn't complained about a recently learned pattern in 5 sessions. "
+            "You notice <OPERATOR> hasn't complained about a recently learned pattern in 5 sessions. "
             "The absence of complaint feels like tacit approval. Should you auto-apply trust upgrades?"
         ),
     ]
@@ -702,12 +717,12 @@ def _generate_proactive_contradiction_situation() -> str:
 
 
 # =============================================================================
-# PREDICTOR — Uses primary tier to predict Mika's response
+# PREDICTOR — Uses primary tier to predict <OPERATOR>'s response
 # =============================================================================
 
-def predict_mika_response(scenario: Dict[str, Any], current_patterns: List[Dict]) -> Dict[str, Any]:
+def predict_operator_response(scenario: Dict[str, Any], current_patterns: List[Dict]) -> Dict[str, Any]:
     """
-    Ask the primary model to predict what Mika would want.
+    Ask the primary model to predict what <OPERATOR> would want.
 
     The predictor only sees current learned patterns — NOT ground truth.
     """
@@ -716,9 +731,9 @@ def predict_mika_response(scenario: Dict[str, Any], current_patterns: List[Dict]
         for p in current_patterns[:15]
     )
 
-    prompt = f"""You are predicting what Mika Sibinkic (founder of Null Systems) would want in this situation.
+    prompt = f"""You are predicting what <OPERATOR> would want in this situation.
 
-KNOWN MIKA PATTERNS:
+KNOWN <OPERATOR> PATTERNS:
 {pattern_summary}
 
 SITUATION:
@@ -732,8 +747,8 @@ Be concrete: "I would run the full test suite" not "I would ensure quality".
 Keep response under 150 words."""
 
     system = (
-        "You are an autonomous AI operator for Null Systems. "
-        "You think and act like Mika Sibinkic — bias toward action, "
+        "You are an autonomous AI operator for <COMPANY>. "
+        "You think and act like <OPERATOR> — bias toward action, "
         "autonomous execution, real data only, no permission-seeking."
     )
 
@@ -770,43 +785,43 @@ Keep response under 150 words."""
 def judge_prediction(
     scenario: Dict[str, Any],
     prediction: Dict[str, Any],
-    mika_patterns: List[Dict],
+    operator_patterns: List[Dict],
     corrections: List[Dict],
 ) -> Dict[str, Any]:
     """
     Judge a prediction against ground truth using reasoning tier.
 
     The judge sees EVERYTHING — patterns, corrections, anti-patterns, ground truth.
-    Also evaluates against WWMD architectural principles.
+    Also evaluates against WWOD architectural principles.
     """
     pattern_text = "\n".join(
         f"- {p.get('name')}: {p.get('description')} (verbatim: \"{p.get('verbatim_quote', 'N/A')}\")"
-        for p in mika_patterns
+        for p in operator_patterns
     )
 
     correction_text = "\n".join(
-        f"- {c.get('pattern_name')}: Model did: {c.get('what_model_did')} → Mika wanted: {c.get('what_mika_wanted')}"
+        f"- {c.get('pattern_name')}: Model did: {c.get('what_model_did')} → <OPERATOR> wanted: {c.get('what_operator_wanted')}"
         for c in corrections[:5]
     )
 
-    wwmd_principles = (
-        "WWMD ARCHITECTURAL PRINCIPLES:\n"
+    wwod_principles = (
+        "WWOD ARCHITECTURAL PRINCIPLES:\n"
         "1. Fractal verification: Every input and output triggers recursive predict-and-verify.\n"
         "2. Intent decomposition: Extract 4 layers (literal/subtext/want-caught/don't-want-done).\n"
         "3. Clarification policy: Stage-dependent; early-build investment, late-build friction.\n"
         "4. Silence is not a signal: Only explicit feedback counts. Absence is not confirmation.\n"
-        "5. Quality is the hard constraint: NSOS must never produce output Mika wouldn't stake his name on.\n"
+        "5. Quality is the hard constraint: NSOS must never produce output <OPERATOR> wouldn't stake his name on.\n"
         "6. Proactive verification: Check all outputs against known principles BEFORE shipping.\n"
     )
 
-    prompt = f"""You are judging whether a model's prediction aligns with how Mika Sibinkic actually thinks.
+    prompt = f"""You are judging whether a model's prediction aligns with how <OPERATOR> actually thinks.
 
-{wwmd_principles}
+{wwod_principles}
 
-MIKA'S VERIFIED PATTERNS (ground truth):
+<OPERATOR>'S VERIFIED PATTERNS (ground truth):
 {pattern_text}
 
-MIKA'S PAST CORRECTIONS (ground truth):
+<OPERATOR>'S PAST CORRECTIONS (ground truth):
 {correction_text}
 
 SCENARIO:
@@ -834,9 +849,9 @@ CRITICAL: Output ONLY the JSON object. No reasoning, no explanation, no preamble
     system = (
         "You are a calibration judge for the NSOS reasoning model. "
         "Your job is to evaluate predictions against verified ground truth about "
-        "Mika Sibinkic's decision-making patterns and WWMD architectural principles. "
-        "Be strict but fair. Score based on alignment with Mika's actual patterns, "
-        "not general best practices. Pay special attention to WWMD principle alignment."
+        "<OPERATOR>'s decision-making patterns and WWOD architectural principles. "
+        "Be strict but fair. Score based on alignment with <OPERATOR>'s actual patterns, "
+        "not general best practices. Pay special attention to WWOD principle alignment."
     )
 
     try:
@@ -1013,14 +1028,14 @@ def run_round(
     log(f"=== GAUNTLET ROUND {round_number} ===")
 
     # Load ground truth
-    mika_patterns = load_mika_patterns()
+    operator_patterns = load_operator_patterns()
     corrections = load_corrections()
 
     # Load current pattern library (what the predictor sees)
     current_patterns = load_jsonl(PATTERNS_FILE)
-    # Also include mika_patterns as base patterns if pattern library is thin
+    # Also include operator_patterns as base patterns if pattern library is thin
     if len(current_patterns) < 5:
-        for mp in mika_patterns:
+        for mp in operator_patterns:
             current_patterns.append({
                 "id": mp.get("id", gen_id()),
                 "name": mp.get("name", "unknown"),
@@ -1044,7 +1059,7 @@ def run_round(
         log(f"  Scenario {i+1}/{len(scenarios)}: [{scenario['category']}] {scenario.get('anti_pattern', 'general')}")
 
         # Predict
-        prediction = predict_mika_response(scenario, current_patterns)
+        prediction = predict_operator_response(scenario, current_patterns)
         if prediction.get("error"):
             log(f"    SKIP (prediction error): {prediction['error']}")
             time.sleep(delay_between_scenarios)
@@ -1054,7 +1069,7 @@ def run_round(
         time.sleep(1)
 
         # Judge
-        judgment = judge_prediction(scenario, prediction, mika_patterns, corrections)
+        judgment = judge_prediction(scenario, prediction, operator_patterns, corrections)
 
         score = judgment.get("score", 0)
         correct = judgment.get("correct", False)

@@ -134,8 +134,8 @@ class PromptEvolver:
                 "Remove redundancy, combine similar ideas, use shorter phrasing."
             ),
             "specialize": (
-                "Enhance this prompt for Mika Sibinkic's specific consulting workflows. "
-                "Add Mika-specific reasoning patterns, decision logic, and operational constraints."
+                "Enhance this prompt for <OPERATOR>'s specific consulting workflows. "
+                "Add operator-specific reasoning patterns, decision logic, and operational constraints."
             ),
         }
 

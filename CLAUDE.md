@@ -47,12 +47,19 @@ This repo is a **fork** of the architectural DNA from the personal NSOS at `busi
 4. **Council protocol changes** require a regression run — gauntlet score must stay within ±5 of the lifted baseline (74.6).
 5. **Synthetic client examples** are the smoke-test target. Any engine change must pass `examples/synthetic-client-a/`.
 
+## Claude / NIM separation (immutable)
+
+- **Every LLM call goes through NIM** via `engine/router/nim_client.py`. Default model `meta/llama-3.3-70b-instruct`.
+- **Claude Code is the decision-maker, never a worker.** Invoked in exactly one place: `vinny-dispatch/router/orchestrator.py`, headless with zero tools. It classifies user intent and emits a JSON plan of NIM task_specs.
+- **All recurring work runs on the Dell G7.** No Mac cron / launchd / background loops.
+
 ## Don't
 
 - Don't modify the personal NSOS at `business-framework/Active Projects/NSOS/` from this repo. Lift, don't edit-in-place.
 - Don't add tenant-specific code to `engine/`. That belongs in `client/`.
 - Don't write to `presentation/` from `engine/`. The presentation layer pulls from engine outputs; engine doesn't push.
-- Don't introduce new LLM providers without updating `engine/router/llm_router.py` AND the cascade handler config.
+- Don't import any LLM client outside the two whitelisted modules. `vinny-dispatch/check-nim-only.sh` enforces this.
+- Don't introduce a second LLM provider without explicit Tier 2 approval — NIM is the contract.
 
 ## Decision tiers (inherited from operator profile)
 

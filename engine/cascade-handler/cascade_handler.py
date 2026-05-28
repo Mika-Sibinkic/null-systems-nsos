@@ -155,7 +155,7 @@ Available recovery strategies:
 - escalate_tier: Escalate to higher tier agent
 - decompose_further: Break task into smaller subtasks
 - skip_and_continue: Mark as non-critical, move on
-- human_required: Escalate to human (Mika)
+- human_required: Escalate to human (the operator)
 
 Respond with JSON:
 {{

@@ -19,16 +19,29 @@ from .recursive_weights import rank_findings, ScoreBreakdown
 
 
 def deterministic_judge(a: dict, b: dict) -> str:
-    """Stub judge for tests — picks the higher impact_usd as winner.
+    """Offline-deterministic judge for tests. Picks higher impact_usd as winner.
 
-    Replace with `engine.router.llm_router.judge_pair(a, b, model="r1-distill")`
-    in production.
+    Production path: `engine.router.nim_client.judge_pair` (NIM v4 llama-3.3-70b).
+    This function remains the offline fallback so tests can run without network.
     """
     if a.get("impact_usd", 0) > b.get("impact_usd", 0):
         return "A"
     if b.get("impact_usd", 0) > a.get("impact_usd", 0):
         return "B"
     return "TIE"
+
+
+def nim_judge(a: dict, b: dict) -> str:
+    """Production judge — routes through engine.router.nim_client (NIM only).
+
+    Falls back to deterministic_judge if NIM client cannot be imported (offline
+    or env missing).
+    """
+    try:
+        from ..router.nim_client import judge_pair
+        return judge_pair(a, b, criterion="higher client impact ($ + hours saved)")
+    except Exception:
+        return deterministic_judge(a, b)
 
 
 def borda_from_pairwise(

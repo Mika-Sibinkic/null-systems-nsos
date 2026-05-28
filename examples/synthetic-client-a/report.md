@@ -1,6 +1,6 @@
 # Acme Services — Diagnostic Summary
 
-*Prepared by Null Systems · 2026-05-15*
+*Prepared by Vinny · A Null Systems product · 2026-05-15*
 
 ---
 
