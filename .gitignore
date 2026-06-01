@@ -14,4 +14,7 @@ data/
 .nsos-mirror/
 node_modules/
 dist/
-build/
+# compiled build output in nested dirs (e.g. web), EXCEPT the root build/ orchestration source
+**/build/
+!/build/
+!/build/**
