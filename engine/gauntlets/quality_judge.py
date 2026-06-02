@@ -452,6 +452,8 @@ def main() -> int:
     p.add_argument("--channel", default="cli")
     p.add_argument("--verb", default="manual")
     p.add_argument("--user-text", default="")
+    p.add_argument("--gate", action="store_true",
+                   help="Build-gate mode: exit 1 if the output is gated OR the judge is unavailable (fail-CLOSED).")
     args = p.parse_args()
     scores = score(
         args.text,
@@ -459,6 +461,15 @@ def main() -> int:
     )
     gated = gate_decision(scores)
     print(json.dumps({"scores": scores, "gated": gated}, indent=2, default=str))
+    if args.gate:
+        # Fail-closed for the build pipeline: an unscoreable output must NOT pass silently.
+        if scores.get("status") != "ok":
+            print("GATE: FAIL — judge unavailable (fail-closed)", file=sys.stderr)
+            return 1
+        if gated:
+            print("GATE: FAIL — output below quality threshold", file=sys.stderr)
+            return 1
+        print("GATE: PASS")
     return 0
 
 

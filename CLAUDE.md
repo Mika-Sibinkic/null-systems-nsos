@@ -1,6 +1,16 @@
+STAGE: internal-solo
+
 # NSOS — Operator Agent Manual
 
 > Instructions for any Claude Code agent working on this productized NSOS codebase.
+
+## Build mode (active)
+
+When executing the build (`build/`), authorization is the standing perma-greenlight in
+`build/GREENLIGHT.md` — Tier 0/1/2 act-without-asking; only the 6 Tier-3 hard stops pause you.
+This **overrides** the "Tier 2 → surface first" rule below for build-time work at `internal-solo`
+stage (flagged in `build/MEMORY.md`; reverts at `client-mvp`). No-silent-fail: `build/BLOCKER-PROTOCOL.md`.
+Map of the product + state + roadmap: `docs/PRODUCT.md`, `docs/STATE.md`, `docs/ROADMAP.md`.
 
 ## Operator profile (canonical, machine-wide)
 
