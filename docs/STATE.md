@@ -3,17 +3,21 @@
 
 > Single source of "where we are." Updated on every milestone merge (see [UPDATE-PROTOCOL](./UPDATE-PROTOCOL.md)).
 > Legend: 🟢 built & verified · 🟡 partial / not wired · 🔴 empty / planned · 🔵 external service.
-> Last verified: **2026-06-02** (P1 + P2 build pass, `dev` branch).
+> Last verified: **2026-06-02** (P1 + P2 + P3 build pass, `dev` branch).
 
 <a id="summary"></a>
 ## One-line summary
 
-Last-mile works (council → scoring → report, $1.38M synthetic SOW). **P1 + P2 complete:** QuickBooks
+Last-mile works (council → scoring → report, $1.38M synthetic SOW). **P1 + P2 + P3 complete:** QuickBooks
 adapter → valid `baseline.json`, scoped-token onboarding (secrets server-side, per-tenant authz),
-<1h teaser, the Next.js web surface, and now the **financial meta-team** that turns the snapshot into
+<1h teaser, the Next.js web surface, the **financial meta-team** that turns the snapshot into
 **6 real grounded findings** (vendor/customer concentration, overdue-AR, advisory-spend, scope cycle
 time, margin) — every `impact_usd` source-traced + confidence-banded, low-confidence findings routed
-to an FDE-review queue. Remaining core: bundle findings → 2–3 scored SOWs (P3).
+to an FDE-review queue — and now the **SOW bridge**: those findings bundle into **3 coherent scored
+SOW candidates** (de-risk revenue, expand margin, reduce supplier concentration), each carrying a
+**WWMD consultant-would-push score**, a **5-pillar deployability grade** (all 3 grade A), and
+**quantified success metrics** (EBITDA +21–273%/yr, payback 0.3–3.3 months — all source-traced).
+Remaining: render the 2–3 SOWs side-by-side + operator choice + FDE handoff (P4); outcome flywheel + E2E (P5).
 
 <a id="engine"></a>
 ## Engine (the brain) — mostly 🟢, lifted from personal NSOS
@@ -57,14 +61,16 @@ to an FDE-review queue. Remaining core: bundle findings → 2–3 scored SOWs (P
 | <1h teaser signal | 🟢 | `engine/teaser/teaser.py` — cheap grounded finding, near-instant |
 
 <a id="sow"></a>
-## SOW output + scoring — 🟡
+## SOW output + scoring — 🟢 (P3 complete)
 
 | Component | State | Path |
 |---|---|---|
-| Exec report generator | 🟡 | `presentation/exec-report/report_generator.py` | finding-list today, not yet 2–3 chooseable SOWs |
-| SOW assembly (bundle findings → 2–3 candidates) | 🔴 | not built |
-| WWMD × 5-pillar SOW scoring | 🔴 | not built (engine pieces exist) |
-| Narrative / side-by-side | 🔴 | `presentation/{narrative,side-by-side}/` (empty) |
+| Exec report generator | 🟡 | `presentation/exec-report/report_generator.py` | finding-list today, 2–3 chooseable SOWs render in P4 |
+| SOW assembly (bundle findings → 2–3 candidates) | 🟢 | `engine/sow/assembly.py` — thrust taxonomy bundles 6 findings → 3 coherent SOWs; impact-weighted confidence; source-traced union (no invented numbers) |
+| WWMD SOW scoring (consultant-would-push) | 🟢 | `engine/sow/wwmd_score.py` — `predict()` learned-policy + deterministic deal-quality prior; cold-start falls back to prior (no silent 0); confidence + honest gaps[] |
+| 5-pillar deployability grade | 🟢 | `engine/sow/pillar_grade.py` — each SOW graded on security/compliance/build/throughput/audit-replayable; letter grade + sub-0.5 blockers; 3 real SOWs grade A |
+| Quantified success metrics | 🟢 | `engine/sow/metrics.py` — EBITDA %/yr + hrs/yr + payback months per SOW; every number source-traced to NetIncome + cost assumption; grounded-numbers probe validates the metrics artifact |
+| Narrative / side-by-side | 🔴 | `presentation/{narrative,side-by-side}/` (empty — P4) |
 | Grounded-numbers gate (source-trace + confidence band) | 🟢 | `engine/meta-levels/financial/findings.py` (`assert_grounded`, fail-closed) + `build/probes/grounded_numbers.py` |
 
 <a id="flywheel"></a>

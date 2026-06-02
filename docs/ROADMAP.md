@@ -42,12 +42,12 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 > State: [STATE#engine](./STATE.md#engine), [STATE#sow](./STATE.md#sow)
 
 <a id="phase3"></a>
-## Phase 3 — Council + SOW assembly + scoring
-- [ ] Council ranks real findings (works today)
-- [ ] Bundle ranked findings → 2–3 **SOW candidates**
-- [ ] Score each: **WWMD** (consultant-would-push + confidence + gaps) × **5-pillar** (deployable)
-- [ ] Attach quantified success metrics (EBITDA %/yr, hrs/yr, payback months)
-- **Success:** synthetic client yields 2–3 scored, metric-bearing SOWs.
+## Phase 3 — Council + SOW assembly + scoring  ·  ✅ done (2026-06-02)
+- [x] Council ranks real findings (works today)
+- [x] Bundle ranked findings → 2–3 **SOW candidates** (`engine/sow/assembly.py` — thrust taxonomy, source-traced union)
+- [x] Score each: **WWMD** (consultant-would-push + confidence + gaps, `engine/sow/wwmd_score.py`) × **5-pillar** deployability grade (`engine/sow/pillar_grade.py` — 3 SOWs grade A)
+- [x] Attach quantified success metrics (EBITDA %/yr, hrs/yr, payback months — `engine/sow/metrics.py`, grounded-numbers-validated)
+- **Success:** synthetic client yields **3 scored, metric-bearing SOWs** (EBITDA +21–273%/yr, payback 0.3–3.3mo).
 > State: [STATE#sow](./STATE.md#sow)
 
 <a id="phase4"></a>
