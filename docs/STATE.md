@@ -3,15 +3,17 @@
 
 > Single source of "where we are." Updated on every milestone merge (see [UPDATE-PROTOCOL](./UPDATE-PROTOCOL.md)).
 > Legend: 🟢 built & verified · 🟡 partial / not wired · 🔴 empty / planned · 🔵 external service.
-> Last verified: **2026-06-02** (P1 build pass, `dev` branch).
+> Last verified: **2026-06-02** (P1 + P2 build pass, `dev` branch).
 
 <a id="summary"></a>
 ## One-line summary
 
-Last-mile works (council → scoring → report, $1.38M synthetic SOW). **P1 complete:** QuickBooks
+Last-mile works (council → scoring → report, $1.38M synthetic SOW). **P1 + P2 complete:** QuickBooks
 adapter → valid `baseline.json`, scoped-token onboarding (secrets server-side, per-tenant authz),
-<1h teaser, and the Next.js web surface are built and verified. Remaining core: meta-team execution
-→ quantified findings from the snapshot (P2).
+<1h teaser, the Next.js web surface, and now the **financial meta-team** that turns the snapshot into
+**6 real grounded findings** (vendor/customer concentration, overdue-AR, advisory-spend, scope cycle
+time, margin) — every `impact_usd` source-traced + confidence-banded, low-confidence findings routed
+to an FDE-review queue. Remaining core: bundle findings → 2–3 scored SOWs (P3).
 
 <a id="engine"></a>
 ## Engine (the brain) — mostly 🟢, lifted from personal NSOS
@@ -24,7 +26,8 @@ adapter → valid `baseline.json`, scoped-token onboarding (secrets server-side,
 | Agent memory / tracker / context / prompt-evolver | 🟢 | `engine/reasoning/` | ~2.7k LOC lifted |
 | Cascade handler (7 recovery strategies) | 🟢 | `engine/cascade-handler/cascade_handler.py` | |
 | NIM client (NIM-only enforced) | 🟢 | `engine/router/nim_client.py` | `judge_pair` for council |
-| Meta-teams (6) | 🔴 | `engine/meta-levels/{financial,operational,organizational,customer,technology,strategic}/` | empty dirs — **MVP work** |
+| Meta-teams — financial | 🟢 | `engine/meta-levels/financial/` | question battery (`questions.jsonl` + `team.py`), data→findings engine (`findings.py`) → 6 grounded findings; in-engine grounding gate (fail-closed); FDE-review gate (`review_gate.py`) |
+| Meta-teams — other 5 | 🔴 | `engine/meta-levels/{operational,organizational,customer,technology,strategic}/` | empty — post-MVP |
 | Gaps / prediction-residual | 🔴 | `engine/gaps/`, `engine/prediction-residual/` | empty |
 
 <a id="harness"></a>
@@ -38,7 +41,8 @@ adapter → valid `baseline.json`, scoped-token onboarding (secrets server-side,
 | Quality judge (3-layer) | 🟢 | `engine/gauntlets/quality_judge.py` |
 | GitHub Actions CI (lint/typecheck/test) | 🟡 | `.github/workflows/ci.yml` | engine job live; web + docs-sync jobs staged (workflow-scope escalation) |
 | docs_sync gate | 🟢 | `scripts/check_docs_sync.py` | fails on source-vs-docs drift; `[skip-docs-sync]` override |
-| Unit tests (adapter/auth/teaser/weights) | 🟢 | `tests/` | 33 PASS |
+| Unit tests (adapter/auth/teaser/weights/financial/review-gate) | 🟢 | `tests/` | 57 PASS |
+| Quality judge offline-deterministic fallback | 🟢 | `engine/gauntlets/quality_judge.py` | opt-in `NSOS_JUDGE_OFFLINE_DETERMINISTIC=1`; prod stays fail-closed ([decision](./decisions/2026-06-02-offline-deterministic-quality-judge.md)) |
 
 <a id="client"></a>
 ## Client ingestion (first three miles) — 🟢 P1 (QB path)
@@ -61,7 +65,7 @@ adapter → valid `baseline.json`, scoped-token onboarding (secrets server-side,
 | SOW assembly (bundle findings → 2–3 candidates) | 🔴 | not built |
 | WWMD × 5-pillar SOW scoring | 🔴 | not built (engine pieces exist) |
 | Narrative / side-by-side | 🔴 | `presentation/{narrative,side-by-side}/` (empty) |
-| Grounded-numbers gate (source-trace + confidence band) | 🔴 | not built — **client-trust blocker** |
+| Grounded-numbers gate (source-trace + confidence band) | 🟢 | `engine/meta-levels/financial/findings.py` (`assert_grounded`, fail-closed) + `build/probes/grounded_numbers.py` |
 
 <a id="flywheel"></a>
 ## Learning / outcome flywheel — 🔴 (the moat, currently empty)
