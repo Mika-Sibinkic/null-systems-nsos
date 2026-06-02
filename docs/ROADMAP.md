@@ -21,12 +21,14 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 > State: [STATE#docs](./STATE.md#docs), [STATE#harness](./STATE.md#harness)
 
 <a id="phase1"></a>
-## Phase 1 — Onboarding + ONE connector (QuickBooks)
-- [ ] Web onboarding flow (secrets server-side; scoped token — Vinnie auth pattern)
-- [ ] `client/adapters/quickbooks.py` → `client/snapshots/{tenant_id}/baseline.json`
-- [ ] Tenant isolation by `tenant_id`
-- [ ] <1h **teaser** path (one cheap high-signal finding)
-- **Success:** a synthetic tenant's QuickBooks data lands as a valid `baseline.json`; teaser renders.
+## Phase 1 — Onboarding + ONE connector (QuickBooks)  ·  ✅ done (2026-06-02)
+- [x] Web onboarding flow (secrets server-side; scoped token — Vinnie auth pattern)
+- [x] `client/adapters/quickbooks.py` → `client/snapshots/{tenant_id}/baseline.json` (schema-valid)
+- [x] Tenant isolation by `tenant_id` (per-tenant authz in `client/onboarding/auth.py`)
+- [x] <1h **teaser** path (one cheap high-signal finding, grounded)
+- [x] Next.js web surface (`tsc --noEmit` clean) + engine HTTP boundary
+- [x] `scripts/check_docs_sync.py` docs-sync gate
+- **Success:** ✅ synthetic tenant's QuickBooks data lands as a valid `baseline.json`; teaser renders.
 > State: [STATE#client](./STATE.md#client), [STATE#surface](./STATE.md#surface)
 
 <a id="phase2"></a>

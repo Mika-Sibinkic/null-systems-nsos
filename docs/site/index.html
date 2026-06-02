@@ -90,12 +90,12 @@ flowchart TB
     classDef external fill:#1e3a8a,stroke:#3b82f6,color:#fff
 
     subgraph ONB_BOX["1 · Onboarding — client/ + web/"]
-        WEB[Next.js / Vercel<br/>web surface]:::planned
-        ONB[onboarding flow]:::planned
-        ADQB[QuickBooks adapter]:::planned
+        WEB[Next.js / Vercel<br/>web surface]:::built
+        ONB[onboarding flow]:::built
+        ADQB[QuickBooks adapter]:::built
         ADX[HubSpot · Slack · Pocket<br/>adapters]:::planned
-        SNAP[(baseline.json<br/>tenant snapshot)]:::planned
-        TEASER[&lt;1h teaser signal]:::planned
+        SNAP[(baseline.json<br/>tenant snapshot)]:::built
+        TEASER[&lt;1h teaser signal]:::built
     end
 
     subgraph DIAG_BOX["2 · Diagnostic — engine/meta-levels"]
@@ -233,7 +233,7 @@ flowchart TB
     only</b>; the web holds a scoped short-lived token. Each source is read via a provider adapter and
     snapshotted to <span class="file">client/snapshots/{tenant_id}/baseline.json</span>. A &lt;1h
     <b>teaser</b> surfaces one high-signal finding to hook the operator while the full run proceeds async.</p>
-    <p class="file">client/onboarding · client/adapters · client/snapshots · web/ &nbsp;|&nbsp; status: 🔴 planned (MVP work)</p>
+    <p class="file">client/onboarding · client/adapters · client/snapshots · web/ &nbsp;|&nbsp; status: 🟢 built (P1, QuickBooks path)</p>
     <p><a href="../PRODUCT.md#onboarding">PRODUCT.md → onboarding</a> · <a href="../STATE.md#client">STATE.md → client</a> · <a href="../ROADMAP.md#phase1">ROADMAP → Phase 1</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
