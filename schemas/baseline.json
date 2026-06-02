@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nullsystems.dev/schemas/baseline.json",
+  "title": "Tenant baseline snapshot",
+  "description": "The normalized snapshot a provider adapter writes to client/snapshots/{tenant_id}/baseline.json. Source-system data is mapped into provider-neutral shapes the meta-level teams consume. Every dollar figure is in USD cents-free integers; every record carries provenance so downstream findings can source-trace.",
+  "type": "object",
+  "required": ["tenant_id", "generated_at", "schema_version", "sources"],
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "Stable per-tenant identifier (e.g. synth-acme-services)."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp the snapshot was assembled."
+    },
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Baseline schema version for forward-compat migration."
+    },
+    "sources": {
+      "type": "array",
+      "description": "One entry per connected source system that contributed to this snapshot.",
+      "items": {
+        "type": "object",
+        "required": ["type", "system", "snapshot_at"],
+        "properties": {
+          "type": {"type": "string", "enum": ["accounting", "crm", "comms", "ops", "interview_transcript"]},
+          "system": {"type": "string", "description": "Vendor name, e.g. QuickBooks, HubSpot, Slack."},
+          "snapshot_at": {"type": "string", "format": "date-time"},
+          "record_count": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "accounting": {
+      "type": "object",
+      "description": "Provider-neutral accounting view mapped from the accounting source (e.g. QuickBooks).",
+      "properties": {
+        "currency": {"type": "string", "default": "USD"},
+        "period_start": {"type": "string", "format": "date"},
+        "period_end": {"type": "string", "format": "date"},
+        "profit_and_loss": {
+          "type": "object",
+          "description": "Aggregated P&L lines keyed by account category.",
+          "additionalProperties": {"type": "number"}
+        },
+        "expenses_by_vendor": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["vendor", "amount_usd"],
+            "properties": {
+              "vendor": {"type": "string"},
+              "amount_usd": {"type": "number"},
+              "category": {"type": "string"},
+              "txn_count": {"type": "integer", "minimum": 0}
+            }
+          }
+        },
+        "invoices": {
+          "type": "array",
+          "description": "Normalized invoices with cycle-time provenance for time-leak findings.",
+          "items": {
+            "type": "object",
+            "required": ["invoice_id", "amount_usd", "issued_at"],
+            "properties": {
+              "invoice_id": {"type": "string"},
+              "customer": {"type": "string"},
+              "amount_usd": {"type": "number"},
+              "issued_at": {"type": "string", "format": "date"},
+              "paid_at": {"type": ["string", "null"], "format": "date"},
+              "first_contact_at": {"type": ["string", "null"], "format": "date"},
+              "scope_sent_at": {"type": ["string", "null"], "format": "date"},
+              "status": {"type": "string", "enum": ["draft", "sent", "paid", "overdue", "void"]}
+            }
+          }
+        }
+      }
+    },
+    "firm": {
+      "type": "object",
+      "description": "Firm-level context carried through from onboarding (objectives, known baseline).",
+      "properties": {
+        "firm_name": {"type": "string"},
+        "industry": {"type": "string"},
+        "employees": {"type": "integer", "minimum": 0},
+        "annual_revenue_usd": {"type": "number"},
+        "stated_objectives": {"type": "array", "items": {"type": "object"}},
+        "known_baseline": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Adapter run metadata for audit replay.",
+      "properties": {
+        "adapter": {"type": "string"},
+        "adapter_version": {"type": "string"},
+        "source_export_sha256": {"type": "string"}
+      }
+    }
+  }
+}

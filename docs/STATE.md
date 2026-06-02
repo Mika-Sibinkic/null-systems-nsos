@@ -3,14 +3,15 @@
 
 > Single source of "where we are." Updated on every milestone merge (see [UPDATE-PROTOCOL](./UPDATE-PROTOCOL.md)).
 > Legend: 🟢 built & verified · 🟡 partial / not wired · 🔴 empty / planned · 🔵 external service.
-> Last verified: **2026-05-28** (direct code sweep, `dev` branch off baseline `c6b1f83`).
+> Last verified: **2026-06-02** (P1 build pass, `dev` branch).
 
 <a id="summary"></a>
 ## One-line summary
 
-Last-mile works (council → scoring → report, $1.38M synthetic SOW). The first three miles —
-connectors → meta-team execution → quantified findings from real data — are empty. **The single
-missing core is `client data → quantified findings`.**
+Last-mile works (council → scoring → report, $1.38M synthetic SOW). **P1 complete:** QuickBooks
+adapter → valid `baseline.json`, scoped-token onboarding (secrets server-side, per-tenant authz),
+<1h teaser, and the Next.js web surface are built and verified. Remaining core: meta-team execution
+→ quantified findings from the snapshot (P2).
 
 <a id="engine"></a>
 ## Engine (the brain) — mostly 🟢, lifted from personal NSOS
@@ -35,18 +36,21 @@ missing core is `client data → quantified findings`.**
 | Eval harness (A/B, net-positive-all-metrics) | 🟢 | `engine/gauntlets/eval_harness.py` |
 | Gauntlet (self-play) | 🟢 | `engine/gauntlets/gauntlet.py` |
 | Quality judge (3-layer) | 🟢 | `engine/gauntlets/quality_judge.py` |
-| GitHub Actions CI (lint/typecheck/test) | 🟡 | `.github/workflows/ci.yml` | scaffolded this session; wire on first real code |
-| Recursive-weights unit tests | 🟢 | `tests/test_recursive_weights.py` | PASS |
+| GitHub Actions CI (lint/typecheck/test) | 🟡 | `.github/workflows/ci.yml` | engine job live; web + docs-sync jobs staged (workflow-scope escalation) |
+| docs_sync gate | 🟢 | `scripts/check_docs_sync.py` | fails on source-vs-docs drift; `[skip-docs-sync]` override |
+| Unit tests (adapter/auth/teaser/weights) | 🟢 | `tests/` | 33 PASS |
 
 <a id="client"></a>
-## Client ingestion (first three miles) — 🔴 the MVP work
+## Client ingestion (first three miles) — 🟢 P1 (QB path)
 
 | Component | State | Path |
 |---|---|---|
-| Onboarding flow | 🔴 | `client/onboarding/` (empty) |
-| Connectors / adapters (QB, HubSpot, Slack, Pocket) | 🔴 | `client/adapters/` (0 files) |
-| Tenant snapshots | 🔴 | `client/snapshots/` (schema only) |
-| <1h teaser signal | 🔴 | not built |
+| Onboarding flow | 🟢 | `client/onboarding/onboarding.py` — connect → server-side secret → snapshot → scoped web token |
+| Scoped-token auth (Vinnie pattern) | 🟢 | `client/onboarding/auth.py` — HMAC scoped token, per-tenant authz, secrets-server-side wall |
+| QuickBooks adapter | 🟢 | `client/adapters/quickbooks.py` — read-only QB export → `baseline.json` (schema-valid) |
+| Connectors (HubSpot, Slack, Pocket) | 🔴 | `client/adapters/` — QB only so far |
+| Tenant snapshots | 🟢 | `client/snapshots/{tenant}/baseline.json` + `schemas/baseline.json` |
+| <1h teaser signal | 🟢 | `engine/teaser/teaser.py` — cheap grounded finding, near-instant |
 
 <a id="sow"></a>
 ## SOW output + scoring — 🟡
@@ -68,13 +72,15 @@ missing core is `client data → quantified findings`.**
 | RL / external-signals / self-triggers | 🔴 | `learning/{rl,external-signals,self-triggers}/` (empty) |
 
 <a id="surface"></a>
-## Web surface — 🔴 (net-new)
+## Web surface — 🟡 (P1 scaffold live)
 
 | Component | State | Path |
 |---|---|---|
-| Next.js/Vercel app | 🔴 | `web/` (not yet created) |
-| Auth (scoped token, Vinnie pattern) | 🔴 | not built |
-| Connector tool-auth tiers (Vinnie pattern) | 🔴 | not built |
+| Next.js/Vercel app | 🟢 | `web/` — App Router, `tsc --noEmit` clean, Next 14.2.35 (patched) |
+| Onboarding page + first-finding UX | 🟢 | `web/app/onboarding/page.tsx` |
+| Engine HTTP boundary (scoped token only) | 🟢 | `web/lib/engine.ts` + `web/app/api/teaser/route.ts` |
+| SOW review/choose UI | 🔴 | `web/app/diagnostic/[runId]/` (P4) |
+| Web CI job | 🟡 | staged at `build/ci-web-job.staged.yml` — workflow-scope escalation logged |
 
 <a id="docs"></a>
 ## Docs + visualization — 🟢 (this session)

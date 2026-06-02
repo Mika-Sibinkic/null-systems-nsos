@@ -1,0 +1,42 @@
+{
+  "_comment": "Synthetic QuickBooks Online API export shape (read-only). Mirrors the QBO Reports + Invoice + Purchase entities. Used to exercise client/adapters/quickbooks.py without touching a real QB account. All data fabricated for synth-acme-services.",
+  "realmId": "9130350000000001",
+  "companyName": "Acme Services",
+  "currency": "USD",
+  "report_period": {"start_date": "2025-05-01", "end_date": "2026-04-30"},
+  "ProfitAndLoss": {
+    "TotalIncome": 28000000,
+    "TotalCostOfGoodsSold": 11200000,
+    "GrossProfit": 16800000,
+    "TotalExpenses": 13720000,
+    "NetIncome": 3080000,
+    "lines": {
+      "Income:Consulting": 24500000,
+      "Income:Retainers": 3500000,
+      "COGS:Subcontractors": 8400000,
+      "COGS:Software_Resale": 2800000,
+      "Expense:Payroll": 9100000,
+      "Expense:CloudInfra": 84000,
+      "Expense:SaaS_Tools": 410000,
+      "Expense:Office": 620000,
+      "Expense:Travel": 480000,
+      "Expense:Professional_Services": 3026000
+    }
+  },
+  "Purchases": [
+    {"vendor": "CloudProvider X", "account": "Expense:CloudInfra", "total": 84000, "txn_count": 12},
+    {"vendor": "SaaS Bundle Co", "account": "Expense:SaaS_Tools", "total": 410000, "txn_count": 48},
+    {"vendor": "Subcontractor Group", "account": "COGS:Subcontractors", "total": 8400000, "txn_count": 220},
+    {"vendor": "Office Realty LLC", "account": "Expense:Office", "total": 620000, "txn_count": 12},
+    {"vendor": "Pro Services Advisory", "account": "Expense:Professional_Services", "total": 3026000, "txn_count": 36}
+  ],
+  "Invoices": [
+    {"Id": "INV-1001", "CustomerRef": "Northwind Co", "TotalAmt": 240000, "TxnDate": "2025-06-02", "DueDate": "2025-07-02", "Balance": 0, "MetaData_FirstContact": "2025-05-12", "MetaData_ScopeSent": "2025-05-30"},
+    {"Id": "INV-1002", "CustomerRef": "Globex Inc", "TotalAmt": 180000, "TxnDate": "2025-06-18", "DueDate": "2025-07-18", "Balance": 0, "MetaData_FirstContact": "2025-05-20", "MetaData_ScopeSent": "2025-06-10"},
+    {"Id": "INV-1003", "CustomerRef": "Initech", "TotalAmt": 95000, "TxnDate": "2025-07-09", "DueDate": "2025-08-09", "Balance": 95000, "MetaData_FirstContact": "2025-06-15", "MetaData_ScopeSent": "2025-07-02"},
+    {"Id": "INV-1004", "CustomerRef": "Umbrella Corp", "TotalAmt": 320000, "TxnDate": "2025-08-01", "DueDate": "2025-09-01", "Balance": 0, "MetaData_FirstContact": "2025-07-01", "MetaData_ScopeSent": "2025-07-24"},
+    {"Id": "INV-1005", "CustomerRef": "Northwind Co", "TotalAmt": 210000, "TxnDate": "2025-09-12", "DueDate": "2025-10-12", "Balance": 0, "MetaData_FirstContact": "2025-08-20", "MetaData_ScopeSent": "2025-09-05"},
+    {"Id": "INV-1006", "CustomerRef": "Soylent LLC", "TotalAmt": 140000, "TxnDate": "2025-10-03", "DueDate": "2025-11-03", "Balance": 140000, "MetaData_FirstContact": "2025-09-08", "MetaData_ScopeSent": "2025-09-26"},
+    {"Id": "INV-1007", "CustomerRef": "Globex Inc", "TotalAmt": 265000, "TxnDate": "2025-11-15", "DueDate": "2025-12-15", "Balance": 0, "MetaData_FirstContact": "2025-10-22", "MetaData_ScopeSent": "2025-11-08"}
+  ]
+}
