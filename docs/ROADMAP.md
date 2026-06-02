@@ -32,12 +32,12 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 > State: [STATE#client](./STATE.md#client), [STATE#surface](./STATE.md#surface)
 
 <a id="phase2"></a>
-## Phase 2 — Financial meta-team executes  *(the missing core)*
-- [ ] Expand `sample-financial.jsonl` → financial question battery
-- [ ] `engine/meta-levels/financial/` runs gauntlet vs `baseline.json` → **real** `findings.jsonl`
-- [ ] Bottleneck / time-leak / dollars-missed logic
-- [ ] **Grounded-numbers gate**: every `impact_usd`/`impact_hours` source-traced + confidence-banded; unsourced number → rejected (LeCun grounding; #1 trust risk)
-- [ ] `quality_judge` gate: low-confidence findings → FDE review before client sees (Karpathy autonomy slider)
+## Phase 2 — Financial meta-team executes  *(the missing core)*  ·  ✅ done (2026-06-02)
+- [x] Expand `sample-financial.jsonl` → financial question battery (`engine/meta-levels/financial/questions.jsonl` + `team.py`, 6 questions, 6/6 answered from baseline)
+- [x] `engine/meta-levels/financial/` runs gauntlet vs `baseline.json` → **real** `findings.jsonl` (6 grounded findings)
+- [x] Bottleneck / time-leak / dollars-missed logic (`findings.py`: vendor/customer concentration, overdue-AR, advisory-spend, scope cycle-time, margin)
+- [x] **Grounded-numbers gate**: every `impact_usd`/`impact_hours` source-traced + confidence-banded; unsourced number → rejected in-engine (`assert_grounded`, fail-closed) + `build/probes/grounded_numbers.py` (LeCun grounding)
+- [x] `quality_judge` gate: low-confidence findings → FDE review queue before client sees (`review_gate.py`, Karpathy autonomy slider)
 - **Success:** real (not fixture) findings with sourced numbers flow from QB snapshot.
 > State: [STATE#engine](./STATE.md#engine), [STATE#sow](./STATE.md#sow)
 
