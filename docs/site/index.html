@@ -123,10 +123,10 @@ flowchart TB
     end
 
     subgraph SOW_BOX["4 · SOW scoring — the decision bridge"]
-        ASM[SOW assembly<br/>2–3 candidates]:::planned
-        WWMD[WWMD predict<br/>consultant-would-push]:::partial
-        PILLAR[5-pillar grade<br/>deployable?]:::planned
-        SOW[(2–3 scored SOWs<br/>+ success metrics)]:::planned
+        ASM[SOW assembly<br/>2–3 candidates]:::built
+        WWMD[WWMD predict<br/>consultant-would-push]:::built
+        PILLAR[5-pillar grade<br/>deployable?]:::built
+        SOW[(2–3 scored SOWs<br/>+ success metrics)]:::built
     end
 
     subgraph PRES_BOX["Presentation + choice — presentation/"]
@@ -268,7 +268,7 @@ flowchart TB
     <b>5-pillar engineering bar</b> grades deployability. Each SOW carries quantified success metrics
     (EBITDA +X%/yr, N hrs/yr, payback M months) so the operator chooses on evidence + their own sense
     of priority.</p>
-    <p class="file">presentation/exec-report (🟡 finding-list today) · SOW assembly + WWMD×5-pillar scoring: 🔴 planned</p>
+    <p class="file">engine/sow/assembly.py · wwmd_score.py · pillar_grade.py · metrics.py — 🟢 built (P3): 3 scored SOWs, all grade A, EBITDA +21–273%/yr, payback 0.3–3.3mo · presentation/exec-report side-by-side render: 🟡 P4</p>
     <p><a href="../PRODUCT.md#sow">PRODUCT.md → SOWs</a> · <a href="../STATE.md#sow">STATE.md → sow</a> · <a href="../ROADMAP.md#phase3">ROADMAP → Phase 3–4</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
