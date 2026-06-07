@@ -130,15 +130,15 @@ flowchart TB
     end
 
     subgraph PRES_BOX["Presentation + choice — presentation/"]
-        RPT[report_generator.py]:::partial
-        SBS[side-by-side / narrative]:::planned
-        CHOICE[operator chooses SOW]:::planned
-        FDE[FDE handoff packet]:::planned
+        RPT[report_generator.py]:::built
+        SBS[side-by-side]:::built
+        CHOICE[operator chooses SOW]:::built
+        FDE[FDE handoff packet]:::built
     end
 
     subgraph FLY_BOX["5 · Outcome flywheel — learning/ (the moat)"]
-        FB[feedback<br/>predicted vs realized]:::planned
-        MON[monitoring / recurring tier]:::planned
+        FB[feedback<br/>predicted vs realized]:::built
+        MON[monitoring / recurring tier]:::built
         EVAL[(eval set / signaling IP)]:::partial
     end
 
@@ -268,7 +268,7 @@ flowchart TB
     <b>5-pillar engineering bar</b> grades deployability. Each SOW carries quantified success metrics
     (EBITDA +X%/yr, N hrs/yr, payback M months) so the operator chooses on evidence + their own sense
     of priority.</p>
-    <p class="file">engine/sow/assembly.py · wwmd_score.py · pillar_grade.py · metrics.py — 🟢 built (P3): 3 scored SOWs, all grade A, EBITDA +21–273%/yr, payback 0.3–3.3mo · presentation/exec-report side-by-side render: 🟡 P4</p>
+    <p class="file">engine/sow/assembly.py · wwmd_score.py · pillar_grade.py · metrics.py — 🟢 built (P3): 3 scored SOWs, all grade A, EBITDA +21–273%/yr, payback 0.3–3.3mo · presentation/exec-report `render_sow_report` + presentation/side-by-side/sbs.py + web/app/diagnostic/[runId] — 🟢 built (P4): side-by-side decision report (quality_judge-gated) + web review/choose surface</p>
     <p><a href="../PRODUCT.md#sow">PRODUCT.md → SOWs</a> · <a href="../STATE.md#sow">STATE.md → sow</a> · <a href="../ROADMAP.md#phase3">ROADMAP → Phase 3–4</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
@@ -277,7 +277,7 @@ flowchart TB
     <h2>5 · FDE handoff</h2>
     <p>The chosen SOW exports as an FDE handoff packet — confirmed scope to Null Systems' delivery side.
     NSOS keeps watching; outcomes feed the flywheel.</p>
-    <p class="file">presentation/ · status: 🔴 planned (Phase 4)</p>
+    <p class="file">presentation/handoff/packet.py · status: 🟢 built (P4) — selected SOW → JSON + markdown engagement brief; source-traced target; gaps/blockers → FDE validation checklist</p>
     <p><a href="../PRODUCT.md#handoff">PRODUCT.md → handoff</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
@@ -288,7 +288,7 @@ flowchart TB
     and powering a <b>monitoring/recurring tier</b> (land-and-expand). Anyone can call an LLM; nobody else
     has the realized-outcome dataset. The eval set / consulting signaling is versioned as crown-jewel IP,
     cold-started from Null Systems' prior engagements.</p>
-    <p class="file">learning/feedback · learning/rl · status: 🔴 empty (the moat, currently unbuilt)</p>
+    <p class="file">learning/feedback/outcome_loop.py + monitoring.py · engine/run/durable.py · status: 🟢 built (P5): append-only predicted-vs-realized ledger → eval-set deltas; idempotency-on-run_id + retry/backoff; recurring-diagnostic cadence · learning/rl: 🔴 post-MVP</p>
     <p><a href="../PRODUCT.md#moat">PRODUCT.md → moat</a> · <a href="../STATE.md#flywheel">STATE.md → flywheel</a> · <a href="../GTM.md#eval">GTM → eval set</a> · <a href="../ROADMAP.md#phase5">ROADMAP → Phase 5</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>

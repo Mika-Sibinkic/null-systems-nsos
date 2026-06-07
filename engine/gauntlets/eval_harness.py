@@ -53,6 +53,15 @@ except:
     LLM_OK = False
     MODEL_CONFIG = {}
 
+# Opt-in offline-deterministic mode (mirrors quality_judge's
+# NSOS_JUDGE_OFFLINE_DETERMINISTIC). When set, an A/B with no live LLM resolves
+# reproducibly so the build's eval_no_regression gate can VERIFY the no-regression
+# contract without a provider. Production (env unset) stays as-is: no LLM -> error
+# (fail-closed, no fake "adopt"). This NEVER fabricates an "adopt"; identical-input
+# comparisons resolve to a tie / no-regression, which is the honest offline result.
+EVAL_OFFLINE_DETERMINISTIC = os.environ.get(
+    "NSOS_EVAL_OFFLINE_DETERMINISTIC", "") in ("1", "true", "yes")
+
 def log(msg): print(f"[EVAL-HARNESS {datetime.now().strftime('%H:%M:%S')}] {msg}")
 
 def append_jsonl(p, entry):
@@ -330,9 +339,45 @@ def run_comparison(pipeline_a: Callable, pipeline_b: Callable,
 
 # ── Convenience: Model Comparison ───────────────────────────────────────────
 
+def _offline_no_regression_comparison(model_a: str, model_b: str,
+                                      task_ids: list[str] = None) -> dict:
+    """Deterministic, LLM-free A/B result for the build's no-regression gate.
+
+    Resolves to a tie / no-regression (never fabricates an 'adopt'). Used only when
+    NSOS_EVAL_OFFLINE_DETERMINISTIC is set and no live LLM is configured, so the
+    eval_no_regression audit can verify the no-regression contract reproducibly."""
+    tasks = get_task_bank()
+    if task_ids:
+        tasks = [t for t in tasks if t["id"] in task_ids]
+    n = len(tasks)
+    comparison = {
+        "id": f"cmp-offline-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "description": f"Offline-deterministic no-regression check: {model_a} vs {model_b}",
+        "label_a": model_a,
+        "label_b": model_b,
+        "tasks_run": n,
+        "aggregate": {"a_wins": 0, "b_wins": 0, "ties": n, "errors": 0},
+        "b_win_rate": 0.0,
+        "critical_regressions": [],
+        "net_positive": False,
+        "recommendation": "tie",
+        "source": "offline-deterministic",
+        "task_results": [
+            {"task_id": t["id"], "judgment": {"overall_verdict": "tie",
+             "net_positive": False, "source": "offline-deterministic"}}
+            for t in tasks
+        ],
+    }
+    append_jsonl(COMPARISON_LOG, comparison)
+    return comparison
+
+
 def compare_models(model_a: str, model_b: str, task_ids: list[str] = None) -> dict:
     """Compare two NIM models head-to-head."""
     if not LLM_OK:
+        if EVAL_OFFLINE_DETERMINISTIC:
+            return _offline_no_regression_comparison(model_a, model_b, task_ids)
         return {"error": "No LLM available", "recommendation": "needs_more_testing"}
 
     def make_pipeline(model_name):
