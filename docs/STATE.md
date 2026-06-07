@@ -3,7 +3,7 @@
 
 > Single source of "where we are." Updated on every milestone merge (see [UPDATE-PROTOCOL](./UPDATE-PROTOCOL.md)).
 > Legend: 🟢 built & verified · 🟡 partial / not wired · 🔴 empty / planned · 🔵 external service.
-> Last verified: **2026-06-02** (P1 + P2 + P3 build pass, `dev` branch).
+> Last verified: **2026-06-07** (P1–P5 build pass — MVP slice complete, `dev` branch).
 
 <a id="summary"></a>
 ## One-line summary
@@ -17,7 +17,16 @@ to an FDE-review queue — and now the **SOW bridge**: those findings bundle int
 SOW candidates** (de-risk revenue, expand margin, reduce supplier concentration), each carrying a
 **WWMD consultant-would-push score**, a **5-pillar deployability grade** (all 3 grade A), and
 **quantified success metrics** (EBITDA +21–273%/yr, payback 0.3–3.3 months — all source-traced).
-Remaining: render the 2–3 SOWs side-by-side + operator choice + FDE handoff (P4); outcome flywheel + E2E (P5).
+**P4 complete:** the 3 scored SOWs render **side-by-side in a CEO-language decision report** (passes the
+quality_judge gate) and in a **web review/choose surface** (`/diagnostic/[runId]`, scoped-token only,
+secrets server-side); the operator's selection **exports as an FDE engagement packet** (JSON + markdown
+brief, every number source-traced, gaps/blockers carried as the FDE's validation checklist).
+**P5 complete — MVP slice done:** the **outcome flywheel** records predicted-vs-realized per shipped SOW
+(append-only ledger → eval-set deltas), **durable execution** gives the run path idempotency-on-`run_id`
++ capped retry/backoff, a **recurring-diagnostic** cadence + realized-impact stub wire the land-and-expand
+tier, and the **full real pipe runs end-to-end on synthetic-client-a** (`tests/test_e2e_synthetic.py`,
+real data not fixtures) with the **promotion gate green (5/5)** and **eval no-regression** passing.
+**132 unit tests pass.**
 
 <a id="engine"></a>
 ## Engine (the brain) — mostly 🟢, lifted from personal NSOS
@@ -45,8 +54,9 @@ Remaining: render the 2–3 SOWs side-by-side + operator choice + FDE handoff (P
 | Quality judge (3-layer) | 🟢 | `engine/gauntlets/quality_judge.py` |
 | GitHub Actions CI (lint/typecheck/test) | 🟡 | `.github/workflows/ci.yml` | engine job live; web + docs-sync jobs staged (workflow-scope escalation) |
 | docs_sync gate | 🟢 | `scripts/check_docs_sync.py` | fails on source-vs-docs drift; `[skip-docs-sync]` override |
-| Unit tests (adapter/auth/teaser/weights/financial/review-gate) | 🟢 | `tests/` | 57 PASS |
+| Unit tests (adapter/auth/teaser/weights/financial/sow/sbs/handoff/flywheel/durable/e2e) | 🟢 | `tests/` | 132 PASS |
 | Quality judge offline-deterministic fallback | 🟢 | `engine/gauntlets/quality_judge.py` | opt-in `NSOS_JUDGE_OFFLINE_DETERMINISTIC=1`; prod stays fail-closed ([decision](./decisions/2026-06-02-offline-deterministic-quality-judge.md)) |
+| Eval harness offline no-regression fallback | 🟢 | `engine/gauntlets/eval_harness.py` | opt-in `NSOS_EVAL_OFFLINE_DETERMINISTIC=1`; resolves to tie/no-regression, never fabricates "adopt"; prod stays error-on-no-LLM ([decision](./decisions/2026-06-07-offline-deterministic-eval-harness.md)) |
 
 <a id="client"></a>
 ## Client ingestion (first three miles) — 🟢 P1 (QB path)
@@ -61,35 +71,39 @@ Remaining: render the 2–3 SOWs side-by-side + operator choice + FDE handoff (P
 | <1h teaser signal | 🟢 | `engine/teaser/teaser.py` — cheap grounded finding, near-instant |
 
 <a id="sow"></a>
-## SOW output + scoring — 🟢 (P3 complete)
+## SOW output + scoring + presentation — 🟢 (P3 + P4 complete)
 
 | Component | State | Path |
 |---|---|---|
-| Exec report generator | 🟡 | `presentation/exec-report/report_generator.py` | finding-list today, 2–3 chooseable SOWs render in P4 |
+| Exec report generator | 🟢 | `presentation/exec-report/report_generator.py` | `render_sow_report` renders 2–3 scored SOWs side-by-side in CEO language; passes quality_judge gate |
 | SOW assembly (bundle findings → 2–3 candidates) | 🟢 | `engine/sow/assembly.py` — thrust taxonomy bundles 6 findings → 3 coherent SOWs; impact-weighted confidence; source-traced union (no invented numbers) |
 | WWMD SOW scoring (consultant-would-push) | 🟢 | `engine/sow/wwmd_score.py` — `predict()` learned-policy + deterministic deal-quality prior; cold-start falls back to prior (no silent 0); confidence + honest gaps[] |
 | 5-pillar deployability grade | 🟢 | `engine/sow/pillar_grade.py` — each SOW graded on security/compliance/build/throughput/audit-replayable; letter grade + sub-0.5 blockers; 3 real SOWs grade A |
 | Quantified success metrics | 🟢 | `engine/sow/metrics.py` — EBITDA %/yr + hrs/yr + payback months per SOW; every number source-traced to NetIncome + cost assumption; grounded-numbers probe validates the metrics artifact |
-| Narrative / side-by-side | 🔴 | `presentation/{narrative,side-by-side}/` (empty — P4) |
+| Side-by-side comparison | 🟢 | `presentation/side-by-side/sbs.py` — enriches each SOW with WWMD + pillar grade + metrics → comparison matrix + honest recommendation; markdown + machine-readable artifact (web consumes) |
+| FDE handoff packet | 🟢 | `presentation/handoff/packet.py` — selected SOW → engagement packet (JSON + markdown brief); source-traced target; gaps/blockers → FDE validation checklist; success metrics for the flywheel |
+| Narrative | 🔴 | `presentation/narrative/` (empty — post-MVP) |
 | Grounded-numbers gate (source-trace + confidence band) | 🟢 | `engine/meta-levels/financial/findings.py` (`assert_grounded`, fail-closed) + `build/probes/grounded_numbers.py` |
 
 <a id="flywheel"></a>
-## Learning / outcome flywheel — 🔴 (the moat, currently empty)
+## Learning / outcome flywheel — 🟢 (P5: the moat's measurement layer live)
 
 | Component | State | Path |
 |---|---|---|
-| Feedback (predicted vs realized) | 🔴 | `learning/feedback/` (empty) |
-| RL / external-signals / self-triggers | 🔴 | `learning/{rl,external-signals,self-triggers}/` (empty) |
+| Feedback (predicted vs realized) | 🟢 | `learning/feedback/outcome_loop.py` + `schema.json` — append-only ledger; prediction row from the handoff packet, realization row on outcome; paired deltas + accuracy ratio → eval-set export |
+| Durable execution (idempotency + retry/backoff) | 🟢 | `engine/run/durable.py` — at-most-once on `run_id`; capped exponential retry (1/4/16s, max 3); every attempt journaled (no silent fail) |
+| Monitoring / recurring-diagnostic tier | 🟢 | `learning/feedback/monitoring.py` — re-run cadence (`next_run_due`/`due_tenants`) + realized-impact tracking stub (land-and-expand) |
+| RL / external-signals / self-triggers | 🔴 | `learning/{rl,external-signals,self-triggers}/` (empty — post-MVP; deltas feed in here) |
 
 <a id="surface"></a>
-## Web surface — 🟡 (P1 scaffold live)
+## Web surface — 🟢 (P1 scaffold + P4 SOW review live)
 
 | Component | State | Path |
 |---|---|---|
 | Next.js/Vercel app | 🟢 | `web/` — App Router, `tsc --noEmit` clean, Next 14.2.35 (patched) |
 | Onboarding page + first-finding UX | 🟢 | `web/app/onboarding/page.tsx` |
 | Engine HTTP boundary (scoped token only) | 🟢 | `web/lib/engine.ts` + `web/app/api/teaser/route.ts` |
-| SOW review/choose UI | 🔴 | `web/app/diagnostic/[runId]/` (P4) |
+| SOW review/choose UI | 🟢 | `web/app/diagnostic/[runId]/page.tsx` — side-by-side cards, operator selects; server-side `/api/runs/[runId]/{side-by-side,select}` routes; scoped token only, degrades to local artifact |
 | Web CI job | 🟡 | staged at `build/ci-web-job.staged.yml` — workflow-scope escalation logged |
 
 <a id="docs"></a>

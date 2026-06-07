@@ -51,25 +51,25 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 > State: [STATE#sow](./STATE.md#sow)
 
 <a id="phase4"></a>
-## Phase 4 — SOW presentation + operator choice
-- [ ] `report_generator.py` → 2–3 SOWs, CEO-language, side-by-side
-- [ ] Web: operator reviews + picks → FDE handoff packet
-- **Success:** operator can compare and select a SOW in the web UI; packet exports.
+## Phase 4 — SOW presentation + operator choice ✅
+- [x] `report_generator.py` → 2–3 SOWs, CEO-language, side-by-side (`render_sow_report` + `presentation/side-by-side/sbs.py`; passes quality_judge gate)
+- [x] Web: operator reviews + picks → FDE handoff packet (`web/app/diagnostic/[runId]/page.tsx` + server-side routes; `presentation/handoff/packet.py` exports JSON + markdown brief)
+- **Success:** operator can compare and select a SOW in the web UI; packet exports. **Met** (109 tests pass; pillar5_security + quality_judge green).
 > State: [STATE#sow](./STATE.md#sow), [STATE#surface](./STATE.md#surface)
 
 <a id="phase5"></a>
-## Phase 5 — Outcome flywheel + E2E gate
-- [ ] Wire `learning/feedback/` — capture predicted vs realized per shipped SOW (the moat)
-- [ ] Monitoring/recurring tier hook (land-and-expand)
-- [ ] E2E on synthetic-client-a through the **real** pipe
-- [ ] `promotion_gate.evaluate_proposal()` green; `eval_harness` no regression; CI green
-- **Success:** full pipe runs end-to-end; flywheel captures its first (synthetic) outcome.
+## Phase 5 — Outcome flywheel + E2E gate ✅
+- [x] Wire `learning/feedback/` — capture predicted vs realized per shipped SOW (`outcome_loop.py` + `schema.json`; append-only ledger → eval-set deltas)
+- [x] Monitoring/recurring tier hook (land-and-expand) — `learning/feedback/monitoring.py` (cadence + realized-impact stub) + `engine/run/durable.py` (idempotency + retry/backoff)
+- [x] E2E on synthetic-client-a through the **real** pipe — `tests/test_e2e_synthetic.py` (real data, not fixtures)
+- [x] `promotion_gate.evaluate_proposal()` green (5/5); `eval_harness` no regression (offline-deterministic mode, [decision](./decisions/2026-06-07-offline-deterministic-eval-harness.md))
+- **Success:** full pipe runs end-to-end; flywheel captures its first (synthetic) outcome. **Met** (132 tests pass; all P5 exit-gate audits green).
 > State: [STATE#flywheel](./STATE.md#flywheel)
 
 <a id="cross"></a>
 ## Cross-cutting (apply every phase)
 - [ ] Eval set versioned as IP; cold-start from prior Null Systems engagements ([GTM#eval](./GTM.md#eval))
-- [ ] Durable execution for multi-hour runs (queue + retries + idempotency on `run_id`)
+- [x] Durable execution for multi-hour runs (queue + retries + idempotency on `run_id`) — `engine/run/durable.py` (at-most-once on run_id; capped exponential backoff; durable-backend interface ready)
 - [ ] Per-tenant LLM spend cap; cache identical gauntlet calls
 - [ ] Messy-real-data robustness (dirty QuickBooks exports), not just happy path
 - [ ] Trust collateral: DPA + SOC2 path + "no shared-model training" ([GTM#trust](./GTM.md#trust))
