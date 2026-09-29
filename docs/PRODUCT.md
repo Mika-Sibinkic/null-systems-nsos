@@ -51,7 +51,7 @@ priorities, novelty vs known baseline, cross-team corroboration, and projected $
 <a id="sow"></a>
 ### 4. Two or three SOWs, scored and chooseable
 Ranked findings bundle into 2–3 coherent **SOW candidates** (each a growth thrust). Each SOW is
-scored by the **decision bridge**: **WWMD** predicts whether a Null Systems consultant would push it
+scored by the **decision bridge**: **WWOD** predicts whether a Null Systems consultant would push it
 (+ confidence + gaps); the **5-pillar engineering bar** grades whether it's deployable. Each SOW
 carries quantified success metrics — e.g. *EBITDA +X%/yr, N hrs/yr reclaimed, payback in M months* —
 so the operator chooses on evidence + their own sense of priority.
@@ -77,7 +77,7 @@ nobody else has the realized-outcome dataset.
 ## Surface (what's wired underneath)
 
 Next.js/Vercel `web/` ↔ Python `engine/` over an HTTP/MCP boundary. Auth/tool-tiers/connector-flow
-patterns lifted from Vinnie. Diagnostic runs use durable execution (queue + retries + idempotency on
+patterns lifted from the earlier desktop prototype. Diagnostic runs use durable execution (queue + retries + idempotency on
 `run_id`). Multi-tenant isolation by `tenant_id`. Full architecture: [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ---
@@ -86,5 +86,5 @@ patterns lifted from Vinnie. Diagnostic runs use durable execution (queue + retr
 
 - **2026-05-28** — Initial product description. Defined thesis, 5-stage client flow (onboarding →
   diagnostic → council → 2–3 scored SOWs → FDE handoff + flywheel), defensibility, surface. Added the
-  <1h teaser, grounded-numbers requirement, WWMD×5-pillar SOW scoring, and the outcome flywheel /
+  <1h teaser, grounded-numbers requirement, WWOD×5-pillar SOW scoring, and the outcome flywheel /
   recurring tier as first-class (per Karpathy/Tan/LeCun hardening pass).

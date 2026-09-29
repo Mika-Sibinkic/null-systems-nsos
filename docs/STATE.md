@@ -15,7 +15,7 @@ adapter → valid `baseline.json`, scoped-token onboarding (secrets server-side,
 time, margin) — every `impact_usd` source-traced + confidence-banded, low-confidence findings routed
 to an FDE-review queue — and now the **SOW bridge**: those findings bundle into **3 coherent scored
 SOW candidates** (de-risk revenue, expand margin, reduce supplier concentration), each carrying a
-**WWMD consultant-would-push score**, a **5-pillar deployability grade** (all 3 grade A), and
+**WWOD consultant-would-push score**, a **5-pillar deployability grade** (all 3 grade A), and
 **quantified success metrics** (EBITDA +21–273%/yr, payback 0.3–3.3 months — all source-traced).
 **P4 complete:** the 3 scored SOWs render **side-by-side in a CEO-language decision report** (passes the
 quality_judge gate) and in a **web review/choose surface** (`/diagnostic/[runId]`, scoped-token only,
@@ -29,13 +29,13 @@ real data not fixtures) with the **promotion gate green (5/5)** and **eval no-re
 **132 unit tests pass.**
 
 <a id="engine"></a>
-## Engine (the brain) — mostly 🟢, lifted from personal NSOS
+## Engine (the brain) — mostly 🟢, lifted from the earlier prototype
 
 | Component | State | Path | Notes |
 |---|---|---|---|
 | Council (pairwise judge + Borda) | 🟢 | `engine/council/council.py` | deterministic judge fallback for tests |
 | Recursive-weight scoring | 🟢 | `engine/council/recursive_weights.py` | 0.30 prio + 0.25 novelty + 0.20 corrob + 0.25 impact, z-normed $/hrs |
-| Reasoning engine (predict/compare/extract/update) | 🟢 | `engine/reasoning/reasoning_engine.py` | lifted; powers WWMD SOW scoring |
+| Reasoning engine (predict/compare/extract/update) | 🟢 | `engine/reasoning/reasoning_engine.py` | lifted; powers WWOD SOW scoring |
 | Agent memory / tracker / context / prompt-evolver | 🟢 | `engine/reasoning/` | ~2.7k LOC lifted |
 | Cascade handler (7 recovery strategies) | 🟢 | `engine/cascade-handler/cascade_handler.py` | |
 | NIM client (NIM-only enforced) | 🟢 | `engine/router/nim_client.py` | `judge_pair` for council |
@@ -64,7 +64,7 @@ real data not fixtures) with the **promotion gate green (5/5)** and **eval no-re
 | Component | State | Path |
 |---|---|---|
 | Onboarding flow | 🟢 | `client/onboarding/onboarding.py` — connect → server-side secret → snapshot → scoped web token |
-| Scoped-token auth (Vinnie pattern) | 🟢 | `client/onboarding/auth.py` — HMAC scoped token, per-tenant authz, secrets-server-side wall |
+| Scoped-token auth | 🟢 | `client/onboarding/auth.py` — HMAC scoped token, per-tenant authz, secrets-server-side wall |
 | QuickBooks adapter | 🟢 | `client/adapters/quickbooks.py` — read-only QB export → `baseline.json` (schema-valid) |
 | Connectors (HubSpot, Slack, Pocket) | 🔴 | `client/adapters/` — QB only so far |
 | Tenant snapshots | 🟢 | `client/snapshots/{tenant}/baseline.json` + `schemas/baseline.json` |
@@ -77,10 +77,10 @@ real data not fixtures) with the **promotion gate green (5/5)** and **eval no-re
 |---|---|---|
 | Exec report generator | 🟢 | `presentation/exec-report/report_generator.py` | `render_sow_report` renders 2–3 scored SOWs side-by-side in CEO language; passes quality_judge gate |
 | SOW assembly (bundle findings → 2–3 candidates) | 🟢 | `engine/sow/assembly.py` — thrust taxonomy bundles 6 findings → 3 coherent SOWs; impact-weighted confidence; source-traced union (no invented numbers) |
-| WWMD SOW scoring (consultant-would-push) | 🟢 | `engine/sow/wwmd_score.py` — `predict()` learned-policy + deterministic deal-quality prior; cold-start falls back to prior (no silent 0); confidence + honest gaps[] |
+| WWOD SOW scoring (consultant-would-push) | 🟢 | `engine/sow/wwod_score.py` — `predict()` learned-policy + deterministic deal-quality prior; cold-start falls back to prior (no silent 0); confidence + honest gaps[] |
 | 5-pillar deployability grade | 🟢 | `engine/sow/pillar_grade.py` — each SOW graded on security/compliance/build/throughput/audit-replayable; letter grade + sub-0.5 blockers; 3 real SOWs grade A |
 | Quantified success metrics | 🟢 | `engine/sow/metrics.py` — EBITDA %/yr + hrs/yr + payback months per SOW; every number source-traced to NetIncome + cost assumption; grounded-numbers probe validates the metrics artifact |
-| Side-by-side comparison | 🟢 | `presentation/side-by-side/sbs.py` — enriches each SOW with WWMD + pillar grade + metrics → comparison matrix + honest recommendation; markdown + machine-readable artifact (web consumes) |
+| Side-by-side comparison | 🟢 | `presentation/side-by-side/sbs.py` — enriches each SOW with WWOD + pillar grade + metrics → comparison matrix + honest recommendation; markdown + machine-readable artifact (web consumes) |
 | FDE handoff packet | 🟢 | `presentation/handoff/packet.py` — selected SOW → engagement packet (JSON + markdown brief); source-traced target; gaps/blockers → FDE validation checklist; success metrics for the flywheel |
 | Narrative | 🔴 | `presentation/narrative/` (empty — post-MVP) |
 | Grounded-numbers gate (source-trace + confidence band) | 🟢 | `engine/meta-levels/financial/findings.py` (`assert_grounded`, fail-closed) + `build/probes/grounded_numbers.py` |

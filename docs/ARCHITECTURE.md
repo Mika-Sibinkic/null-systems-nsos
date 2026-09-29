@@ -77,7 +77,7 @@ Per provider research:
 - **Groq Llama 3.3 70B** — latency-critical fallback
 - **Anthropic** — escalation for genuinely hard reasoning (rare; requires explicit tier-gate)
 
-Routed by `engine/router/llm_router.py` with cascade handler attached.
+Routed by `engine/router/nim_client.py` with cascade handler attached.
 
 ## Multi-tenant isolation
 

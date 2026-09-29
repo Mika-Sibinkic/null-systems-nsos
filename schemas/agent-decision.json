@@ -18,7 +18,7 @@
     },
     "category": {
       "type": "string",
-      "description": "Decision category from DECISION_TIERS.md (e.g., 'code_architecture', 'tool_selection', 'testing_approach')"
+      "description": "Decision category (e.g., 'code_architecture', 'tool_selection', 'testing_approach')"
     },
     "decision": {
       "type": "string",
