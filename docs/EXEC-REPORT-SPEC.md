@@ -4,7 +4,7 @@
 
 ## Format
 
-3–5 page markdown document. Renders to PDF via Pandoc (`deploy/render-report.sh`). Optional Notion publish via `mcp__claude_ai_Notion__*`.
+3–5 page markdown document. PDF rendering (Pandoc) and publishing to a docs tool are planned, not built.
 
 ## Required sections (in order)
 

@@ -69,7 +69,7 @@ Implementation:
 
 The `0.30 / 0.25 / 0.20 / 0.25` weights are tunable per engagement. Calibration:
 1. Run on 2–3 pilot reports.
-2. Have Mika (or, eventually, the client engagement lead) manually rank the top 10 findings.
+2. Have the operator (or, eventually, the client engagement lead) manually rank the top 10 findings.
 3. Fit weights to minimize Spearman distance from manual rank.
 4. Persist tuned weights to `client/snapshots/{tenant_id}/council-weights.json`.
 

@@ -10,7 +10,7 @@ Keep-a-Changelog; the diagnostic engine's internal pattern/eval promotions are t
 - **Added** P4 — SOW presentation + operator choice:
   - `presentation/exec-report/report_generator.py::render_sow_report` — CEO-language decision report
     rendering the 2–3 scored SOWs side-by-side; passes the `quality_judge` gate.
-  - `presentation/side-by-side/sbs.py` — enriches each SOW with WWMD push + 5-pillar grade + metrics
+  - `presentation/side-by-side/sbs.py` — enriches each SOW with WWOD push + 5-pillar grade + metrics
     into a comparison matrix + an honest single recommendation; markdown + machine-readable artifact.
   - `web/app/diagnostic/[runId]/page.tsx` + server-side `/api/runs/[runId]/{side-by-side,select}` routes
     — operator reviews + selects a SOW; scoped token only, secrets server-side (`tsc --noEmit` clean,
@@ -37,7 +37,7 @@ Keep-a-Changelog; the diagnostic engine's internal pattern/eval promotions are t
 
 ### 2026-05-28 — Conglomeration foundation (Phase 0 + 0.5)
 - **Decided** Tier-2 architecture: monorepo (Python `engine/` + Next.js `web/`), NIM-primary brain,
-  WWMD × 5-pillar SOW scoring. Record: `docs/decisions/2026-05-28-saas-conglomeration-architecture.md`.
+  WWOD × 5-pillar SOW scoring. Record: `docs/decisions/2026-05-28-saas-conglomeration-architecture.md`.
   Rollback baseline: `c6b1f83`.
 - **Added** living docs, all in `dev`:
   - `docs/PRODUCT.md` — product description + product-description changelog (the thesis, 5-stage flow, moat).
@@ -46,7 +46,6 @@ Keep-a-Changelog; the diagnostic engine's internal pattern/eval promotions are t
   - `docs/GTM.md` — ICP, design partners, pricing, unit economics, eval-set-as-IP, trust collateral.
   - `docs/UPDATE-PROTOCOL.md` — the rule + CI gate keeping docs/viz in sync with code.
   - `docs/BUILD-PLAN.md` — the approved implementation plan (verbatim).
-  - `docs/research/vinnie-nsos-salvage.md` — Vinnie↔NSOS salvage analysis + Karpathy/Tan/LeCun hardening.
 - **Added** `docs/site/index.html` — clickable product mind map (Mermaid, nodes colored by real build
   state, click → in-page description panels deep-linking to the docs).
 - **Added** `.github/workflows/ci.yml` — CI scaffold (python tests gate; web + docs-sync jobs land Phase 1).

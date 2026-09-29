@@ -16,13 +16,13 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 - [x] Tier-2 decision record written
 - [x] Living docs (PRODUCT/STATE/ROADMAP/GTM/UPDATE-PROTOCOL)
 - [x] Clickable product mind map (`docs/site/`)
-- [ ] Private remote (`gh repo create`) — deferred until first real code lands
+- [x] Git remote + CI (pytest + web build on every push)
 - [ ] `.github/workflows/ci.yml` wired green (scaffolded 🟡 → green when `web/` + python lint exist)
 > State: [STATE#docs](./STATE.md#docs), [STATE#harness](./STATE.md#harness)
 
 <a id="phase1"></a>
 ## Phase 1 — Onboarding + ONE connector (QuickBooks)  ·  ✅ done (2026-06-02)
-- [x] Web onboarding flow (secrets server-side; scoped token — Vinnie auth pattern)
+- [x] Web onboarding flow (secrets server-side; scoped token)
 - [x] `client/adapters/quickbooks.py` → `client/snapshots/{tenant_id}/baseline.json` (schema-valid)
 - [x] Tenant isolation by `tenant_id` (per-tenant authz in `client/onboarding/auth.py`)
 - [x] <1h **teaser** path (one cheap high-signal finding, grounded)
@@ -45,7 +45,7 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 ## Phase 3 — Council + SOW assembly + scoring  ·  ✅ done (2026-06-02)
 - [x] Council ranks real findings (works today)
 - [x] Bundle ranked findings → 2–3 **SOW candidates** (`engine/sow/assembly.py` — thrust taxonomy, source-traced union)
-- [x] Score each: **WWMD** (consultant-would-push + confidence + gaps, `engine/sow/wwmd_score.py`) × **5-pillar** deployability grade (`engine/sow/pillar_grade.py` — 3 SOWs grade A)
+- [x] Score each: **WWOD** (consultant-would-push + confidence + gaps, `engine/sow/wwod_score.py`) × **5-pillar** deployability grade (`engine/sow/pillar_grade.py` — 3 SOWs grade A)
 - [x] Attach quantified success metrics (EBITDA %/yr, hrs/yr, payback months — `engine/sow/metrics.py`, grounded-numbers-validated)
 - **Success:** synthetic client yields **3 scored, metric-bearing SOWs** (EBITDA +21–273%/yr, payback 0.3–3.3mo).
 > State: [STATE#sow](./STATE.md#sow)
@@ -77,4 +77,4 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 <a id="stage"></a>
 ## Stage gate
 Currently `internal-solo`. **Promotion → `client-mvp` triggers on first SMB pilot** — at that point a
-separate Tier-2 decision record + dev/PR/CI ceremony + pre-push hook (per engineering-bar stage policy).
+separate Tier-2 decision record + dev/PR/CI ceremony + pre-push hook (per stage policy).

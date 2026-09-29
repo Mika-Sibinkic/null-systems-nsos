@@ -25,7 +25,7 @@ SOURCE_PREFIXES = ("engine/", "client/", "web/", "learning/", "presentation/")
 DOC_FILES = {"docs/STATE.md", "docs/ROADMAP.md", "docs/site/index.html"}
 SKIP_TAG = "[skip-docs-sync]"
 # Source paths that are docs-adjacent or non-shipping — changing them alone doesn't require a doc bump.
-IGNORE_SUFFIXES = (".md",)  # e.g. engine/SANITIZED.md
+IGNORE_SUFFIXES = (".md",)  # e.g. engine/SANITIZED.md (a note, not shipping code)
 
 
 def _git(*args: str) -> str:

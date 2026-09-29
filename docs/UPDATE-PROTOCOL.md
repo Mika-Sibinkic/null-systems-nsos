@@ -16,7 +16,7 @@ A change that moves a component between states (🔴→🟡→🟢) **must, in t
 
 ## CI check
 
-`.github/workflows/ci.yml` runs `scripts/check_docs_sync.py` (to be added in Phase 1). It fails the
+`.github/workflows/ci.yml` can run `scripts/check_docs_sync.py`. It fails the
 build when engine/client/web/learning source changed in a commit but none of STATE.md / ROADMAP.md /
 `docs/site/index.html` did — forcing the doc update. Override only with a `[skip-docs-sync]` tag in
 the commit message (logged, not silent).
