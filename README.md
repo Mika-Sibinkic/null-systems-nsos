@@ -31,7 +31,7 @@ client/        — tenant-specific data + onboarding adapters
 engine/        — reusable diagnostic intelligence (lifted + new)
 learning/      — RL-style cross-run improvement + external signal ingestion
 presentation/  — engine output → CEO-language report (markdown / PDF / Notion)
-schemas/       — universal JSON contracts (lifted from business-framework)
+schemas/       — JSON contracts shared across layers
 mcp-servers/   — Model Context Protocol servers (correction + nsos)
 examples/      — synthetic clients for smoke tests + regression
 deploy/        — docker-compose + deployment notes

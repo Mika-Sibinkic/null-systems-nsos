@@ -12,7 +12,7 @@ import { join } from 'path';
 // ── Configuration ──────────────────────────────────────────────────────────
 
 const CORRECTIONS_DIR = process.env.CORRECTIONS_DIR
-  || join(process.env.HOME, 'Desktop', 'Null Systems', 'business-framework', '.claude', 'corrections');
+  || join(process.env.HOME, '.nsos', 'corrections');
 
 const PREDICTIONS_FILE = join(CORRECTIONS_DIR, 'predictions.json');
 const RESIDUALS_FILE = join(CORRECTIONS_DIR, 'residuals.json');
