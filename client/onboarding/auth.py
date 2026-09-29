@@ -1,4 +1,4 @@
-"""Scoped-token auth for the onboarding surface (Vinnie auth/tool-auth pattern).
+"""Scoped-token auth for the onboarding surface (scoped-token / tool-auth pattern).
 
 Engineering-bar pillar 1 (Security) hard rules enforced here:
   - No secrets in the frontend. The web surface never holds a connector OAuth token.

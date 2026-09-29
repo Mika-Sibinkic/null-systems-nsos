@@ -34,7 +34,7 @@ import re
 HOME = Path.home()
 # All filesystem roots are env-overridable so the iterator has no hardcoded operator paths.
 FRAMEWORK_ROOT = Path(os.environ.get("NSOS_FRAMEWORK_ROOT", str(HOME / ".nsos" / "framework")))
-BIZ_FRAMEWORK  = Path(os.environ.get("NSOS_BIZ_ROOT", str(HOME / ".nsos" / "business-framework")))
+BIZ_FRAMEWORK  = Path(os.environ.get("NSOS_BIZ_ROOT", str(HOME / ".nsos" / "biz")))
 ORCHESTRATOR   = Path(os.environ.get("NSOS_ORCHESTRATOR_DIR", str(FRAMEWORK_ROOT / ".claude" / "orchestrator")))
 NSOS_DIR       = Path(os.environ.get("NSOS_DIR", str(FRAMEWORK_ROOT / "nsos")))
 LOGS_DIR       = NSOS_DIR / "logs"
