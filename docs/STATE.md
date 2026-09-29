@@ -52,7 +52,7 @@ real data not fixtures) with the **promotion gate green (5/5)** and **eval no-re
 | Eval harness (A/B, net-positive-all-metrics) | 🟢 | `engine/gauntlets/eval_harness.py` |
 | Gauntlet (self-play) | 🟢 | `engine/gauntlets/gauntlet.py` |
 | Quality judge (3-layer) | 🟢 | `engine/gauntlets/quality_judge.py` |
-| GitHub Actions CI (lint/typecheck/test) | 🟡 | `.github/workflows/ci.yml` | engine job live; web + docs-sync jobs staged (workflow-scope escalation) |
+| GitHub Actions CI | 🟢 | `.github/workflows/ci.yml` | `pytest` + `npm ci && npm run build` on every push and PR |
 | docs_sync gate | 🟢 | `scripts/check_docs_sync.py` | fails on source-vs-docs drift; `[skip-docs-sync]` override |
 | Unit tests (adapter/auth/teaser/weights/financial/sow/sbs/handoff/flywheel/durable/e2e) | 🟢 | `tests/` | 132 PASS |
 | Quality judge offline-deterministic fallback | 🟢 | `engine/gauntlets/quality_judge.py` | opt-in `NSOS_JUDGE_OFFLINE_DETERMINISTIC=1`; prod stays fail-closed ([decision](./decisions/2026-06-02-offline-deterministic-quality-judge.md)) |

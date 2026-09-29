@@ -17,7 +17,6 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 - [x] Living docs (PRODUCT/STATE/ROADMAP/GTM/UPDATE-PROTOCOL)
 - [x] Clickable product mind map (`docs/site/`)
 - [x] Git remote + CI (pytest + web build on every push)
-- [ ] `.github/workflows/ci.yml` wired green (scaffolded 🟡 → green when `web/` + python lint exist)
 > State: [STATE#docs](./STATE.md#docs), [STATE#harness](./STATE.md#harness)
 
 <a id="phase1"></a>
