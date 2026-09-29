@@ -14,6 +14,15 @@ jobs:
           python-version: "3.11"
       - run: pip install -r requirements.txt
       - run: python -m pytest -q
+      - name: engine API smoke (boot uvicorn, hit /health and /teaser)
+        run: |
+          python -m engine.api > engine.log 2>&1 &
+          ENGINE_PID=$!
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/health && break; sleep 1; done
+          TOKEN=$(curl -sf -X POST http://127.0.0.1:8000/dev/scoped-token -H 'content-type: application/json' -d '{"tenant_id":"synth-acme-services"}' | python -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+          curl -sf "http://127.0.0.1:8000/teaser?tenant=synth-acme-services" -H "authorization: Bearer $TOKEN" | python -c 'import json,sys; f=json.load(sys.stdin); assert f["team"]=="teaser" and f["impact_usd"]>0, f; print(f["headline"])'
+          kill $ENGINE_PID
+          cat engine.log
 
   web:
     runs-on: ubuntu-latest
@@ -28,4 +37,5 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
+      - run: npm run typecheck
       - run: npm run build
