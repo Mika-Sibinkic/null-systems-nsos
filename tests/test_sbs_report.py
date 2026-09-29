@@ -64,9 +64,9 @@ def test_every_column_carries_all_scoring_layers():
         # metrics
         assert c.ebitda_uplift_pct >= 0.0
         assert c.payback_months >= 0.0
-        # wwmd
-        assert 0.0 <= c.wwmd_score <= 1.0
-        assert 0.0 <= c.wwmd_confidence <= 1.0
+        # wwod
+        assert 0.0 <= c.wwod_score <= 1.0
+        assert 0.0 <= c.wwod_confidence <= 1.0
         # pillar grade
         assert c.grade in ("A", "B", "C", "D", "F")
         assert 0.0 <= c.pillar_aggregate <= 1.0
@@ -87,8 +87,8 @@ def test_recommendation_prefers_deployable_high_conviction():
     rec = next(c for c in sbs.columns if c.sow_id == sbs.recommended_sow_id)
     deployable = [c for c in sbs.columns if not c.blockers]
     if deployable:
-        # recommendation must be the max-WWMD among deployable
-        assert rec.wwmd_score == max(c.wwmd_score for c in deployable)
+        # recommendation must be the max-WWOD among deployable
+        assert rec.wwod_score == max(c.wwod_score for c in deployable)
 
 
 def test_markdown_table_renders_all_columns():

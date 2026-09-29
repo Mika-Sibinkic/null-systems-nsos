@@ -1,4 +1,4 @@
-"""Tests for WWMD SOW scoring (P3.T2)."""
+"""Tests for WWOD SOW scoring (P3.T2)."""
 import importlib
 import json
 import sys
@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-wwmd = importlib.import_module("engine.sow.wwmd_score")
+wwod = importlib.import_module("engine.sow.wwod_score")
 assembly = importlib.import_module("engine.sow.assembly")
 findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
 
@@ -24,15 +24,15 @@ def _real_sows():
 
 def test_every_sow_gets_a_score():
     sows = _real_sows()
-    scores = wwmd.score_sows(sows)
+    scores = wwod.score_sows(sows)
     assert len(scores) == len(sows)
     for s in scores:
-        assert 0.0 <= s.wwmd_score <= 1.0
+        assert 0.0 <= s.wwod_score <= 1.0
         assert 0.0 <= s.confidence <= 1.0
 
 
 def test_score_carries_gaps_list():
-    scores = wwmd.score_sows(_real_sows())
+    scores = wwod.score_sows(_real_sows())
     for s in scores:
         assert isinstance(s.gaps, list)
 
@@ -50,8 +50,8 @@ def test_cold_start_falls_back_to_prior_not_zero():
         "finding_ids": ["f1", "f2"],
         "source": ["accounting.x=1", "accounting.y=2"],
     }
-    sc = wwmd.score_sow(big_sow)
-    assert sc.wwmd_score > 0.3, "large well-evidenced SOW should not score near zero at cold start"
+    sc = wwod.score_sow(big_sow)
+    assert sc.wwod_score > 0.3, "large well-evidenced SOW should not score near zero at cold start"
     assert sc.prior_signal > 0.0
 
 
@@ -62,7 +62,7 @@ def test_higher_impact_scores_higher_all_else_equal():
     }
     low = dict(base, id="low", impact_usd=200_000.0)
     high = dict(base, id="high", impact_usd=1_800_000.0)
-    assert wwmd.score_sow(high).wwmd_score > wwmd.score_sow(low).wwmd_score
+    assert wwod.score_sow(high).wwod_score > wwod.score_sow(low).wwod_score
 
 
 def test_low_confidence_sow_flags_gap():
@@ -71,7 +71,7 @@ def test_low_confidence_sow_flags_gap():
         "impact_hours": 0.0, "confidence": 0.3, "finding_ids": ["x"],
         "source": ["s1"],
     }
-    sc = wwmd.score_sow(weak)
+    sc = wwod.score_sow(weak)
     assert any("confidence" in g.lower() for g in sc.gaps)
 
 
@@ -81,24 +81,24 @@ def test_single_finding_thrust_flags_thin_corroboration():
         "impact_hours": 0.0, "confidence": 0.8, "finding_ids": ["only"],
         "source": ["s1"],
     }
-    sc = wwmd.score_sow(solo)
+    sc = wwod.score_sow(solo)
     assert any("single-finding" in g.lower() or "corroboration" in g.lower() for g in sc.gaps)
 
 
-def test_attach_scores_embeds_wwmd_block():
+def test_attach_scores_embeds_wwod_block():
     sows = _real_sows()
-    enriched = wwmd.attach_scores(sows)
+    enriched = wwod.attach_scores(sows)
     assert len(enriched) == len(sows)
     for d in enriched:
-        assert "wwmd" in d
-        assert "wwmd_score" in d["wwmd"]
-        assert "gaps" in d["wwmd"]
+        assert "wwod" in d
+        assert "wwod_score" in d["wwod"]
+        assert "gaps" in d["wwod"]
 
 
 def test_no_new_dollar_numbers_minted():
-    """WWMD scores the push, not the impact — it must not alter impact_usd."""
+    """WWOD scores the push, not the impact — it must not alter impact_usd."""
     sows = _real_sows()
-    enriched = wwmd.attach_scores(sows)
+    enriched = wwod.attach_scores(sows)
     by_id = {s.id: s for s in sows}
     for d in enriched:
         assert d["impact_usd"] == by_id[d["id"]].impact_usd

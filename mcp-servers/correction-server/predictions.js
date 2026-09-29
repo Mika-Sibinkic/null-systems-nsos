@@ -20,7 +20,7 @@ const RESIDUALS_FILE = join(CORRECTIONS_DIR, 'residuals.json');
 // ── Phase Thresholds ───────────────────────────────────────────────────────
 
 // Phase thresholds are intentionally HIGH — the model must EARN the right to stop asking.
-// Mika's instruction: "the model shouldn't be shy with questions"
+// Operator instruction: "the model shouldn't be shy with questions"
 const PHASE_THRESHOLDS = {
   ACTIVE: { minPredictions: 0, minAccuracy: 0 },
   GUIDED: { minPredictions: 20, minAccuracy: 0.6 },
@@ -118,13 +118,13 @@ export function logPrediction({
 }
 
 /**
- * Log the outcome after Mika responds to a prediction.
+ * Log the outcome after the operator responds to a prediction.
  */
 export function logOutcome({
   prediction_id,
   actual,
   outcome_type,
-  mika_words = '',
+  operator_words = '',
 }) {
   const predictions = loadPredictions();
   const residuals = loadResiduals();
@@ -144,7 +144,7 @@ export function logOutcome({
 
   // Update prediction record
   pred.outcome = actual;  pred.outcome_type = outcome_type;
-  pred.mika_words = mika_words;
+  pred.operator_words = operator_words;
   pred.residual = computedResidual;
   pred.prediction_correct = predictionCorrect;
   savePredictions(predictions);
@@ -287,7 +287,7 @@ export function getLearningPhase(category) {
 }
 
 /**
- * Trigger a reality check — returns the top assumptions that need Mika's validation.
+ * Trigger a reality check — returns the top assumptions that need the operator's validation.
  */
 export function triggerRealityCheck() {  const predictions = loadPredictions();
   const residuals = loadResiduals();
@@ -323,7 +323,7 @@ export function triggerRealityCheck() {  const predictions = loadPredictions();
     .slice(0, 5);
 
   return {
-    trigger_reason: 'Periodic reality check — validating assumptions against Mika',
+    trigger_reason: 'Periodic reality check — validating assumptions against the operator',
     top_assumptions: assumptions.map((a, i) => ({
       rank: i + 1,
       assumption: `For ${a.category} decisions: "${a.prediction}"`,
@@ -332,7 +332,7 @@ export function triggerRealityCheck() {  const predictions = loadPredictions();
       ever_explicitly_confirmed: a.ever_confirmed,
       risk_level: a.risk_score > 5 ? 'HIGH' : a.risk_score > 2 ? 'MEDIUM' : 'LOW',
     })),
-    instructions: 'Present these to Mika and ask for explicit confirmation or correction. Log outcomes for each.',
+    instructions: 'Present these to the operator and ask for explicit confirmation or correction. Log outcomes for each.',
   };
 }
 

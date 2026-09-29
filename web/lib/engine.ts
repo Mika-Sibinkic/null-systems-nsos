@@ -71,8 +71,8 @@ export interface SOWColumn {
   confidence: number;
   ebitda_uplift_pct: number;
   payback_months: number;
-  wwmd_score: number;
-  wwmd_confidence: number;
+  wwod_score: number;
+  wwod_confidence: number;
   grade: string;
   pillar_aggregate: number;
   blockers: string[];

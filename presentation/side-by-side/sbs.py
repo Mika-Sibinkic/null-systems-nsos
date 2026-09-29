@@ -7,8 +7,8 @@ intuition call about direction, not an arithmetic exercise.
 
 Design (deterministic, offline, source-traced):
 
-  1. Each SOW candidate is enriched with its three scoring layers — WWMD push
-     score (`engine.sow.wwmd_score`), 5-pillar deployability grade
+  1. Each SOW candidate is enriched with its three scoring layers — WWOD push
+     score (`engine.sow.wwod_score`), 5-pillar deployability grade
      (`engine.sow.pillar_grade`), and quantified metrics
      (`engine.sow.metrics`). No new dollar numbers are minted here; this layer
      only *arranges* numbers that already carry a `source[]` + confidence, so the
@@ -19,7 +19,7 @@ Design (deterministic, offline, source-traced):
   3. The matrix renders to a markdown table the report generator embeds, plus a
      machine-readable dict the web SOW-review UI (P4.T2) consumes.
 
-The recommendation pointer ("our pick") is the highest WWMD-pushed candidate that
+The recommendation pointer ("our pick") is the highest WWOD-pushed candidate that
 clears the deployability block threshold — the consultant's honest lead, with the
 gaps shown alongside so it is never a blind push (Karpathy human-in-loop).
 """
@@ -31,7 +31,7 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Sequence
 
-_wwmd = importlib.import_module("engine.sow.wwmd_score")
+_wwod = importlib.import_module("engine.sow.wwod_score")
 _grade = importlib.import_module("engine.sow.pillar_grade")
 _metrics = importlib.import_module("engine.sow.metrics")
 
@@ -42,7 +42,7 @@ ROWS: list[tuple[str, str]] = [
     ("ebitda_uplift_pct", "EBITDA lift"),
     ("payback_months", "Payback"),
     ("impact_hours", "Leadership hours freed / yr"),
-    ("wwmd_score", "Consultant conviction"),
+    ("wwod_score", "Consultant conviction"),
     ("grade", "Deployability grade"),
     ("confidence", "Evidence confidence"),
     ("key_gap", "Key thing to firm up"),
@@ -66,8 +66,8 @@ class SBSColumn:
     confidence: float
     ebitda_uplift_pct: float
     payback_months: float
-    wwmd_score: float
-    wwmd_confidence: float
+    wwod_score: float
+    wwod_confidence: float
     grade: str
     pillar_aggregate: float
     blockers: list[str] = field(default_factory=list)
@@ -105,8 +105,8 @@ def _format_cell(key: str, col: SBSColumn) -> str:
         return "—" if col.payback_months in (None, float("inf")) else f"{col.payback_months:.0f} mo"
     if key == "impact_hours":
         return f"{col.impact_hours:.0f} hrs/yr" if col.impact_hours else "—"
-    if key == "wwmd_score":
-        return f"{col.wwmd_score:.0%}"
+    if key == "wwod_score":
+        return f"{col.wwod_score:.0%}"
     if key == "grade":
         return col.grade + (" ⚠" if col.blockers else "")
     if key == "confidence":
@@ -122,11 +122,11 @@ def build_columns(
     *,
     engagement_cost_usd: float | None = None,
 ) -> list[SBSColumn]:
-    """Enrich each SOW candidate with WWMD + pillar grade + metrics -> a column."""
+    """Enrich each SOW candidate with WWOD + pillar grade + metrics -> a column."""
     cost_kw = {} if engagement_cost_usd is None else {"engagement_cost_usd": engagement_cost_usd}
     cols: list[SBSColumn] = []
     for s in sows:
-        w = _wwmd.score_sow(s)
+        w = _wwod.score_sow(s)
         g = _grade.grade_sow(s)
         m = _metrics.metrics_for(s, baseline, **cost_kw)
         gaps = list(w.gaps)
@@ -141,8 +141,8 @@ def build_columns(
                 confidence=float(_attr(s, "confidence", 0.0) or 0.0),
                 ebitda_uplift_pct=m.ebitda_uplift_pct,
                 payback_months=m.payback_months,
-                wwmd_score=w.wwmd_score,
-                wwmd_confidence=w.confidence,
+                wwod_score=w.wwod_score,
+                wwod_confidence=w.confidence,
                 grade=g.grade,
                 pillar_aggregate=g.aggregate,
                 blockers=list(g.blockers),
@@ -155,14 +155,14 @@ def build_columns(
 
 
 def _recommend(columns: Sequence[SBSColumn]) -> str | None:
-    """The consultant's honest lead: highest WWMD push among deployable (no
-    blocking pillar) candidates; falls back to highest WWMD overall if every
+    """The consultant's honest lead: highest WWOD push among deployable (no
+    blocking pillar) candidates; falls back to highest WWOD overall if every
     candidate carries a blocker (so we always name a pick, never hide)."""
     if not columns:
         return None
     deployable = [c for c in columns if not c.blockers]
     pool = deployable or list(columns)
-    return max(pool, key=lambda c: (c.wwmd_score, c.impact_usd)).sow_id
+    return max(pool, key=lambda c: (c.wwod_score, c.impact_usd)).sow_id
 
 
 def build_side_by_side(
@@ -195,7 +195,7 @@ def render_markdown(sbs: SideBySide) -> str:
         if rec:
             out += (
                 f"\n\n**Our recommendation: {rec.title}** — strongest consultant "
-                f"conviction ({rec.wwmd_score:.0%}) at a deployability grade of "
+                f"conviction ({rec.wwod_score:.0%}) at a deployability grade of "
                 f"{rec.grade}."
             )
             if rec.gaps:

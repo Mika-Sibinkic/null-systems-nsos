@@ -57,7 +57,7 @@ function classifyCorrection(userMsg, prevAssistantMsg) {
     if (regex.test(trimmed)) {
       return {
         pattern_id: 1,
-        pattern_name: 'permission-seeking',        mika_exact_words: trimmed,
+        pattern_name: 'permission-seeking',        operator_exact_words: trimmed,
         detection_rule: 'If the action is the obvious next step and tests pass, execute without asking',
         severity: isShortResponse ? 'high' : 'medium'
       };
@@ -69,7 +69,7 @@ function classifyCorrection(userMsg, prevAssistantMsg) {
       return {
         pattern_id: 2,
         pattern_name: 'memory-neglect',
-        mika_exact_words: trimmed,
+        operator_exact_words: trimmed,
         detection_rule: 'Update checkpoint.md after every deploy, test batch, or 30+ min of work',
         severity: 'medium'
       };
@@ -81,7 +81,7 @@ function classifyCorrection(userMsg, prevAssistantMsg) {
       return {
         pattern_id: 4,
         pattern_name: 'premature-victory',
-        mika_exact_words: trimmed,
+        operator_exact_words: trimmed,
         detection_rule: 'Label partial results as partial. Never claim full success on subset data.',
         severity: 'high'
       };
@@ -92,7 +92,7 @@ function classifyCorrection(userMsg, prevAssistantMsg) {
       return {
         pattern_id: 7,
         pattern_name: 'incomplete-reporting',
-        mika_exact_words: trimmed,
+        operator_exact_words: trimmed,
         detection_rule: 'Label every result with its status. Never present partial data as final.',
         severity: 'medium'
       };
@@ -105,7 +105,7 @@ function classifyCorrection(userMsg, prevAssistantMsg) {
       return {
         pattern_id: 0,
         pattern_name: 'frustration-signal',
-        mika_exact_words: trimmed,
+        operator_exact_words: trimmed,
         detection_rule: 'Frustration detected — review preceding action for anti-pattern match',
         severity: 'high'
       };
@@ -174,7 +174,7 @@ export function parseSession(sessionPath) {
           timestamp: entry.timestamp || new Date().toISOString(),
           context: `Assistant was: ${prevAssistantContext}`,
           what_model_did: `(See assistant context above — model's last action before correction)`,
-          what_mika_wanted: `(Inferred from correction: ${classification.detection_rule})`        });
+          what_operator_wanted: `(Inferred from correction: ${classification.detection_rule})`        });
       }
     }
   }

@@ -69,7 +69,7 @@
     },
     "escalated_to_tier_2": {
       "type": "boolean",
-      "description": "Whether this required Mika's input"
+      "description": "Whether this required the operator's input"
     }
   }
 }

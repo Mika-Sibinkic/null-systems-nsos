@@ -64,7 +64,7 @@
     },
     "flagged_for_review": {
       "type": "boolean",
-      "description": "True if any dimension is <3.0 or overall score needs Mika review"
+      "description": "True if any dimension is <3.0 or overall score needs operator review"
     }
   }
 }

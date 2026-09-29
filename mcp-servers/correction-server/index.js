@@ -15,7 +15,7 @@
  *
  * Tools (v9 — Predictions & Learning Loop):
  *   log_prediction          — Record a prediction before acting/presenting options
- *   log_outcome             — Record Mika's actual response after a prediction
+ *   log_outcome             — Record the operator's actual response after a prediction
  *   get_residuals           — View current accuracy and residuals by category
  *   get_learning_phase      — Check learning phase for a category
  *   trigger_reality_check   — Force assumption validation (anti-hallucination)
@@ -80,7 +80,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({  tools: [
           query: {
             type: 'string',
             description:
-              'Keywords describing the current task/action (e.g., "deploying to production", "running full batch test", "reporting results to Mika")',
+              'Keywords describing the current task/action (e.g., "deploying to production", "running full batch test", "reporting results to the operator")',
           },          limit: {
             type: 'number',
             description: 'Max corrections to return (default: 10)',
@@ -93,7 +93,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({  tools: [
     {
       name: 'log_correction',
       description:
-        'Record a correction that Mika just gave. Call this whenever you detect that Mika\'s message is correcting something you did wrong (not a new instruction). The correction is indexed permanently and will be served to future sessions.',
+        'Record a correction that the operator just gave. Call this whenever you detect that the operator\'s message is correcting something you did wrong (not a new instruction). The correction is indexed permanently and will be served to future sessions.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -112,15 +112,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({  tools: [
             description: 'What you were doing when the correction happened',
           },          what_model_did: {
             type: 'string',
-            description: 'The specific action or output Mika is correcting',
+            description: 'The specific action or output the operator is correcting',
           },
-          what_mika_wanted: {
+          what_operator_wanted: {
             type: 'string',
-            description: 'What Mika wanted instead',
+            description: 'What the operator wanted instead',
           },
-          mika_exact_words: {
+          operator_exact_words: {
             type: 'string',
-            description: "Mika's exact words (the correction message)",
+            description: "The operator's exact words (the correction message)",
           },
           detection_rule: {
             type: 'string',
@@ -137,8 +137,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({  tools: [
           'pattern_name',
           'context',
           'what_model_did',
-          'what_mika_wanted',
-          'mika_exact_words',
+          'what_operator_wanted',
+          'operator_exact_words',
         ],      },
     },
     {
@@ -185,7 +185,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({  tools: [
           },
           prediction: {
             type: 'string',
-            description: 'What you predict Mika would choose/want',
+            description: 'What you predict the operator would choose/want',
           },
           confidence: {
             type: 'number',
@@ -193,7 +193,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({  tools: [
           },
           evidence_source: {
             type: 'string',
-            description: 'Citation: correction ID, session reference, or stated Mika preference that supports this prediction',
+            description: 'Citation: correction ID, session reference, or stated operator preference that supports this prediction',
           },
           alternatives: {            type: 'array',
             items: { type: 'string' },
@@ -206,7 +206,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({  tools: [
     {
       name: 'log_outcome',
       description:
-        'Record what Mika actually chose/said after a prediction was made. This updates residuals and may trigger phase transitions. Outcome types: explicit_confirm (strong learning), no_correction (weak learning), correction (residual grows), redirect (residual grows fast), frustration (maximum residual growth).',
+        'Record what the operator actually chose/said after a prediction was made. This updates residuals and may trigger phase transitions. Outcome types: explicit_confirm (strong learning), no_correction (weak learning), correction (residual grows), redirect (residual grows fast), frustration (maximum residual growth).',
       inputSchema: {
         type: 'object',
         properties: {
@@ -216,15 +216,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({  tools: [
           },
           actual: {
             type: 'string',
-            description: 'What Mika actually chose or wanted',
+            description: 'What the operator actually chose or wanted',
           },
           outcome_type: {
             type: 'string',
             enum: ['explicit_confirm', 'no_correction', 'correction', 'redirect', 'frustration'],
-            description: 'How Mika responded',
+            description: 'How the operator responded',
           },
-          mika_words: {
-            type: 'string',            description: "Mika's exact words (if applicable)",
+          operator_words: {
+            type: 'string',            description: "The operator's exact words (if applicable)",
           },
         },
         required: ['prediction_id', 'actual', 'outcome_type'],
@@ -256,7 +256,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({  tools: [
     },    {
       name: 'trigger_reality_check',
       description:
-        'Force a reality check — surfaces top assumptions that need Mika\'s explicit validation. Use this every 5 sessions OR when 3+ sessions pass without any corrections (to catch self-affirming loops). Returns assumptions ranked by risk.',
+        'Force a reality check — surfaces top assumptions that need the operator\'s explicit validation. Use this every 5 sessions OR when 3+ sessions pass without any corrections (to catch self-affirming loops). Returns assumptions ranked by risk.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -308,8 +308,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           pattern_name: args?.pattern_name,
           context: args?.context,
           what_model_did: args?.what_model_did,
-          what_mika_wanted: args?.what_mika_wanted,
-          mika_exact_words: args?.mika_exact_words,
+          what_operator_wanted: args?.what_operator_wanted,
+          operator_exact_words: args?.operator_exact_words,
           detection_rule: args?.detection_rule ?? '',          severity: args?.severity ?? 'medium',
           session_id: process.env.SESSION_ID || 'unknown',
         });
@@ -387,7 +387,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           prediction_id: args?.prediction_id,
           actual: args?.actual,
           outcome_type: args?.outcome_type,
-          mika_words: args?.mika_words || '',
+          operator_words: args?.operator_words || '',
         });
         if (result.error) {
           return { content: [{ type: 'text', text: `Error: ${result.error}` }], isError: true };

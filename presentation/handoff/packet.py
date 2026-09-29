@@ -10,11 +10,11 @@ measure predicted-vs-realized against.
 Design (deterministic, offline, source-traced):
 
   - The packet is assembled from the run's committed artifacts — the side-by-side
-    columns (already carry WWMD push, pillar grade, metrics, gaps, source[]) and
+    columns (already carry WWOD push, pillar grade, metrics, gaps, source[]) and
     the firm profile. No new dollar number is minted; every figure in the packet
     traces to a `source[]` line, so the grounded-numbers contract holds at the
     handoff boundary too.
-  - `gaps` from WWMD + pillar `blockers` become the FDE's *validation checklist*
+  - `gaps` from WWOD + pillar `blockers` become the FDE's *validation checklist*
     (the honest "confirm before deploying" list — Karpathy human-in-loop carried
     all the way to the engagement).
   - The packet exports as both machine-readable JSON (engine/flywheel consumption)
@@ -53,7 +53,7 @@ class HandoffPacket:
     payback_months: float
     confidence: float
     # scoring carried into the engagement
-    wwmd_score: float
+    wwod_score: float
     deployability_grade: str
     # the FDE's honest pre-deploy checklist
     validation_checklist: list[str] = field(default_factory=list)
@@ -125,7 +125,7 @@ def build_packet(
         ebitda_uplift_pct=float(col.get("ebitda_uplift_pct", 0.0) or 0.0),
         payback_months=col.get("payback_months"),
         confidence=float(col.get("confidence", 0.0) or 0.0),
-        wwmd_score=float(col.get("wwmd_score", 0.0) or 0.0),
+        wwod_score=float(col.get("wwod_score", 0.0) or 0.0),
         deployability_grade=col.get("grade", "?"),
         validation_checklist=checklist,
         deployability_blockers=blockers,
@@ -155,7 +155,7 @@ def render_markdown(p: HandoffPacket) -> str:
         lines.append(f"- **Leadership hours freed**: {p.impact_hours:.0f} hours/year")
     lines.append(f"- **Payback**: {payback}")
     lines.append(f"- **Evidence confidence**: {p.confidence:.0%}")
-    lines.append(f"- **Consultant conviction (WWMD)**: {p.wwmd_score:.0%}")
+    lines.append(f"- **Consultant conviction (WWOD)**: {p.wwod_score:.0%}")
     lines.append(f"- **Deployability grade**: {p.deployability_grade}")
     lines.append("")
     lines.append("## Validation checklist (confirm before deploying)\n")
