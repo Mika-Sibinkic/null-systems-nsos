@@ -181,7 +181,7 @@ function SOWCard({
         {col.impact_hours > 0 && (
           <Metric label="Hours freed / yr" value={`${col.impact_hours.toFixed(0)}`} />
         )}
-        <Metric label="Consultant conviction" value={fmtPct(col.wwmd_score)} />
+        <Metric label="Consultant conviction" value={fmtPct(col.wwod_score)} />
         <Metric
           label="Deployability"
           value={`${col.grade}${col.blockers.length ? " ⚠" : ""}`}

@@ -16,3 +16,4 @@ data/
 node_modules/
 dist/
 **/build/
+learning/promotion-gate/ledger.jsonl

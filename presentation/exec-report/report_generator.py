@@ -106,7 +106,7 @@ def render_sow_report(
 
     Unlike `render_executive_report` (a list of findings), this is the *decision*
     report: each SOW carries its quantified metrics (EBITDA lift, payback, hours),
-    its WWMD consultant-conviction score, and its 5-pillar deployability grade —
+    its WWOD consultant-conviction score, and its 5-pillar deployability grade —
     then a side-by-side comparison matrix and a single honest recommendation.
 
     No new numbers are minted: every dollar/hour traces to the SOW's `source[]`,
@@ -145,7 +145,7 @@ def render_sow_report(
         if col.impact_hours:
             lines.append(f"- **Leadership hours freed**: {col.impact_hours:.0f} hours/year")
         lines.append(f"- **Payback**: {payback}")
-        lines.append(f"- **Consultant conviction**: {col.wwmd_score:.0%} (how hard we'd push this)")
+        lines.append(f"- **Consultant conviction**: {col.wwod_score:.0%} (how hard we'd push this)")
         grade_note = f"{col.grade}" + (" — has a deployability flag, see below" if col.blockers else "")
         lines.append(f"- **Deployability grade**: {grade_note}")
         lines.append(

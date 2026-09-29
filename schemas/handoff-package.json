@@ -66,7 +66,7 @@
     "delivery_email_draft": {
       "type": "string",
       "minLength": 100,
-      "description": "Draft email for client announcing delivery (Mika sends)"
+      "description": "Draft email for client announcing delivery (the operator sends)"
     },
     "irl_instructions": {
       "type": "object",
@@ -94,7 +94,7 @@
         },
         "check_in_cadence": {
           "type": "string",
-          "description": "When Mika will check in with client"
+          "description": "When the operator will check in with client"
         },
         "escalation_contacts": {
           "type": "array",

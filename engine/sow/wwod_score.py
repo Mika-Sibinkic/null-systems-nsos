@@ -1,6 +1,6 @@
-"""WWMD scoring — "would a consultant push this SOW?" (P3.T2).
+"""WWOD scoring — "would a consultant push this SOW?" (P3.T2).
 
-WWMD = What Would Mika Do. NSOS's policy model predicts, for each candidate SOW,
+WWOD = "What Would the Operator Do". NSOS's policy model predicts, for each candidate SOW,
 how hard an experienced consultant would push it to the client. The score is a
 blend of two signals:
 
@@ -10,16 +10,16 @@ blend of two signals:
      seen deals like this; here is how hard we pushed."
   2. **Deterministic deal-quality prior** — magnitude of impact, the candidate's
      own confidence, and breadth (how many independent findings corroborate the
-     thrust). This is the offline-safe floor so WWMD still produces a meaningful,
+     thrust). This is the offline-safe floor so WWOD still produces a meaningful,
      reproducible score when the patterns file is empty (cold start / offline /
      test) — never a silent 0.
 
-Output per SOW: `wwmd_score` in [0,1], `confidence` in [0,1], and `gaps[]` — the
+Output per SOW: `wwod_score` in [0,1], `confidence` in [0,1], and `gaps[]` — the
 dimensions a consultant would flag as needing more evidence before pushing. Gaps
 are the honest "what we don't know yet" list (Karpathy human-in-loop hook: a SOW
 with material gaps routes to FDE review, it does not auto-surface).
 
-No new dollar numbers are minted here — WWMD scores the *push*, not the impact,
+No new dollar numbers are minted here — WWOD scores the *push*, not the impact,
 so the grounded-numbers gate is untouched by this layer.
 """
 from __future__ import annotations
@@ -28,7 +28,7 @@ import importlib
 from dataclasses import dataclass, field, asdict
 from typing import Any, Sequence
 
-# lifted reasoning engine (read-only WWMD policy substrate)
+# lifted reasoning engine (read-only WWOD policy substrate)
 _re = importlib.import_module("engine.reasoning.reasoning_engine")
 
 # ── deterministic deal-quality prior knobs ────────────────────────────────────
@@ -42,10 +42,10 @@ PRIOR_WEIGHT = 0.55                   # blend weight on the deterministic prior
 
 
 @dataclass
-class WWMDScore:
+class WWODScore:
     sow_id: str
-    wwmd_score: float          # [0,1] how hard a consultant would push
-    confidence: float          # [0,1] how sure WWMD is of that push
+    wwod_score: float          # [0,1] how hard a consultant would push
+    confidence: float          # [0,1] how sure WWOD is of that push
     learned_signal: float      # raw learned-policy contribution
     prior_signal: float        # raw deterministic-prior contribution
     match_method: str          # which reasoning-engine ladder rung matched
@@ -107,7 +107,7 @@ def _gaps_for(sow: Any, learned_conf: float, match_method: str) -> list[str]:
         )
     if match_method in ("none", "keyword-fallback") or learned_conf == 0.0:
         gaps.append(
-            "no comparable prior engagement in the WWMD policy — first-of-kind push, "
+            "no comparable prior engagement in the WWOD policy — first-of-kind push, "
             "score leans on the deterministic prior"
         )
     if not _attr(sow, "source", []):
@@ -121,7 +121,7 @@ def _gaps_for(sow: Any, learned_conf: float, match_method: str) -> list[str]:
     return gaps
 
 
-def score_sow(sow: Any, *, domain: str | None = "consulting") -> WWMDScore:
+def score_sow(sow: Any, *, domain: str | None = "consulting") -> WWODScore:
     """Score one SOW candidate. Degrades gracefully when no patterns exist."""
     situation = _situation_text(sow)
     try:
@@ -138,11 +138,11 @@ def score_sow(sow: Any, *, domain: str | None = "consulting") -> WWMDScore:
     # blend: when the learned signal is absent (cold start), fall back entirely
     # to the prior rather than dragging the score toward 0.
     if learned_conf <= 0.0:
-        wwmd = prior
+        wwod = prior
     else:
-        wwmd = round(LEARNED_WEIGHT * learned_conf + PRIOR_WEIGHT * prior, 4)
+        wwod = round(LEARNED_WEIGHT * learned_conf + PRIOR_WEIGHT * prior, 4)
 
-    # WWMD's own confidence: high when both signals agree and a real pattern
+    # WWOD's own confidence: high when both signals agree and a real pattern
     # matched; low at cold start.
     agreement = 1.0 - abs(learned_conf - prior) if learned_conf > 0 else 0.5
     method_bonus = 0.0 if match_method in ("none", "keyword-fallback") else 0.2
@@ -150,9 +150,9 @@ def score_sow(sow: Any, *, domain: str | None = "consulting") -> WWMDScore:
 
     gaps = _gaps_for(sow, learned_conf, match_method)
 
-    return WWMDScore(
+    return WWODScore(
         sow_id=_attr(sow, "id", "unknown"),
-        wwmd_score=round(min(1.0, wwmd), 4),
+        wwod_score=round(min(1.0, wwod), 4),
         confidence=confidence,
         learned_signal=round(learned_conf, 4),
         prior_signal=prior,
@@ -162,16 +162,16 @@ def score_sow(sow: Any, *, domain: str | None = "consulting") -> WWMDScore:
     )
 
 
-def score_sows(sows: Sequence[Any], *, domain: str | None = "consulting") -> list[WWMDScore]:
+def score_sows(sows: Sequence[Any], *, domain: str | None = "consulting") -> list[WWODScore]:
     """Score a list of SOW candidates; preserves input order."""
     return [score_sow(s, domain=domain) for s in sows]
 
 
 def attach_scores(sows: Sequence[Any], *, domain: str | None = "consulting") -> list[dict]:
-    """Return each SOW as a dict with a `wwmd` block attached (for the report layer)."""
+    """Return each SOW as a dict with a `wwod` block attached (for the report layer)."""
     out: list[dict] = []
     for s in sows:
         d = s.to_dict() if hasattr(s, "to_dict") else dict(s)
-        d["wwmd"] = score_sow(s, domain=domain).to_dict()
+        d["wwod"] = score_sow(s, domain=domain).to_dict()
         out.append(d)
     return out

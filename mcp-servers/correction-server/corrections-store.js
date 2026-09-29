@@ -114,8 +114,8 @@ export function logCorrection(correction) {
   // Generate keywords from all text fields
   const textFields = [
     correction.context,
-    correction.what_model_did,    correction.what_mika_wanted,
-    correction.mika_exact_words,
+    correction.what_model_did,    correction.what_operator_wanted,
+    correction.operator_exact_words,
     correction.detection_rule,
     correction.pattern_name
   ].filter(Boolean);
@@ -258,8 +258,8 @@ function formatCorrection(corr) {
     pattern_name: corr.pattern_name,
     context: corr.context,
     what_model_did: corr.what_model_did,
-    what_mika_wanted: corr.what_mika_wanted,
-    mika_exact_words: corr.mika_exact_words,
+    what_operator_wanted: corr.what_operator_wanted,
+    operator_exact_words: corr.operator_exact_words,
     detection_rule: corr.detection_rule,    severity: corr.severity
   };
 }

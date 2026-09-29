@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""promotion_gate.py — laptop-side copy. Identical to the Dell-staging copy.
-The Dell pipeline writes proposals; the laptop pulls them and runs this gate
-against the local null-systems-nsos repo (which has the test suite).
+"""promotion_gate.py — regression + performance gate for internal-pipeline promotions.
+
+A proposal (markdown) is promoted only when every gate passes: the regression
+suite, the gauntlet score within tolerance of baseline, the performance delta,
+council corroboration, and an explicit operator sign-off checkbox. Each
+evaluation is appended to a local ledger (gitignored).
 """
 from __future__ import annotations
 import json, sys, subprocess
@@ -86,13 +89,13 @@ def council_corroboration(proposal_path: Path) -> dict:
     }
 
 
-def mika_checkbox(proposal_path: Path) -> dict:
+def operator_checkbox(proposal_path: Path) -> dict:
     if not proposal_path.exists():
-        return {"gate": "mika", "pass": False, "reason": "proposal file not found"}
+        return {"gate": "operator", "pass": False, "reason": "proposal file not found"}
     md = proposal_path.read_text()
     return {
-        "gate": "mika",
-        "pass": "- [x] Mika reviewed" in md,
+        "gate": "operator",
+        "pass": "- [x] Operator reviewed" in md,
     }
 
 
@@ -102,7 +105,7 @@ def evaluate_proposal(proposal_path: Path, repo_path: Path = REPO_ROOT) -> dict:
         gauntlet_score_check(repo_path),
         performance_analyzer(repo_path),
         council_corroboration(proposal_path),
-        mika_checkbox(proposal_path),
+        operator_checkbox(proposal_path),
     ]
     overall = all(r.get("pass") for r in results)
     return {

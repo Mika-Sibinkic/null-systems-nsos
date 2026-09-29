@@ -38,7 +38,7 @@ class Memory:
     id: str
     agent_tier: str  # "T0", "T1", "T2", "T3"
     agent_role: str  # e.g., "Conductor", "ProjectManager", "DataValidator"
-    project: str  # e.g., "NSOS", "a client", "a lending client"
+    project: str  # e.g., "NSOS", "ProjectAlpha", "ProjectBravo"
     category: str  # "fact" | "insight" | "decision" | "warning" | "preference"
     content: str  # The actual memory content
     confidence: float  # 0.0-1.0, credibility score
@@ -115,7 +115,7 @@ class AgentMemoryStore:
         Args:
             agent_tier: "T0", "T1", "T2", or "T3"
             agent_role: Human-readable role (e.g., "Conductor", "DataValidator")
-            project: Project name (e.g., "NSOS", "a client")
+            project: Project name (e.g., "NSOS", "ProjectAlpha")
             category: "fact", "insight", "decision", "warning", or "preference"
             content: The memory content (string)
             confidence: 0.0-1.0 credibility score

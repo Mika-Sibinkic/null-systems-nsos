@@ -9,7 +9,7 @@ the real grounded_numbers + quality_judge probes:
       -> financial meta-team -> grounded findings
         -> council (recursive-weight rank + debate)
           -> SOW assembly -> 2-3 candidates
-            -> WWMD + pillar grade + metrics -> side-by-side
+            -> WWOD + pillar grade + metrics -> side-by-side
               -> CEO decision report (quality_judge-gated)
                 -> FDE handoff packet
                   -> outcome flywheel prediction row
@@ -92,7 +92,7 @@ def _run_full_pipe(tmp_path):
     sows = assembly.assemble_sows(findings, council_scores=council_scores, artifacts_dir=sow_dir)
     assert 2 <= len(sows) <= 3
 
-    # 5. side-by-side (WWMD + pillar grade + metrics) -> web-renderable artifact
+    # 5. side-by-side (WWOD + pillar grade + metrics) -> web-renderable artifact
     sbs = sbs_mod.build_side_by_side(sows, baseline)
     sbs_mod.write_artifact(sbs, RUN_DIR / "presentation" / "side-by-side.json")
 
@@ -133,7 +133,7 @@ def test_e2e_pipe_produces_scored_sows(tmp_path):
     for c in sbs.columns:
         assert c.impact_usd > 0
         assert c.grade in ("A", "B", "C", "D", "F")
-        assert 0.0 <= c.wwmd_score <= 1.0
+        assert 0.0 <= c.wwod_score <= 1.0
         assert c.source
     assert sbs.recommended_sow_id in {c.sow_id for c in sbs.columns}
 
