@@ -1,85 +1,51 @@
-STAGE: internal-solo
+# NSOS — agent instructions for this repo
 
-# NSOS — Operator Agent Manual
+Instructions for any coding agent (or human) working in this codebase.
 
-> Instructions for any Claude Code agent working on this productized NSOS codebase.
+## What this is
 
-## Build mode (active)
-
-When executing the build (`build/`), authorization is the standing perma-greenlight in
-`build/GREENLIGHT.md` — Tier 0/1/2 act-without-asking; only the 6 Tier-3 hard stops pause you.
-This **overrides** the "Tier 2 → surface first" rule below for build-time work at `internal-solo`
-stage (flagged in `build/MEMORY.md`; reverts at `client-mvp`). No-silent-fail: `build/BLOCKER-PROTOCOL.md`.
-Map of the product + state + roadmap: `docs/PRODUCT.md`, `docs/STATE.md`, `docs/ROADMAP.md`.
-
-## Operator profile (canonical, machine-wide)
-
-@~/.claude/operator-profile/mika.md
-@~/.claude/operator-profile/communication-rules.md
-
-## Capability menu
-
-Reference the index at `~/path/to/private-framework/.claude/index/CAPABILITY_INDEX.md` BEFORE planning any non-trivial task. It enumerates every MCP / skill / CLI / script / integration / external signal available.
-
-## What this codebase is
-
-NSOS is the **consultation and diagnostic** arm of Null Systems. Multi-tenant. Generates executive-language opportunity scope from client firm data. Confirmed scope hands off to FDEs.
-
-This repo is a **fork** of the architectural DNA from the personal NSOS at `business-framework/Active Projects/NSOS/`. The personal version stays in place untouched — *do not modify it from here*.
+NSOS is a diagnostic engine for small and mid-sized firms: it ingests a firm's
+data snapshot, runs question batteries per domain team, ranks findings in a
+council, bundles them into 2–3 scored statements of work, and renders a
+CEO-language report. Client-facing name: "Vinny". See `README.md` and
+`docs/ARCHITECTURE.md` first, then `docs/STATE.md` (what is built) and
+`docs/ROADMAP.md` (what is next).
 
 ## Layer ownership
 
-| Layer | Purpose | Source |
-|-------|---------|--------|
-| `client/` | Tenant-specific code (per-firm onboarding, adapters, snapshots) | NEW |
-| `engine/reasoning/` | Predict / compare / extract / update cycle | LIFTED (verbatim) |
-| `engine/gaps/` | Open reasoning gap detection + impact scoring | LIFTED (verbatim) |
-| `engine/prediction-residual/` | Predict → measure → residual loop | LIFTED (verbatim) |
-| `engine/vector-index/` | Hybrid BM25 + TF-IDF semantic search | LIFTED (verbatim) |
-| `engine/cascade-handler/` | 7 recovery strategies, provider-agnostic | LIFTED (verbatim) |
-| `engine/router/` | NIM primary + Groq/Cerebras/Anthropic fallbacks | LIFTED (sanitized + generalized) |
-| `engine/gauntlets/` | JSONL-defined hardcoded question batteries | LIFTED (sanitized) + NEW question sets |
-| `engine/meta-levels/{financial,operational,organizational,customer,technology,strategic}/` | One folder per agent team | NEW |
-| `engine/council/` | Debate protocol + recursive-weight scoring | NEW |
-| `learning/rl/` | RL-style cross-run learning | NEW |
-| `learning/external-signals/` | HN / GH / Reddit pollers | NEW |
-| `learning/self-triggers/` | Cron NSOS sets for itself | NEW |
-| `learning/promotion-gate/` | Regression + perf gate for internal-pipeline promotions | NEW |
-| `presentation/` | CEO-language report + side-by-side + narrative | NEW |
-| `mcp-servers/correction-server/` | Indexed corrections | LIFTED (rebrand) |
-| `mcp-servers/nsos-server/` | Engine exposed via MCP | NEW |
+| Layer | Purpose |
+|---|---|
+| `client/` | Tenant-specific code: onboarding, connector adapters, snapshots (gitignored except the synthetic example) |
+| `engine/` | Reusable diagnostic intelligence: meta-level teams, council, SOW scoring, reasoning, gauntlets, router |
+| `learning/` | Cross-run improvement: outcome flywheel, promotion gate |
+| `presentation/` | Engine output → executive report, side-by-side, FDE handoff packet |
+| `schemas/` | JSON contracts shared across layers |
+| `web/` | Next.js surface (onboarding + diagnostic review); holds only a scoped token, never a connector secret |
+| `mcp-servers/` | MCP servers (correction store, engine exposure) |
+| `examples/` | Synthetic client used by tests and smoke runs |
 
-## How to work in this repo
+## Rules
 
-1. **Read the layer manifest above before touching files** — verbatim-lifted code stays verbatim unless we discover a tenant-coupling bug.
-2. **Use TDD** for any NEW code. Tests live in `tests/`. Fixtures in `tests/fixtures/`.
-3. **Sanitization rules** for any further lift: no "Mika", no "Null Systems", no Dell / Telegram / RustDesk references in code; provider endpoints come from env / config.
-4. **Council protocol changes** require a regression run — gauntlet score must stay within ±5 of the lifted baseline (74.6).
-5. **Synthetic client examples** are the smoke-test target. Any engine change must pass `examples/synthetic-client-a/`.
-
-## Claude / NIM separation (immutable)
-
-- **Every LLM call goes through NIM** via `engine/router/nim_client.py`. Default model `meta/llama-3.3-70b-instruct`.
-- **Claude Code is the decision-maker, never a worker.** Invoked in exactly one place: `vinny-dispatch/router/orchestrator.py`, headless with zero tools. It classifies user intent and emits a JSON plan of NIM task_specs.
-- **All recurring work runs on the Dell G7.** No Mac cron / launchd / background loops.
-
-## Don't
-
-- Don't modify the personal NSOS at `business-framework/Active Projects/NSOS/` from this repo. Lift, don't edit-in-place.
-- Don't add tenant-specific code to `engine/`. That belongs in `client/`.
-- Don't write to `presentation/` from `engine/`. The presentation layer pulls from engine outputs; engine doesn't push.
-- Don't import any LLM client outside the two whitelisted modules. `vinny-dispatch/check-nim-only.sh` enforces this.
-- Don't introduce a second LLM provider without explicit Tier 2 approval — NIM is the contract.
-
-## Decision tiers (inherited from operator profile)
-
-- Tier 0/1: just do it.
-- Tier 2 (e.g., new provider, schema change, council weight change): surface to Mika first.
-- Tier 3 (publish to client, spend money, modify personal NSOS): hard stop, always confirm.
-
-## Session startup
-
-1. Read this file
-2. Read `docs/ARCHITECTURE.md`, `docs/COUNCIL-PROTOCOL.md`
-3. Check `checkpoint.md` if it exists
-4. Begin work
+1. **Tests first for new code.** `python -m pytest -q` must stay green; the
+   suite runs offline against `examples/synthetic-client-a` and
+   `client/snapshots/synth-acme-services` with no API keys.
+2. **Every number is grounded.** A finding or metric that carries `impact_usd`
+   or `impact_hours` must carry a source trace and a confidence.
+   `scripts/probes/grounded_numbers.py` enforces this and the tests run it.
+3. **Every LLM call goes through `engine/router/nim_client.py`.** Do not import
+   a second provider client elsewhere. Offline-deterministic modes
+   (`NSOS_JUDGE_OFFLINE_DETERMINISTIC`, `NSOS_EVAL_OFFLINE_DETERMINISTIC`)
+   exist for tests; production stays fail-closed.
+4. **No tenant-specific code in `engine/`.** That belongs in `client/`.
+5. **`presentation/` reads from `engine/` outputs; `engine/` never writes to
+   `presentation/`.**
+6. **No secrets in source, in `web/` client bundles, or in example files.**
+   Everything comes from environment variables. `scripts/probes/pillar5_security.py`
+   scans for hardcoded secrets.
+7. **Operator identity is parameterized** (`OPERATOR_NAME`, `COMPANY_NAME`);
+   never hardcode a person's name.
+8. **Keep docs recursive to code.** Source changes under `engine/ client/ web/
+   learning/ presentation/` should be reflected in `docs/STATE.md` or
+   `docs/ROADMAP.md` in the same change (`scripts/check_docs_sync.py`).
+9. **Architecture-level changes** (new provider, schema change, council weight
+   change) get a decision record under `docs/decisions/` before the code.
