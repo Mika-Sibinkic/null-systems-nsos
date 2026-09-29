@@ -1,4 +1,4 @@
-# NSOS — diagnostic engine for small and mid-sized firms
+# NSOS: diagnostic engine for small and mid-sized firms
 
 NSOS ingests a firm's own data (accounting first; CRM, ops and comms adapters planned), runs domain question batteries against it, ranks the findings in a council, and bundles them into two or three scored statements of work with dollar and hours impact that trace back to source lines. The output is a short decision report written for a CEO, not for an engineer. The client-facing name for the product is "Vinny"; this repo uses NSOS throughout.
 
@@ -6,10 +6,10 @@ Built by [Null Systems](https://github.com/Mika-Sibinkic) as its own product, no
 
 ## Who it is for
 
-- Owners and operators of firms in roughly the $5M–$100M revenue range who feel operational drag but cannot name the dollar figure.
+- Owners and operators of firms in roughly the $5M to $100M revenue range who feel operational drag but cannot name the dollar figure.
 - The consultancy that then scopes and executes the chosen work. Every NSOS run ends in a handoff packet whose numbers, gaps and blockers become the engineer's validation checklist.
 
-## Status (honest)
+## Status
 
 Internal prototype. It runs end to end on one synthetic client and nothing is deployed to a real customer yet.
 
@@ -17,7 +17,7 @@ What works today, all exercised by the test suite from a clean clone with no API
 
 - QuickBooks export → schema-valid tenant snapshot, with connector secrets kept server-side and a scoped token minted for the web layer.
 - Financial meta-team → six grounded findings (vendor and customer concentration, overdue receivables, advisory spend, proposal cycle time, margin). Any `impact_usd` or `impact_hours` without a source trace and a confidence is rejected in-engine, fail-closed.
-- Council ranking (pairwise judge + Borda, with recursive weights for priority alignment, novelty, corroboration and impact) → 2–3 SOW candidates.
+- Council ranking (pairwise judge + Borda, with recursive weights for priority alignment, novelty, corroboration and impact) → 2 to 3 SOW candidates.
 - Per-SOW scoring: consultant-conviction ("would we push this?"), a five-pillar deployability grade, and EBITDA / payback metrics validated by the same grounding probe.
 - CEO-language report, side-by-side comparison, and an FDE handoff packet (JSON + markdown).
 - Outcome flywheel (append-only predicted-vs-realized ledger), idempotent runs with capped retry, and a promotion gate for engine changes.
@@ -27,15 +27,15 @@ What is not built: the other five meta-teams (operational, organizational, custo
 ## Architecture
 
 ```
-client/        — tenant-specific data + onboarding adapters
-engine/        — reusable diagnostic intelligence (lifted + new)
-learning/      — RL-style cross-run improvement + external signal ingestion
-presentation/  — engine output → CEO-language report (markdown / PDF / Notion)
-schemas/       — JSON contracts shared across layers
-mcp-servers/   — Model Context Protocol servers (correction + nsos)
-examples/      — synthetic clients for smoke tests + regression
-deploy/        — docker-compose + deployment notes
-web/           — Next.js surface: onboarding + diagnostic review
+client/        tenant-specific data + onboarding adapters
+engine/        reusable diagnostic intelligence (lifted + new)
+learning/      RL-style cross-run improvement + external signal ingestion
+presentation/  engine output → CEO-language report (markdown / PDF / Notion)
+schemas/       JSON contracts shared across layers
+mcp-servers/   Model Context Protocol servers (correction + nsos)
+examples/      synthetic clients for smoke tests + regression
+deploy/        docker-compose + deployment notes
+web/           Next.js surface: onboarding + diagnostic review
 ```
 
 Flow: `client/` snapshot → `engine/meta-levels/*` findings → `engine/council` ranking → `engine/sow` assembly and scoring → `presentation/` report, side-by-side and handoff → `learning/feedback` outcome ledger. `docs/ARCHITECTURE.md` has the layer diagram; `docs/COUNCIL-PROTOCOL.md` the ranking rules; `docs/decisions/` the recorded architecture choices.
@@ -81,7 +81,7 @@ CI (`.github/workflows/ci.yml`) runs `python -m pytest -q` and `npm ci && npm ru
 
 ## Built with AI agents in the loop
 
-Most commits in this repo were produced with Claude Code and carry a `Co-Authored-By: Claude` trailer. The operator wrote the specs and decision records, reviewed each diff, ran the tests, and verified the outputs before committing. The engine's own correction store (`mcp-servers/correction-server/`) and promotion gate (`learning/promotion-gate/`) exist because that review loop is part of the product design, not just the development process.
+Most commits in this repo were produced with Claude Code and carry a `Co-Authored-By: Claude` trailer. The operator wrote the specs and decision records, reviewed each diff, ran the tests, and verified the outputs before committing. The engine's own correction store (`mcp-servers/correction-server/`) and promotion gate (`learning/promotion-gate/`) exist because that review loop belongs to the product design as much as to the development process.
 
 ## License
 

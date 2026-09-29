@@ -1,4 +1,4 @@
-# NSOS — agent instructions for this repo
+# NSOS: agent instructions for this repo
 
 Instructions for any coding agent (or human) working in this codebase.
 
@@ -6,7 +6,7 @@ Instructions for any coding agent (or human) working in this codebase.
 
 NSOS is a diagnostic engine for small and mid-sized firms: it ingests a firm's
 data snapshot, runs question batteries per domain team, ranks findings in a
-council, bundles them into 2–3 scored statements of work, and renders a
+council, bundles them into 2 to 3 scored statements of work, and renders a
 CEO-language report. Client-facing name: "Vinny". See `README.md` and
 `docs/ARCHITECTURE.md` first, then `docs/STATE.md` (what is built) and
 `docs/ROADMAP.md` (what is next).
@@ -37,8 +37,8 @@ CEO-language report. Client-facing name: "Vinny". See `README.md` and
    (`NSOS_JUDGE_OFFLINE_DETERMINISTIC`, `NSOS_EVAL_OFFLINE_DETERMINISTIC`)
    exist for tests; production stays fail-closed.
 4. **No tenant-specific code in `engine/`.** That belongs in `client/`.
-5. **`presentation/` reads from `engine/` outputs; `engine/` never writes to
-   `presentation/`.**
+5. `presentation/` reads from `engine/` outputs; `engine/` never writes to
+   `presentation/`.
 6. **No secrets in source, in `web/` client bundles, or in example files.**
    Everything comes from environment variables. `scripts/probes/pillar5_security.py`
    scans for hardcoded secrets.
