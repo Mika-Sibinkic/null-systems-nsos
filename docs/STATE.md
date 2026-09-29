@@ -26,7 +26,7 @@ brief, every number source-traced, gaps/blockers carried as the FDE's validation
 + capped retry/backoff, a **recurring-diagnostic** cadence + realized-impact stub wire the land-and-expand
 tier, and the **full real pipe runs end-to-end on synthetic-client-a** (`tests/test_e2e_synthetic.py`,
 real data not fixtures) with the **promotion gate green (5/5)** and **eval no-regression** passing.
-**132 unit tests pass.**
+**145 unit tests pass.**
 
 <a id="engine"></a>
 ## Engine (the brain) — mostly 🟢, lifted from the earlier prototype
@@ -39,6 +39,7 @@ real data not fixtures) with the **promotion gate green (5/5)** and **eval no-re
 | Agent memory / tracker / context / prompt-evolver | 🟢 | `engine/reasoning/` | ~2.7k LOC lifted |
 | Cascade handler (7 recovery strategies) | 🟢 | `engine/cascade-handler/cascade_handler.py` | |
 | NIM client (NIM-only enforced) | 🟢 | `engine/router/nim_client.py` | `judge_pair` for council |
+| Engine HTTP API (FastAPI) | 🟢 | `engine/api/app.py` | `GET /health`, `GET /teaser` (scoped token, per-tenant authz), dev-only `POST /dev/scoped-token` (404 once `VINNY_TOKEN_SECRET` is set); `require_live_model` fails closed 503 without `NIM_API_KEY`; `python -m engine.api` |
 | Meta-teams — financial | 🟢 | `engine/meta-levels/financial/` | question battery (`questions.jsonl` + `team.py`), data→findings engine (`findings.py`) → 6 grounded findings; in-engine grounding gate (fail-closed); FDE-review gate (`review_gate.py`) |
 | Meta-teams — other 5 | 🔴 | `engine/meta-levels/{operational,organizational,customer,technology,strategic}/` | empty — post-MVP |
 | Gaps / prediction-residual | 🔴 | `engine/gaps/`, `engine/prediction-residual/` | empty |
@@ -54,7 +55,7 @@ real data not fixtures) with the **promotion gate green (5/5)** and **eval no-re
 | Quality judge (3-layer) | 🟢 | `engine/gauntlets/quality_judge.py` |
 | GitHub Actions CI | 🟢 | `.github/workflows/ci.yml` | `pytest` + `npm ci && npm run build` on every push and PR |
 | docs_sync gate | 🟢 | `scripts/check_docs_sync.py` | fails on source-vs-docs drift; `[skip-docs-sync]` override |
-| Unit tests (adapter/auth/teaser/weights/financial/sow/sbs/handoff/flywheel/durable/e2e) | 🟢 | `tests/` | 132 PASS |
+| Unit tests (adapter/auth/teaser/weights/financial/sow/sbs/handoff/flywheel/durable/api/e2e) | 🟢 | `tests/` | 145 PASS |
 | Quality judge offline-deterministic fallback | 🟢 | `engine/gauntlets/quality_judge.py` | opt-in `NSOS_JUDGE_OFFLINE_DETERMINISTIC=1`; prod stays fail-closed ([decision](./decisions/2026-06-02-offline-deterministic-quality-judge.md)) |
 | Eval harness offline no-regression fallback | 🟢 | `engine/gauntlets/eval_harness.py` | opt-in `NSOS_EVAL_OFFLINE_DETERMINISTIC=1`; resolves to tie/no-regression, never fabricates "adopt"; prod stays error-on-no-LLM ([decision](./decisions/2026-06-07-offline-deterministic-eval-harness.md)) |
 
@@ -102,7 +103,7 @@ real data not fixtures) with the **promotion gate green (5/5)** and **eval no-re
 |---|---|---|
 | Next.js/Vercel app | 🟢 | `web/` — App Router, `tsc --noEmit` clean, Next 14.2.35 (patched) |
 | Onboarding page + first-finding UX | 🟢 | `web/app/onboarding/page.tsx` |
-| Engine HTTP boundary (scoped token only) | 🟢 | `web/lib/engine.ts` + `web/app/api/teaser/route.ts` |
+| Engine HTTP boundary (scoped token only) | 🟢 | `web/lib/engine.ts` + `web/app/api/teaser/route.ts` — wired to `engine/api` over `ENGINE_URL` with a timeout; `engine_unreachable` fallback only when the engine cannot be reached, engine errors surface as 502 |
 | SOW review/choose UI | 🟢 | `web/app/diagnostic/[runId]/page.tsx` — side-by-side cards, operator selects; server-side `/api/runs/[runId]/{side-by-side,select}` routes; scoped token only, degrades to local artifact |
 | Web CI job | 🟡 | staged at `build/ci-web-job.staged.yml` — workflow-scope escalation logged |
 

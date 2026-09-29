@@ -21,8 +21,9 @@ What works today, all exercised by the test suite from a clean clone with no API
 - Per-SOW scoring: consultant-conviction ("would we push this?"), a five-pillar deployability grade, and EBITDA / payback metrics validated by the same grounding probe.
 - CEO-language report, side-by-side comparison, and an FDE handoff packet (JSON + markdown).
 - Outcome flywheel (append-only predicted-vs-realized ledger), idempotent runs with capped retry, and a promotion gate for engine changes.
+- HTTP boundary between the web app and the Python engine (`engine/api/`, FastAPI): `GET /health`, `GET /teaser` behind the scoped token with per-tenant authz, and a dev-only token mint that disappears once `VINNY_TOKEN_SECRET` is set. The web route calls it with a timeout and returns a finding labeled `engine_unreachable` only when the engine cannot be reached; an engine error comes back as a 502 with the engine's JSON error, never as a made-up number.
 
-What is not built: the other five meta-teams (operational, organizational, customer, technology, strategic), the non-QuickBooks connectors, the HTTP boundary between the web app and the Python engine (the web route falls back to a labeled placeholder), and PDF rendering. Scoring runs in an offline-deterministic mode in tests; production paths that need a live model stay fail-closed rather than fabricate a verdict. The headline numbers in `docs/STATE.md` are computed from fabricated QuickBooks data. See `docs/STATE.md` and `docs/ROADMAP.md` for the per-component view.
+What is not built: the other five meta-teams (operational, organizational, customer, technology, strategic), the non-QuickBooks connectors, the engine endpoints behind the diagnostic review page (`/runs/{id}/side-by-side` and `/select` are declared in `web/lib/engine.ts` but not served yet), and PDF rendering. Scoring runs in an offline-deterministic mode in tests; production paths that need a live model stay fail-closed rather than fabricate a verdict. The headline numbers in `docs/STATE.md` are computed from fabricated QuickBooks data. See `docs/STATE.md` and `docs/ROADMAP.md` for the per-component view.
 
 ## Architecture
 
@@ -61,23 +62,32 @@ cat runs/synthetic-client-a/presentation/report.md
 cat runs/synthetic-client-a/handoff/fde-handoff-packet.md
 ```
 
-Web surface (builds and serves with no environment variables; the engine call degrades to a labeled placeholder because the HTTP boundary is not wired yet):
+Web surface. Two terminals from the repo root: the engine first, then the web app. Neither needs an environment variable; the engine runs offline-deterministic without a model key and mints a dev scoped token for the synthetic tenant.
+
+Terminal 1, the engine on port 8000:
 
 ```
-cd web
+cd null-systems-nsos
+python -m engine.api
+```
+
+Terminal 2, the web app on port 3000:
+
+```
+cd null-systems-nsos/web
 npm ci
 npm run dev
 ```
 
-Then open http://localhost:3000. `npm run build` and `npm run typecheck` also pass clean.
+Then open http://localhost:3000/onboarding and press connect; the finding shown is the engine's teaser for `synth-acme-services`. Stop the engine and press connect again to see the `engine_unreachable` fallback. `curl -s -X POST http://localhost:3000/api/teaser` shows the same JSON. The web app reads the engine address from `ENGINE_URL` (default `http://localhost:8000`) and the request timeout from `ENGINE_TIMEOUT_MS` (default 5000); the engine reads `NSOS_API_HOST` and `NSOS_API_PORT`. `npm run build` and `npm run typecheck` pass clean.
 
 ## Tests
 
-`tests/` holds 16 files and 132 test functions. They run offline in under a second against two synthetic fixtures: `examples/synthetic-client-a/` (a fabricated QuickBooks export plus firm profile) and `client/snapshots/synth-acme-services/baseline.json` (the snapshot the adapter produces from it). Real tenant snapshots under `client/snapshots/` are gitignored; only the synthetic one is committed.
+`tests/` holds 17 files and 145 test functions. They run offline in under a second against two synthetic fixtures: `examples/synthetic-client-a/` (a fabricated QuickBooks export plus firm profile) and `client/snapshots/synth-acme-services/baseline.json` (the snapshot the adapter produces from it). Real tenant snapshots under `client/snapshots/` are gitignored; only the synthetic one is committed.
 
-Coverage is by layer: adapter and schema validation, onboarding auth, teaser, council weights, financial findings, review gate, SOW assembly / scoring / metrics, side-by-side report, handoff packet, outcome loop, durable execution, docs-sync gate, and one end-to-end run through the real pipeline. Two tests shell out to `scripts/probes/grounded_numbers.py` so the grounding rule is checked by the same script CI would run, not a mock.
+Coverage is by layer: adapter and schema validation, onboarding auth, teaser, council weights, financial findings, review gate, SOW assembly / scoring / metrics, side-by-side report, handoff packet, outcome loop, durable execution, docs-sync gate, the engine HTTP API (health, teaser over the wire against the synthetic snapshot, token rejection, dev token gating, fail-closed when a live model is required), and one end-to-end run through the real pipeline. Two tests shell out to `scripts/probes/grounded_numbers.py` so the grounding rule is checked by the same script CI would run, not a mock.
 
-CI (`.github/workflows/ci.yml`) runs `python -m pytest -q` and `npm ci && npm run build` on every push and pull request.
+CI (`.github/workflows/ci.yml`) runs `python -m pytest -q`, then boots the engine API with uvicorn and curls `/health` and `/teaser`, and runs `npm ci && npm run typecheck && npm run build`, on every push and pull request.
 
 ## Built with AI agents in the loop
 
