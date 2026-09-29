@@ -61,7 +61,7 @@ def test_findings_carry_evidence_and_confidence():
 
 
 def test_findings_pass_grounded_numbers_shape():
-    # mirror build/probes/grounded_numbers.py
+    # mirror scripts/probes/grounded_numbers.py
     fs = findings_mod.run_findings(BASELINE)
     for f in fs:
         if f.get("impact_usd") or f.get("impact_hours"):

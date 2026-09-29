@@ -69,11 +69,11 @@ def test_with_retry_raises_after_exhaustion(tmp_path):
     assert False, "expected RetryExhausted"
 
 
-def test_backoff_schedule_matches_manifest():
-    manifest = json.loads((ROOT / "build" / "manifest.json").read_text())
-    cascade = manifest["recursive_context"]["cascade"]
-    assert durable.BACKOFF_SECONDS == cascade["backoff_seconds"]
-    assert durable.MAX_ATTEMPTS == cascade["max_retries"]
+def test_backoff_schedule_is_capped_exponential():
+    # 1s -> 4s -> 16s, capped at 3 attempts: the retry discipline every run shares
+    assert durable.BACKOFF_SECONDS == [1, 4, 16]
+    assert durable.MAX_ATTEMPTS == 3
+    assert len(durable.BACKOFF_SECONDS) == durable.MAX_ATTEMPTS
 
 
 def test_journal_records_attempts(tmp_path):

@@ -15,12 +15,8 @@ interface is the same shape so a durable-execution backend drops in later):
     redeploy mid-run, or a duplicate trigger never produces a second SOW set or a
     second client deliverable.
   - **Retry with capped exponential backoff** — `with_retry(fn)` retries transient
-    failures `[1s, 4s, 16s]` (manifest cascade backoff), capped at 3 attempts,
-    then raises. No silent failure: every attempt + the final outcome is journaled.
-
-The backoff schedule and cap come from `build/manifest.json`
-recursive_context.cascade (1/4/16s, max 3) so the run path and the build harness
-share one retry discipline.
+    failures `[1s, 4s, 16s]`, capped at 3 attempts, then raises. No silent
+    failure: every attempt + the final outcome is journaled.
 """
 from __future__ import annotations
 
@@ -33,7 +29,7 @@ from typing import Any, Callable
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_JOURNAL = REPO / "runs" / "_durable" / "journal.jsonl"
 
-# cascade backoff from the manifest (kept in sync with build/manifest.json)
+# capped exponential backoff shared by every run path
 BACKOFF_SECONDS = [1, 4, 16]
 MAX_ATTEMPTS = 3
 

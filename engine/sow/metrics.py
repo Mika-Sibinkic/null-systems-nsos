@@ -2,7 +2,7 @@
 
 Each SOW candidate carries CEO-language success metrics, every number traced to a
 baseline line + carrying a confidence band so the grounded-numbers gate
-(`build/probes/grounded_numbers.py`) passes over the SOW metrics exactly as it
+(`scripts/probes/grounded_numbers.py`) passes over the SOW metrics exactly as it
 does over findings:
 
   - **EBITDA uplift %/yr** — the SOW's annual impact as a percent of the tenant's
