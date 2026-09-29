@@ -7,7 +7,7 @@ survives the same gates the rest of the pipeline enforces:
   - `impact_usd` / `impact_hours` — the dollars/time the finding moves
   - `bottleneck`   — the one-line "what is actually constraining the business"
   - `evidence[]`   — every number traces to a baseline line (LeCun grounding;
-                     `build/probes/grounded_numbers.py` enforces this)
+                     `scripts/probes/grounded_numbers.py` enforces this)
   - `confidence`   — honest band reflecting how defensible the number is
   - `source[]`     — machine-checkable refs into the baseline (accounting.<path>)
 
@@ -320,11 +320,11 @@ class UngroundedFindingError(ValueError):
     """Raised when a finding asserts a dollar/hours impact with no source[] +
     confidence band. This is the LeCun grounding gate wired *into* the producer
     so an ungrounded number can never leave findings.py — not merely caught
-    downstream by build/probes/grounded_numbers.py."""
+    downstream by scripts/probes/grounded_numbers.py."""
 
 
 def assert_grounded(finding: dict) -> dict:
-    """In-engine grounding gate (mirrors build/probes/grounded_numbers.py).
+    """In-engine grounding gate (mirrors scripts/probes/grounded_numbers.py).
 
     Every impact number MUST trace to a non-empty source/evidence list AND carry
     a confidence band. Returns the finding if grounded; raises otherwise. This is

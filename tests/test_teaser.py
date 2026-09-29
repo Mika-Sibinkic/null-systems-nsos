@@ -29,7 +29,7 @@ def test_teaser_returns_grounded_finding():
 
 
 def test_teaser_finding_passes_grounded_numbers_shape():
-    # mirrors build/probes/grounded_numbers.py: impact -> needs evidence[] + confidence
+    # mirrors scripts/probes/grounded_numbers.py: impact -> needs evidence[] + confidence
     f = teaser_finding(_baseline()).to_finding()
     has_impact = bool(f.get("impact_usd")) or bool(f.get("impact_hours"))
     assert has_impact

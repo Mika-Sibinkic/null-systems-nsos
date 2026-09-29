@@ -1,8 +1,6 @@
-"""nim_client.py — single canonical NIM v4 client for all of Vinny/NSOS.
+"""nim_client.py — single canonical NIM v4 client for all of NSOS.
 
 Per architectural rule: EVERY LLM call across this codebase routes through here.
-Claude Code (the orchestrator) is allowed exactly one shell-out elsewhere
-(`vinny-dispatch/router/orchestrator.py`) — everything else MUST import this.
 
 Models verified on NIM as of 2026-05:
   - meta/llama-3.3-70b-instruct (primary, ~1s response)

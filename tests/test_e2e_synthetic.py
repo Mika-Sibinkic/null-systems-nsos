@@ -162,7 +162,7 @@ def test_e2e_metrics_artifact_passes_grounded_numbers_probe(tmp_path):
     metrics.metrics_for_all(art["sows"], art["baseline"], artifacts_dir=RUN_DIR / "sow")
     artifact = RUN_DIR / "sow" / "metrics.jsonl"
     r = subprocess.run(
-        [sys.executable, str(ROOT / "build" / "probes" / "grounded_numbers.py"), str(artifact)],
+        [sys.executable, str(ROOT / "scripts" / "probes" / "grounded_numbers.py"), str(artifact)],
         capture_output=True, text=True,
     )
     assert r.returncode == 0, f"grounded_numbers failed on e2e metrics: {r.stdout}\n{r.stderr}"

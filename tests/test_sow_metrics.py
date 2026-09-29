@@ -80,7 +80,7 @@ def test_metrics_artifact_passes_grounded_numbers_probe(tmp_path):
     artifact = out_dir / "metrics.jsonl"
     assert artifact.exists()
     r = subprocess.run(
-        [sys.executable, str(ROOT / "build" / "probes" / "grounded_numbers.py"), str(artifact)],
+        [sys.executable, str(ROOT / "scripts" / "probes" / "grounded_numbers.py"), str(artifact)],
         capture_output=True, text=True,
     )
     assert r.returncode == 0, f"grounded_numbers probe failed on metrics: {r.stdout}\n{r.stderr}"
