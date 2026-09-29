@@ -92,8 +92,16 @@ export default function OnboardingPage() {
             padding: 24,
           }}
         >
-          <div style={{ fontSize: 13, color: "#4ade80", marginBottom: 8 }}>
-            First finding (full diagnostic still running)
+          <div
+            style={{
+              fontSize: 13,
+              color: state.finding.method === "engine_unreachable" ? "#fbbf24" : "#4ade80",
+              marginBottom: 8,
+            }}
+          >
+            {state.finding.method === "engine_unreachable"
+              ? "Engine unreachable (no finding read)"
+              : "First finding (full diagnostic still running)"}
           </div>
           <h2 style={{ fontSize: 22, margin: "0 0 12px" }}>{state.finding.headline}</h2>
           <div style={{ fontSize: 28, fontWeight: 700, color: "#4ade80" }}>

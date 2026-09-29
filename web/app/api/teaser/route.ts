@@ -1,42 +1,65 @@
 import { NextResponse } from "next/server";
-import { getTeaser, type ScopedSession, type TeaserFinding } from "@/lib/engine";
+import {
+  ENGINE_URL,
+  EngineResponseError,
+  EngineUnreachableError,
+  getDevScopedToken,
+  getTeaser,
+  type ScopedSession,
+  type TeaserFinding,
+} from "@/lib/engine";
 
 // Server-side API route — the first-party backend boundary.
 //
-// In production this issues/loads the tenant's scoped token (from the server-side
-// onboarding flow) and calls the Python engine over HTTP. The browser never sees the
-// engine URL or any secret. For the P1 slice, if the engine HTTP service is not
-// reachable, we degrade to a clearly-labeled placeholder so the page still renders —
-// never a silent failure.
+// Calls the Python engine (engine/api) over HTTP with a scoped token. The browser
+// never sees the engine URL or any secret. Three outcomes:
+//   - engine answered 2xx        -> the engine's finding, untouched
+//   - engine answered non-2xx    -> 502 with the engine's JSON error (no fallback)
+//   - engine unreachable/timeout -> a finding labeled "engine unreachable", never a
+//                                   silent failure and never a fabricated number
 
 export const runtime = "nodejs";
 
 const DEMO_TENANT = process.env.DEMO_TENANT_ID ?? "synth-acme-services";
 
+function engineUnreachableFallback(e: EngineUnreachableError): TeaserFinding {
+  return {
+    id: "teaser-engine-unreachable",
+    headline: "Engine unreachable. No finding could be read.",
+    impact_usd: 0,
+    impact_hours: 0,
+    evidence: [`engine unreachable at ${ENGINE_URL}: ${e.message}`],
+    confidence: 0,
+    method: "engine_unreachable",
+    team: "teaser",
+  };
+}
+
 export async function POST(): Promise<NextResponse> {
-  // The scoped token would come from the onboarding session cookie/store. For the
-  // scaffold we synthesize a session object; the real token is minted server-side.
+  // The scoped token comes from the onboarding session (DEMO_SCOPED_TOKEN for the
+  // scaffold). Without one, ask the engine's dev-only minting endpoint; that endpoint
+  // exists only while the engine runs on its dev signing secret.
   const session: ScopedSession = {
     tenantId: DEMO_TENANT,
     token: process.env.DEMO_SCOPED_TOKEN ?? "",
   };
 
   try {
+    if (!session.token) {
+      session.token = (await getDevScopedToken(DEMO_TENANT)).token;
+    }
     const finding: TeaserFinding = await getTeaser(session);
     return NextResponse.json(finding);
-  } catch {
-    // Engine not reachable in this slice — return a labeled placeholder, not a 500,
-    // so the onboarding UX is verifiable end-to-end at scaffold stage.
-    const placeholder: TeaserFinding = {
-      id: "teaser-pending",
-      headline: "Connected. Full diagnostic running — first quantified finding shortly.",
-      impact_usd: 0,
-      impact_hours: 0,
-      evidence: ["engine HTTP boundary not wired in this slice"],
-      confidence: 0.5,
-      method: "scaffold_placeholder",
-      team: "teaser",
-    };
-    return NextResponse.json(placeholder);
+  } catch (e) {
+    if (e instanceof EngineUnreachableError) {
+      return NextResponse.json(engineUnreachableFallback(e));
+    }
+    if (e instanceof EngineResponseError) {
+      return NextResponse.json(
+        { error: e.message, engine_status: e.status },
+        { status: 502 }
+      );
+    }
+    throw e;
   }
 }
