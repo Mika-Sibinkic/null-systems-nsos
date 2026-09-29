@@ -1,0 +1,176 @@
+{
+  "tenant_id": "synth-acme-services",
+  "generated_at": "2026-06-02T18:01:18.471415+00:00",
+  "schema_version": 1,
+  "sources": [
+    {
+      "type": "accounting",
+      "system": "QuickBooks",
+      "snapshot_at": "2026-04-30T00:00:00Z",
+      "record_count": 12
+    }
+  ],
+  "accounting": {
+    "currency": "USD",
+    "period_start": "2025-05-01",
+    "period_end": "2026-04-30",
+    "profit_and_loss": {
+      "Income:Consulting": 24500000.0,
+      "Income:Retainers": 3500000.0,
+      "COGS:Subcontractors": 8400000.0,
+      "COGS:Software_Resale": 2800000.0,
+      "Expense:Payroll": 9100000.0,
+      "Expense:CloudInfra": 84000.0,
+      "Expense:SaaS_Tools": 410000.0,
+      "Expense:Office": 620000.0,
+      "Expense:Travel": 480000.0,
+      "Expense:Professional_Services": 3026000.0,
+      "TotalIncome": 28000000.0,
+      "GrossProfit": 16800000.0,
+      "TotalExpenses": 13720000.0,
+      "NetIncome": 3080000.0,
+      "TotalCostOfGoodsSold": 11200000.0
+    },
+    "expenses_by_vendor": [
+      {
+        "vendor": "CloudProvider X",
+        "amount_usd": 84000.0,
+        "category": "Expense:CloudInfra",
+        "txn_count": 12
+      },
+      {
+        "vendor": "SaaS Bundle Co",
+        "amount_usd": 410000.0,
+        "category": "Expense:SaaS_Tools",
+        "txn_count": 48
+      },
+      {
+        "vendor": "Subcontractor Group",
+        "amount_usd": 8400000.0,
+        "category": "COGS:Subcontractors",
+        "txn_count": 220
+      },
+      {
+        "vendor": "Office Realty LLC",
+        "amount_usd": 620000.0,
+        "category": "Expense:Office",
+        "txn_count": 12
+      },
+      {
+        "vendor": "Pro Services Advisory",
+        "amount_usd": 3026000.0,
+        "category": "Expense:Professional_Services",
+        "txn_count": 36
+      }
+    ],
+    "invoices": [
+      {
+        "invoice_id": "INV-1001",
+        "customer": "Northwind Co",
+        "amount_usd": 240000.0,
+        "issued_at": "2025-06-02",
+        "paid_at": "2025-06-02",
+        "first_contact_at": "2025-05-12",
+        "scope_sent_at": "2025-05-30",
+        "status": "paid"
+      },
+      {
+        "invoice_id": "INV-1002",
+        "customer": "Globex Inc",
+        "amount_usd": 180000.0,
+        "issued_at": "2025-06-18",
+        "paid_at": "2025-06-18",
+        "first_contact_at": "2025-05-20",
+        "scope_sent_at": "2025-06-10",
+        "status": "paid"
+      },
+      {
+        "invoice_id": "INV-1003",
+        "customer": "Initech",
+        "amount_usd": 95000.0,
+        "issued_at": "2025-07-09",
+        "paid_at": null,
+        "first_contact_at": "2025-06-15",
+        "scope_sent_at": "2025-07-02",
+        "status": "overdue"
+      },
+      {
+        "invoice_id": "INV-1004",
+        "customer": "Umbrella Corp",
+        "amount_usd": 320000.0,
+        "issued_at": "2025-08-01",
+        "paid_at": "2025-08-01",
+        "first_contact_at": "2025-07-01",
+        "scope_sent_at": "2025-07-24",
+        "status": "paid"
+      },
+      {
+        "invoice_id": "INV-1005",
+        "customer": "Northwind Co",
+        "amount_usd": 210000.0,
+        "issued_at": "2025-09-12",
+        "paid_at": "2025-09-12",
+        "first_contact_at": "2025-08-20",
+        "scope_sent_at": "2025-09-05",
+        "status": "paid"
+      },
+      {
+        "invoice_id": "INV-1006",
+        "customer": "Soylent LLC",
+        "amount_usd": 140000.0,
+        "issued_at": "2025-10-03",
+        "paid_at": null,
+        "first_contact_at": "2025-09-08",
+        "scope_sent_at": "2025-09-26",
+        "status": "overdue"
+      },
+      {
+        "invoice_id": "INV-1007",
+        "customer": "Globex Inc",
+        "amount_usd": 265000.0,
+        "issued_at": "2025-11-15",
+        "paid_at": "2025-11-15",
+        "first_contact_at": "2025-10-22",
+        "scope_sent_at": "2025-11-08",
+        "status": "paid"
+      }
+    ]
+  },
+  "provenance": {
+    "adapter": "quickbooks",
+    "adapter_version": "1.0.0",
+    "source_export_sha256": "846864180d9ec8af752a62bd105fa35cd63fc609231914515275fc1a295c0961"
+  },
+  "firm": {
+    "firm_name": "Acme Services",
+    "industry": "Mid-market professional services",
+    "employees": 142,
+    "annual_revenue_usd": 28000000,
+    "stated_objectives": [
+      {
+        "text": "raise net retention from 92% to 105% within 18 months",
+        "weight": 1.0
+      },
+      {
+        "text": "cut average proposal turnaround from 14 days to 5",
+        "weight": 0.85
+      },
+      {
+        "text": "evaluate AI initiative scoped at $1.2M for ROI",
+        "weight": 0.75
+      },
+      {
+        "text": "find one supplier dependency to reduce",
+        "weight": 0.5
+      }
+    ],
+    "known_baseline": [
+      {
+        "text": "we already know our CRM data hygiene is bad and we have a project to fix it"
+      },
+      {
+        "text": "we know proposal templates are inconsistent across partners"
+      }
+    ]
+  }
+}

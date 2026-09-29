@@ -7,6 +7,7 @@ __pycache__/
 .env.*
 client/snapshots/*/
 !client/snapshots/.gitkeep
+!client/snapshots/synth-acme-services/
 runs/
 data/
 *.log
