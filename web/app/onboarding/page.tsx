@@ -3,11 +3,10 @@
 import { useState } from "react";
 import type { TeaserFinding } from "@/lib/engine";
 
-// Onboarding surface. The OAuth connect handshake (not simulated here) sends the
-// connector secret to the SERVER-SIDE flow; the browser only ever receives a scoped,
-// short-lived token. This page calls our own /api/teaser route (server-side), which
-// holds that token and talks to the engine — the browser never touches the engine or
-// any secret directly.
+// Onboarding demo. Nothing connects yet: the engine reads a committed synthetic
+// QuickBooks export. This page calls our own /api/teaser route (server-side), which
+// holds a scoped, short-lived token and talks to the engine. The browser never
+// touches the engine or any secret directly.
 
 interface TeaserState {
   status: "idle" | "connecting" | "ready" | "error";
@@ -16,7 +15,7 @@ interface TeaserState {
 }
 
 const SOURCES = [
-  { id: "quickbooks", label: "QuickBooks", kind: "Accounting", note: "read-only" },
+  { id: "quickbooks", label: "QuickBooks", kind: "Accounting", note: "synthetic export" },
   { id: "hubspot", label: "HubSpot", kind: "CRM", note: "not connected in this demo" },
   { id: "slack", label: "Slack", kind: "Comms", note: "not connected in this demo" },
 ];
@@ -48,10 +47,10 @@ export default function OnboardingPage() {
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto", padding: "64px 24px" }}>
-      <h1 style={{ fontSize: 32, marginBottom: 8 }}>Connect your stack</h1>
+      <h1 style={{ fontSize: 32, marginBottom: 8 }}>Sample diagnostic</h1>
       <p style={{ color: MUTED, marginBottom: 32 }}>
-        Read-only. Your credentials stay server-side — this browser only holds a
-        short-lived access token.
+        This demo reads a synthetic QuickBooks export, not your books. The engine
+        reads it server-side; this browser only holds a short-lived access token.
       </p>
 
       <div style={{ display: "grid", gap: 12, marginBottom: 32 }}>
@@ -91,7 +90,7 @@ export default function OnboardingPage() {
           cursor: busy ? "progress" : "pointer",
         }}
       >
-        {busy ? "Reading your data…" : "Connect & get first finding"}
+        {busy ? "Reading the export…" : "Read the sample export"}
       </button>
 
       <div role="status" style={{ marginTop: 32 }}>
@@ -120,7 +119,7 @@ export default function OnboardingPage() {
             }}
           >
             <div style={{ fontSize: 13, color: "#4ade80", marginBottom: 8 }}>
-              First finding (full diagnostic still running)
+              Sample finding from the synthetic export
             </div>
             <h2 style={{ fontSize: 22, margin: "0 0 12px" }}>{f.headline}</h2>
             <div style={{ fontSize: 28, fontWeight: 700, color: "#4ade80" }}>
@@ -128,7 +127,7 @@ export default function OnboardingPage() {
             </div>
             <ul style={{ color: MUTED, fontSize: 14, marginTop: 16 }}>
               {f.evidence.map((e, i) => (
-                <li key={i}>{e}</li>
+                <li key={i}>{e.endsWith(" [LIKELY]") ? `Assumes: ${e.slice(0, -9)}` : e}</li>
               ))}
             </ul>
             <div style={{ fontSize: 12, color: MUTED, marginTop: 12 }}>

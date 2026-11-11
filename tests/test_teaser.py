@@ -43,10 +43,16 @@ def test_teaser_is_fast():
     assert (time.time() - start) < 1.0, "teaser must be near-instant (well inside <1h budget)"
 
 
-def test_teaser_picks_largest_impact():
+def test_teaser_is_a_finding_the_report_also_shows():
+    """Web page and report agree: the teaser is the report's scope-cycle finding, same number."""
+    import importlib
+    findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+    review_gate = importlib.import_module("engine.meta-levels.financial.review_gate")
     res = teaser_finding(_baseline())
-    # scope-cycle leak vs cloud overspend — the larger grounded number wins
-    assert res.method in {"scope_cycle_time_leak", "vendor_concentration_vs_benchmark"}
+    full = next(f for f in findings_mod.run_findings(_baseline()) if f["method"] == "scope_cycle_time")
+    assert res.method == "scope_cycle_time_leak"
+    assert (res.impact_usd, res.confidence) == (full["impact_usd"], full["confidence"])
+    assert res.confidence >= review_gate.CONF_FLOOR
 
 
 def test_teaser_fallback_when_no_signal():

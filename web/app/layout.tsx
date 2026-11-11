@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 export const metadata: Metadata = {
   title: "Null Systems — Diagnostic",
   description:
-    "Run the diagnostic yourself. Connect your stack, get 2–3 scored SOWs in time/cost language.",
+    "Demo: one finding from a synthetic QuickBooks export, with the lines it came from.",
 };
 
 export default function RootLayout({

@@ -66,7 +66,7 @@ def test_teaser_returns_engine_finding_for_synthetic_tenant(client):
     assert f["impact_usd"] > 0
     assert f["evidence"]
     assert 0.0 < f["confidence"] <= 1.0
-    assert f["method"] in {"scope_cycle_time_leak", "vendor_concentration_vs_benchmark"}
+    assert f["method"] == "scope_cycle_time_leak"
 
 
 def test_teaser_matches_direct_engine_call(client):

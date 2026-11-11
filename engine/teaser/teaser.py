@@ -1,16 +1,9 @@
-"""<1h teaser signal path.
+"""Teaser: one quick finding from baseline.json, for the web onboarding demo.
 
-Produces ONE cheap, high-signal finding from baseline.json with no LLM call and no
-full gauntlet — pure arithmetic over the snapshot — so it returns in seconds (well
-inside the <1h budget) and hooks the operator while the full 24-72h diagnostic runs
-async. The number it surfaces is fully source-traced + confidence-banded so
-it survives the same grounded_numbers gate the real findings do.
-
-Strategy: compute two cheap signals and return the larger grounded impact_usd:
-  - proposal/scope cycle-time leak: the full engine's own
-    `findings.ANALYTICS["scope_cycle_time"]`, so teaser and report never disagree
-  - cloud spend vs a commodity re-platform benchmark (teaser-only heuristic)
-Deterministic + offline.
+No LLM call, pure arithmetic over the snapshot, so it returns in milliseconds.
+It is the full engine's own `findings.ANALYTICS["scope_cycle_time"]` with the
+same confidence, so the number on the web page is the number in the report.
+Deterministic and offline.
 """
 from __future__ import annotations
 
@@ -21,8 +14,6 @@ from pathlib import Path
 from typing import Any, Optional
 
 _findings = importlib.import_module("engine.meta-levels.financial.findings")
-
-CLOUD_BENCHMARK_SAVINGS_PCT = 0.40       # observed commodity-cloud re-platform saving [LIKELY]
 
 
 @dataclass
@@ -41,31 +32,6 @@ class TeaserResult:
         return d
 
 
-def _cloud_overspend(acct: dict[str, Any]) -> Optional[TeaserResult]:
-    vendors = acct.get("expenses_by_vendor", []) or []
-    cloud = [v for v in vendors if "cloud" in (v.get("category", "") + v.get("vendor", "")).lower()]
-    if not cloud:
-        return None
-    top = max(cloud, key=lambda v: v.get("amount_usd", 0))
-    spend = float(top.get("amount_usd", 0))
-    if spend <= 0:
-        return None
-    scale, per = _findings.per_year(acct)
-    saving = round(spend * scale * CLOUD_BENCHMARK_SAVINGS_PCT)
-    return TeaserResult(
-        id="teaser-cloud-001",
-        headline=f"Cloud spend with {top['vendor']} looks ~${saving:,.0f}{per} re-platformable",
-        impact_usd=float(saving),
-        impact_hours=0.0,
-        evidence=[
-            f"QuickBooks: ${spend:,.0f} to {top['vendor']} over the export period ({top.get('txn_count', 0)} txns), category {top.get('category','')}",
-            f"Benchmark commodity-cloud re-platform saving ~{int(CLOUD_BENCHMARK_SAVINGS_PCT*100)}% [LIKELY]",
-        ],
-        confidence=0.6,
-        method="vendor_concentration_vs_benchmark",
-    )
-
-
 def _scope_cycle_leak(baseline: dict[str, Any]) -> Optional[TeaserResult]:
     a = _findings.ANALYTICS["scope_cycle_time"](baseline)
     if not a or a["impact_usd"] <= 0:
@@ -77,33 +43,33 @@ def _scope_cycle_leak(baseline: dict[str, Any]) -> Optional[TeaserResult]:
         impact_usd=a["impact_usd"],
         impact_hours=a["leaked_hours"],
         evidence=a["source"],
-        confidence=0.7,
+        confidence=_findings.CONFIDENCE_BY_METHOD["scope_cycle_time"],
         method="scope_cycle_time_leak",
     )
 
 
 def teaser_finding(baseline: dict[str, Any]) -> TeaserResult:
-    """Return the single strongest cheap finding from a baseline snapshot.
+    """Return the teaser finding for a baseline snapshot.
 
     Raises ValueError if the baseline has no accounting view to read.
     """
     acct = baseline.get("accounting")
     if not acct:
         raise ValueError("baseline has no accounting view — cannot produce a teaser")
-    candidates = [c for c in (_scope_cycle_leak(baseline), _cloud_overspend(acct)) if c]
-    if not candidates:
+    leak = _scope_cycle_leak(baseline)
+    if leak is None:
         # Always return SOMETHING grounded rather than failing silently.
         revenue = (baseline.get("firm", {}) or {}).get("annual_revenue_usd", 0)
         return TeaserResult(
             id="teaser-fallback-001",
-            headline="Connected. Full diagnostic running — first quantified findings within the run window.",
+            headline="No quick finding in this export. The full run reads the rest.",
             impact_usd=0.0,
             impact_hours=0.0,
             evidence=[f"Baseline accepted; annual revenue context ${revenue:,.0f}" if revenue else "Baseline accepted"],
             confidence=0.5,
             method="no_cheap_signal_found",
         )
-    return max(candidates, key=lambda c: c.impact_usd)
+    return leak
 
 
 def from_snapshot(tenant_id: str, *, snapshots_root: Optional[Path] = None) -> TeaserResult:
@@ -115,7 +81,7 @@ def from_snapshot(tenant_id: str, *, snapshots_root: Optional[Path] = None) -> T
 
 def _main() -> int:
     import argparse
-    p = argparse.ArgumentParser(description="<1h teaser from a tenant baseline")
+    p = argparse.ArgumentParser(description="teaser finding from a tenant baseline")
     p.add_argument("--tenant", required=True)
     args = p.parse_args()
     res = from_snapshot(args.tenant)

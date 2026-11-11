@@ -132,7 +132,7 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:3000/onboarding and press "Connect & get first finding". The finding shown is the engine's teaser for `synth-acme-services`. Stop the engine and press connect again to see the `engine_unreachable` fallback. An engine error comes back as a 502 carrying the engine's JSON error. This shows the same JSON:
+Open http://localhost:3000/onboarding and press "Read the sample export". The finding shown is the engine's teaser for `synth-acme-services`: the report's proposal-scoping finding, same number and confidence. Stop the engine and press the button again to see the `engine_unreachable` fallback. An engine error comes back as a 502 carrying the engine's JSON error. This shows the same JSON:
 
 ```
 curl -s -X POST http://localhost:3000/api/teaser
