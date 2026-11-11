@@ -38,7 +38,7 @@ def render_sow_report(
     )
 
     lines: list[str] = []
-    lines.append(f"# {firm['firm_name']} — Growth Options")
+    lines.append(f"# {firm['firm_name']} — Options")
     lines.append("")
     lines.append(
         f"*Prepared by Vinny · A Null Systems product · "
@@ -47,7 +47,7 @@ def render_sow_report(
     lines.append("\n---\n")
     lines.append("## Executive summary\n")
     lines.append(
-        f"From your data we assembled **{len(sbs.columns)} growth options**, each a "
+        f"From your data we assembled **{len(sbs.columns)} options**, each a "
         f"statement of work (SOW) you can pick. Every number below comes from your "
         f"books or from an assumption we name next to it.\n"
     )

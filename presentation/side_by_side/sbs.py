@@ -35,7 +35,7 @@ import engine.sow.metrics as _metrics
 
 # decision dimensions, in the order a CEO weighs them.
 ROWS: list[tuple[str, str]] = [
-    ("title", "Growth thrust"),
+    ("title", "Option"),
     ("impact_usd", "Annual impact"),
     ("exposure_usd", "At risk (not in totals)"),
     ("ebitda_uplift_pct", "EBITDA lift"),

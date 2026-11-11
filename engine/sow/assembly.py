@@ -1,7 +1,7 @@
 """SOW assembly — findings -> 2-3 coherent SOW candidates (P3.T1).
 
 A diagnostic run produces a list of findings. A CEO does
-not buy a list of findings; they buy 2-3 *coherent growth thrusts*, each a
+not buy a list of findings; they buy 2-3 *coherent thrusts*, each a
 Statement of Work they can choose between by intuition about where the business
 should go. This module is the bundler that turns the findings into those
 candidates.
@@ -39,7 +39,7 @@ from typing import Sequence
 # to exactly one thrust so bundling is deterministic and explainable.
 THRUSTS: dict[str, dict] = {
     "revenue_resilience": {
-        "title": "De-risk and grow the revenue base",
+        "title": "Protect the revenue base",
         "methods": ["customer_concentration", "ar_overdue", "scope_cycle_time"],
     },
     "margin_expansion": {
