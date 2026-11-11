@@ -101,6 +101,7 @@ def render_sow_report(
     *,
     output_path: Path | str | None = None,
     engagement_cost_usd: float | None = None,
+    pending: Sequence[dict] = (),
 ) -> str:
     """CEO-language report rendering the 2-3 scored SOW candidates side-by-side (P4.T1).
 
@@ -112,6 +113,9 @@ def render_sow_report(
     No new numbers are minted: every dollar/hour traces to the SOW's `source[]`,
     so the grounded-numbers contract holds and the quality_judge gate sees a
     grounded, action-bearing, confidence-tagged client-facing output.
+
+    `pending` are findings the review gate held for a human; they are listed by
+    name and kept out of every SOW and total.
     """
     sbs_mod = _load_sbs_module()
     fmt = sbs_mod._metrics  # fmt_payback / fmt_ebitda: one formatter for every surface
@@ -161,6 +165,13 @@ def render_sow_report(
     lines.append("## Side-by-side\n")
     lines.append(sbs_mod.render_markdown(sbs))
     lines.append("\n---\n")
+
+    if pending:
+        lines.append("## Pending review\n")
+        lines.append("A person checks these before they count. They are not in any option or total above.\n")
+        for f in pending:
+            lines.append(f"- {f.get('headline', f.get('id'))} (confidence {float(f.get('confidence', 0)):.0%})")
+        lines.append("\n---\n")
 
     lines.append("## How to choose\n")
     lines.append(

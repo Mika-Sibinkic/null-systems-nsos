@@ -45,6 +45,8 @@ def _client_text(finding: dict) -> str:
         parts.append("Evidence: " + "; ".join(str(e) for e in ev[:3]))
     if finding.get("impact_usd"):
         parts.append(f"Impact: ${finding['impact_usd']:,.0f}/yr")
+    if finding.get("exposure_usd"):
+        parts.append(f"At risk: ${finding['exposure_usd']:,.0f}")
     conf = finding.get("confidence")
     if conf is not None:
         parts.append(f"Confidence: {conf}")

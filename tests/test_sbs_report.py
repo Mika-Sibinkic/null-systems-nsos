@@ -112,12 +112,13 @@ def test_sbs_artifact_written(tmp_path):
     assert data["recommended_sow_id"] == sbs.recommended_sow_id
 
 
-def test_from_run_reads_run_candidates():
-    # the synthetic run already has sow-candidates.jsonl committed
-    sbs = sbs_mod.from_run("synthetic-client-a")
+def test_from_run_reads_run_candidates(tmp_path):
+    b = _baseline()
+    assembly.assemble_sows(findings_mod.run_findings(b), artifacts_dir=tmp_path / "r1" / "sow")
+    baseline_path = ROOT / "client" / "snapshots" / BASELINE_TENANT / "baseline.json"
+    sbs = sbs_mod.from_run("r1", runs_root=tmp_path, baseline_path=baseline_path)
     assert 2 <= len(sbs.columns) <= 3
-    artifact = ROOT / "runs" / "synthetic-client-a" / "presentation" / "side-by-side.json"
-    assert artifact.exists()
+    assert (tmp_path / "r1" / "presentation" / "side-by-side.json").exists()
 
 
 # ── decision report ───────────────────────────────────────────────────────────

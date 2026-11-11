@@ -218,8 +218,8 @@ def write_artifact(sbs: SideBySide, path: Path | str) -> Path:
 def from_run(
     run_id: str,
     *,
+    baseline_path: Path,
     runs_root: Path | None = None,
-    baseline_path: Path | None = None,
 ) -> SideBySide:
     """End-to-end: load a run's SOW candidates + the tenant baseline -> side-by-side,
     written to runs/{run_id}/presentation/side-by-side.json."""
@@ -227,9 +227,6 @@ def from_run(
     runs = runs_root or (repo / "runs")
     cand_path = runs / run_id / "sow" / "sow-candidates.jsonl"
     cands = [json.loads(l) for l in cand_path.read_text().splitlines() if l.strip()]
-    if baseline_path is None:
-        # default tenant baseline for the synthetic run
-        baseline_path = repo / "client" / "snapshots" / "synth-acme-services" / "baseline.json"
     baseline = json.loads(Path(baseline_path).read_text())
     sbs = build_side_by_side(cands, baseline)
     write_artifact(sbs, runs / run_id / "presentation" / "side-by-side.json")
@@ -241,8 +238,9 @@ def _main() -> int:
 
     ap = argparse.ArgumentParser(description="Render a side-by-side SOW comparison for a run")
     ap.add_argument("--run-id", required=True)
+    ap.add_argument("--baseline", required=True, type=Path, help="tenant baseline.json")
     args = ap.parse_args()
-    sbs = from_run(args.run_id)
+    sbs = from_run(args.run_id, baseline_path=args.baseline)
     print(render_markdown(sbs))
     return 0 if sbs.columns else 1
 

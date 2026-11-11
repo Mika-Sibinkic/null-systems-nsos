@@ -118,10 +118,13 @@ def test_export_writes_json_and_markdown(tmp_path):
     assert data["source"]
 
 
-def test_from_run_exports_under_run_dir():
-    # the synthetic run has side-by-side.json committed (written in P4.T1)
-    p = packet_mod.from_run("synthetic-client-a")
-    artifact = ROOT / "runs" / "synthetic-client-a" / "handoff" / "fde-handoff-packet.json"
+def test_from_run_exports_under_run_dir(tmp_path):
+    sbs_path = tmp_path / "synthetic-client-a" / "presentation" / "side-by-side.json"
+    sbs_path.parent.mkdir(parents=True)
+    sbs_path.write_text(json.dumps(_sbs_dict()))
+    packet_mod.from_run("synthetic-client-a", runs_root=tmp_path, tenant_id=BASELINE_TENANT,
+                        firm_path=ROOT / "examples" / "synthetic-client-a" / "firm.json")
+    artifact = tmp_path / "synthetic-client-a" / "handoff" / "fde-handoff-packet.json"
     assert artifact.exists()
     data = json.loads(artifact.read_text())
     assert data["run_id"] == "synthetic-client-a"

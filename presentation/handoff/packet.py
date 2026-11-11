@@ -194,10 +194,10 @@ def export_packet(
 def from_run(
     run_id: str,
     *,
+    firm_path: Path,
+    tenant_id: str,
     selected_sow_id: str | None = None,
     runs_root: Path | None = None,
-    firm_path: Path | None = None,
-    tenant_id: str | None = None,
 ) -> HandoffPacket:
     """End-to-end: read a run's side-by-side + firm -> packet, exported under
     runs/{run_id}/handoff/."""
@@ -205,12 +205,10 @@ def from_run(
     runs = runs_root or (repo / "runs")
     sbs_path = runs / run_id / "presentation" / "side-by-side.json"
     side_by_side = json.loads(sbs_path.read_text())
-    if firm_path is None:
-        firm_path = repo / "examples" / "synthetic-client-a" / "firm.json"
     firm = json.loads(Path(firm_path).read_text())
     packet = build_packet(
         run_id=run_id,
-        tenant_id=tenant_id or firm.get("tenant_id", "synth-acme-services"),
+        tenant_id=tenant_id,
         firm=firm,
         side_by_side=side_by_side,
         selected_sow_id=selected_sow_id,
@@ -224,9 +222,12 @@ def _main() -> int:
 
     ap = argparse.ArgumentParser(description="Export an FDE handoff packet for a selected SOW")
     ap.add_argument("--run-id", required=True)
+    ap.add_argument("--firm", required=True, type=Path, help="firm.json")
+    ap.add_argument("--tenant", required=True, help="tenant_id")
     ap.add_argument("--sow-id", default=None, help="selected SOW id (default: recommendation)")
     args = ap.parse_args()
-    p = from_run(args.run_id, selected_sow_id=args.sow_id)
+    p = from_run(args.run_id, firm_path=args.firm, tenant_id=args.tenant,
+                 selected_sow_id=args.sow_id)
     print(render_markdown(p))
     return 0
 
