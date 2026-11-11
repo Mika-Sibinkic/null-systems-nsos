@@ -224,21 +224,3 @@ def _open_count(ledger: Path | None = None) -> int:
     preds = {(r["run_id"], r["sow_id"]) for r in rows if r.get("record_type") == "prediction"}
     reals = {(r["run_id"], r["sow_id"]) for r in rows if r.get("record_type") == "realization"}
     return len(preds - reals)
-
-
-def _main() -> int:
-    import argparse
-
-    ap = argparse.ArgumentParser(description="Outcome flywheel — predicted vs realized")
-    ap.add_argument("--summary", action="store_true", help="print calibration summary")
-    ap.add_argument("--export-evalset", action="store_true")
-    args = ap.parse_args()
-    if args.export_evalset:
-        p = export_evalset()
-        print(f"wrote eval set -> {p}")
-    print(json.dumps(calibration_summary(), indent=2, default=str))
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(_main())

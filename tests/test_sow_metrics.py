@@ -1,15 +1,14 @@
 """Tests for quantified SOW success metrics (P3.T4)."""
-import importlib
 import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+import engine.sow.metrics as metrics
+import engine.sow.assembly as assembly
+import engine.meta_levels.financial.findings as findings_mod
 
-metrics = importlib.import_module("engine.sow.metrics")
-assembly = importlib.import_module("engine.sow.assembly")
-findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+ROOT = Path(__file__).resolve().parents[1]
+
 
 BASELINE_TENANT = "synth-acme-services"
 

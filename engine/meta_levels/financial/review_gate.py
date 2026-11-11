@@ -1,6 +1,6 @@
 """Human-in-the-loop review gate: a person checks a finding before it is priced.
 
-Before any finding reaches a client-facing surface (exec report, web SOW review),
+Before any finding reaches a client-facing surface (the report and its side-by-side),
 it passes this gate. Two checks, both fail-toward-human:
 
   1. Confidence floor — a finding below `CONF_FLOOR` is auto-queued for FDE review.
@@ -20,21 +20,14 @@ fail-closed behavior when the flag is off.
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import Any
+
+from engine.gauntlets import quality_judge
 
 CONF_FLOOR = 0.65  # findings below this confidence always go to a human
 
 _REPO = Path(__file__).resolve().parents[3]
-
-
-def _judge():
-    """Import the quality judge (located in engine/gauntlets)."""
-    sys.path.insert(0, str(_REPO / "engine" / "gauntlets"))
-    import quality_judge  # noqa: WPS433
-
-    return quality_judge
 
 
 def _client_text(finding: dict) -> str:
@@ -61,12 +54,10 @@ def review_finding(finding: dict) -> dict:
         reasons.append(f"confidence {conf:.2f} < floor {CONF_FLOOR:.2f}")
 
     text = _client_text(finding)
-    qj = _judge()
-    scores = qj.score(text, context={"source": "review_gate", "verb": "finding"})
-    if scores.get("status") != "ok":
-        reasons.append("quality_judge unavailable (fail-closed)")
-    elif qj.gate_decision(scores):
-        reasons.append("quality_judge gated output below threshold")
+    scores = quality_judge.score(text, context={"source": "review_gate", "verb": "finding"})
+    if quality_judge.gate_decision(scores):
+        reasons.append("quality_judge unavailable (fail-closed)" if scores.get("status") != "ok"
+                       else "quality_judge gated output below threshold")
 
     queued = bool(reasons)
     return {
@@ -105,20 +96,3 @@ def review_findings(findings: list[dict], *, run_id: str | None = None,
         "decisions": decisions,
         "queue_path": queue_path,
     }
-
-
-def _main() -> int:
-    import argparse
-
-    p = argparse.ArgumentParser(description="Route findings through the FDE-review gate")
-    p.add_argument("--findings", required=True, help="path to findings.jsonl")
-    p.add_argument("--run-id", default=None)
-    args = p.parse_args()
-    findings = [json.loads(l) for l in Path(args.findings).read_text().splitlines() if l.strip()]
-    out = review_findings(findings, run_id=args.run_id)
-    print(json.dumps({k: v for k, v in out.items() if k != "decisions"}, indent=2))
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(_main())

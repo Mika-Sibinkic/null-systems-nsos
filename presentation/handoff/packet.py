@@ -1,6 +1,6 @@
 """FDE handoff packet export — selected SOW -> engagement brief (P4.T3).
 
-When the operator selects one of the 2-3 scored SOW candidates (P4.T2), that
+When the owner selects one of the 2-3 scored SOW candidates, that
 choice becomes a real FDE engagement, not a PDF. This module exports the chosen
 SOW as a structured handoff packet the Field Deployment Engineer picks up: the
 scope, the quantified target, the source-traced evidence, the deployability
@@ -19,26 +19,13 @@ Design (deterministic, offline, source-traced):
     all the way to the engagement).
   - The packet exports as both machine-readable JSON (engine/flywheel consumption)
     and a markdown engagement brief (the FDE reads).
-
-This is the FDE *engagement* handoff (pre-deployment scope), distinct from the
-post-delivery handoff in `schemas/handoff-package.json` (that one validates a
-finished build's delivery completeness; this one kicks the engagement off).
 """
 from __future__ import annotations
-
-import importlib
 import json
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Any
 
-_metrics = importlib.import_module("engine.sow.metrics")
-
-
-def _attr(obj: Any, name: str, default=None):
-    if isinstance(obj, dict):
-        return obj.get(name, default)
-    return getattr(obj, name, default)
+import engine.sow.metrics as _metrics
 
 
 @dataclass
@@ -189,48 +176,3 @@ def export_packet(
     json_path.write_text(json.dumps(p.to_dict(), indent=2, default=str, allow_nan=False))
     md_path.write_text(render_markdown(p))
     return json_path, md_path
-
-
-def from_run(
-    run_id: str,
-    *,
-    firm_path: Path,
-    tenant_id: str,
-    selected_sow_id: str | None = None,
-    runs_root: Path | None = None,
-) -> HandoffPacket:
-    """End-to-end: read a run's side-by-side + firm -> packet, exported under
-    runs/{run_id}/handoff/."""
-    repo = Path(__file__).resolve().parents[2]
-    runs = runs_root or (repo / "runs")
-    sbs_path = runs / run_id / "presentation" / "side-by-side.json"
-    side_by_side = json.loads(sbs_path.read_text())
-    firm = json.loads(Path(firm_path).read_text())
-    packet = build_packet(
-        run_id=run_id,
-        tenant_id=tenant_id,
-        firm=firm,
-        side_by_side=side_by_side,
-        selected_sow_id=selected_sow_id,
-    )
-    export_packet(packet, runs / run_id / "handoff")
-    return packet
-
-
-def _main() -> int:
-    import argparse
-
-    ap = argparse.ArgumentParser(description="Export an FDE handoff packet for a selected SOW")
-    ap.add_argument("--run-id", required=True)
-    ap.add_argument("--firm", required=True, type=Path, help="firm.json")
-    ap.add_argument("--tenant", required=True, help="tenant_id")
-    ap.add_argument("--sow-id", default=None, help="selected SOW id (default: recommendation)")
-    args = ap.parse_args()
-    p = from_run(args.run_id, firm_path=args.firm, tenant_id=args.tenant,
-                 selected_sow_id=args.sow_id)
-    print(render_markdown(p))
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(_main())

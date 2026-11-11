@@ -17,23 +17,21 @@ Design (deterministic, offline, source-traced):
      dimension a CEO weighs (annual impact, EBITDA lift, payback, hours freed,
      consultant conviction, deployability grade, key risk/gap).
   3. The matrix renders to a markdown table the report generator embeds, plus a
-     machine-readable dict the web SOW-review UI (P4.T2) consumes.
+     machine-readable dict (side-by-side.json) the handoff packet reads.
 
 The recommendation pointer ("our pick") is the highest WWOD-pushed candidate that
 clears the deployability block threshold — the consultant's honest lead, with the
 gaps shown alongside so it is never a blind push.
 """
 from __future__ import annotations
-
-import importlib
 import json
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Sequence
 
-_wwod = importlib.import_module("engine.sow.wwod_score")
-_grade = importlib.import_module("engine.sow.pillar_grade")
-_metrics = importlib.import_module("engine.sow.metrics")
+import engine.sow.wwod_score as _wwod
+import engine.sow.pillar_grade as _grade
+import engine.sow.metrics as _metrics
 
 # decision dimensions, in the order a CEO weighs them.
 ROWS: list[tuple[str, str]] = [
@@ -219,37 +217,3 @@ def write_artifact(sbs: SideBySide, path: Path | str) -> Path:
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(sbs.to_dict(), indent=2, default=str, allow_nan=False))
     return p
-
-
-def from_run(
-    run_id: str,
-    *,
-    baseline_path: Path,
-    runs_root: Path | None = None,
-) -> SideBySide:
-    """End-to-end: load a run's SOW candidates + the tenant baseline -> side-by-side,
-    written to runs/{run_id}/presentation/side-by-side.json."""
-    repo = Path(__file__).resolve().parents[2]
-    runs = runs_root or (repo / "runs")
-    cand_path = runs / run_id / "sow" / "sow-candidates.jsonl"
-    cands = [json.loads(l) for l in cand_path.read_text().splitlines() if l.strip()]
-    baseline = json.loads(Path(baseline_path).read_text())
-    sbs = build_side_by_side(cands, baseline)
-    write_artifact(sbs, runs / run_id / "presentation" / "side-by-side.json")
-    return sbs
-
-
-def _main() -> int:
-    import argparse
-
-    ap = argparse.ArgumentParser(description="Render a side-by-side SOW comparison for a run")
-    ap.add_argument("--run-id", required=True)
-    ap.add_argument("--baseline", required=True, type=Path, help="tenant baseline.json")
-    args = ap.parse_args()
-    sbs = from_run(args.run_id, baseline_path=args.baseline)
-    print(render_markdown(sbs))
-    return 0 if sbs.columns else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(_main())

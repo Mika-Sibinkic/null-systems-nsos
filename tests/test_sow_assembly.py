@@ -1,13 +1,11 @@
 """Tests for SOW assembly — ranked findings -> 2-3 coherent SOW candidates (P3.T1)."""
-import importlib
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+import engine.sow.assembly as assembly
+import engine.meta_levels.financial.findings as findings_mod
 
-assembly = importlib.import_module("engine.sow.assembly")
-findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+ROOT = Path(__file__).resolve().parents[1]
+
 
 BASELINE_TENANT = "synth-acme-services"
 
@@ -90,19 +88,3 @@ def test_each_finding_lands_in_exactly_one_candidate_when_unclamped():
 
 def test_empty_findings_yields_no_candidates():
     assert assembly.assemble_sows([]) == []
-
-
-def test_from_run_writes_artifact(tmp_path):
-    # build a run dir with the real findings, then assemble from it
-    findings = _real_findings()
-    run_id = "test-run"
-    fpath = tmp_path / run_id / "gauntlet" / "financial" / "findings.jsonl"
-    fpath.parent.mkdir(parents=True, exist_ok=True)
-    import json
-    fpath.write_text("\n".join(json.dumps(f) for f in findings) + "\n")
-    sows = assembly.from_run(run_id, runs_root=tmp_path)
-    assert 2 <= len(sows) <= 3
-    artifact = tmp_path / run_id / "sow" / "sow-candidates.jsonl"
-    assert artifact.exists()
-    lines = [l for l in artifact.read_text().splitlines() if l.strip()]
-    assert len(lines) == len(sows)

@@ -25,7 +25,7 @@ MIN_CONFIDENCE_TO_PUSH = 0.5          # below this, a consultant hedges
 BREADTH_BONUS_PER_FINDING = 0.05      # each corroborating finding firms the push
 
 # True of every SOW until past engagements are on record, so owner-facing text
-# states it once instead of per option (presentation/side-by-side/sbs.py).
+# states it once instead of per option (presentation/side_by_side/sbs.py).
 COLD_START_GAP = (
     "we have no past engagement like this on record, so the conviction score "
     "rests only on size, confidence and how many findings back it"

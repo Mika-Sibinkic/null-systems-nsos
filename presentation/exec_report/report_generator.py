@@ -3,25 +3,12 @@
 Run the whole pipeline with `python scripts/run_synthetic.py` to produce one.
 """
 from __future__ import annotations
-import importlib.util
 from pathlib import Path
 from typing import Sequence
 
-
-def _load_sbs_module():
-    """Load the side-by-side renderer (hyphenated package dir -> load by path)."""
-    repo = Path(__file__).resolve().parents[2]
-    sbs_path = repo / "presentation" / "side-by-side" / "sbs.py"
-    import sys
-    if "nsos_sbs" in sys.modules:
-        return sys.modules["nsos_sbs"]
-    spec = importlib.util.spec_from_file_location("nsos_sbs", str(sbs_path))
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules["nsos_sbs"] = mod  # required so @dataclass resolves cls.__module__
-    if str(repo) not in sys.path:
-        sys.path.insert(0, str(repo))
-    spec.loader.exec_module(mod)
-    return mod
+import engine.sow.metrics as fmt  # fmt_payback / fmt_ebitda: one formatter for every surface
+import engine.sow.wwod_score as wwod
+import presentation.side_by_side.sbs as sbs_mod
 
 
 def render_sow_report(
@@ -47,8 +34,6 @@ def render_sow_report(
     `pending` are findings the review gate held for a human; they are listed by
     name and kept out of every SOW and total.
     """
-    sbs_mod = _load_sbs_module()
-    fmt = sbs_mod._metrics  # fmt_payback / fmt_ebitda: one formatter for every surface
     sbs = sbs_mod.build_side_by_side(
         sows, baseline, engagement_cost_usd=engagement_cost_usd
     )
@@ -69,8 +54,8 @@ def render_sow_report(
         f"assumption we name next to it.\n"
     )
     lines.append("How to read the scores:\n")
-    if any(sbs_mod._wwod.COLD_START_GAP in col.gaps for col in sbs.columns):
-        lines.append(f"- **Consultant conviction**: {sbs_mod._wwod.COLD_START_GAP}.")
+    if any(wwod.COLD_START_GAP in col.gaps for col in sbs.columns):
+        lines.append(f"- **Consultant conviction**: {wwod.COLD_START_GAP}.")
     lines.append("- **Deployability grade**: a placeholder. One of its five checks returns a fixed score.")
     lines.append("- **Evidence confidence**: set per type of finding, not measured for each number.")
     cost = engagement_cost_usd if engagement_cost_usd is not None else fmt.DEFAULT_ENGAGEMENT_COST_USD

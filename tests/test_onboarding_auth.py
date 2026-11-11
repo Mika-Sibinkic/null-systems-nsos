@@ -1,21 +1,20 @@
 """Tests for client/onboarding — scoped-token auth + secrets-server-side contract."""
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
-from client.onboarding.auth import (  # noqa: E402
+from client.onboarding.auth import (
     AuthError,
     ConnectorSecretStore,
     authorize,
     issue_token,
     verify_token,
 )
-from client.onboarding.onboarding import OnboardingSession, onboard_quickbooks  # noqa: E402
+from client.onboarding.onboarding import OnboardingSession, onboard_quickbooks
+
+ROOT = Path(__file__).resolve().parents[1]
+
 
 EXPORT = json.loads((ROOT / "examples" / "synthetic-client-a" / "quickbooks_export.json").read_text())
 FIRM = json.loads((ROOT / "examples" / "synthetic-client-a" / "firm.json").read_text())

@@ -4,18 +4,16 @@ Runs offline with FastAPI's TestClient against the committed synthetic snapshot
 (client/snapshots/synth-acme-services). No API keys, no network.
 """
 import json
-import sys
 from pathlib import Path
 
 import pytest
-from fastapi import Depends
 from fastapi.testclient import TestClient
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+from client.onboarding.auth import issue_token
+from engine.api.app import create_app
 
-from client.onboarding.auth import issue_token  # noqa: E402
-from engine.api.app import create_app, require_live_model  # noqa: E402
+ROOT = Path(__file__).resolve().parents[1]
+
 
 TENANT = "synth-acme-services"
 TEASER_KEYS = {"id", "headline", "impact_usd", "impact_hours", "evidence", "confidence", "method", "team"}
@@ -130,29 +128,6 @@ def test_dev_token_is_absent_when_production_secret_configured(monkeypatch):
     r = TestClient(create_app()).post("/dev/scoped-token", json={"tenant_id": TENANT})
     assert r.status_code == 404
     assert r.json() == {"error": "not found"}
-
-
-# ── fail-closed when a live model is required ─────────────────────────────────
-
-def _app_with_live_route(app):
-    @app.get("/_test/needs-model", dependencies=[Depends(require_live_model)])
-    def needs_model():
-        return {"ok": True}
-    return app
-
-
-def test_live_model_route_fails_closed_without_key(monkeypatch):
-    monkeypatch.delenv("NIM_API_KEY", raising=False)
-    c = TestClient(_app_with_live_route(create_app()), client=LOCAL)
-    r = c.get("/_test/needs-model")
-    assert r.status_code == 503
-    assert r.json() == {"error": "live model required but NIM_API_KEY is not configured"}
-
-
-def test_live_model_route_passes_with_key(monkeypatch):
-    monkeypatch.setenv("NIM_API_KEY", "set-for-test-only")
-    c = TestClient(_app_with_live_route(create_app()), client=LOCAL)
-    assert c.get("/_test/needs-model").status_code == 200
 
 
 # ── trust boundary: tenant ids, malformed tokens, validation errors ───────────

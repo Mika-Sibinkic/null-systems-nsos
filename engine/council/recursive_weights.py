@@ -4,7 +4,7 @@ Implements the algorithm from docs/COUNCIL-PROTOCOL.md:
   composite = w_prio*prio + w_nov*novelty + w_corrob*corroboration + w_impact*impact
   final     = borda_position * (1 + composite)
 
-The Borda position comes from a pairwise LLM-judge tournament (see council.py).
+The Borda position comes from a pairwise judge tournament (see council.py; the judge is the impact rule).
 """
 from __future__ import annotations
 from dataclasses import dataclass

@@ -6,33 +6,21 @@ assembled from the synthetic tenant baseline (not fixtures), then runs the
 actual quality_judge gate over the rendered client-facing report —
 verification, not assertion.
 """
-import importlib
-import importlib.util
 import json
 import os
 import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+import engine.sow.assembly as assembly
+import engine.meta_levels.financial.findings as findings_mod
+import presentation.side_by_side.sbs as sbs_mod
+import presentation.exec_report.report_generator as report_mod
 
-assembly = importlib.import_module("engine.sow.assembly")
-findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+ROOT = Path(__file__).resolve().parents[1]
+
 
 BASELINE_TENANT = "synth-acme-services"
-
-
-def _load(name: str, rel: str):
-    spec = importlib.util.spec_from_file_location(name, str(ROOT / rel))
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod  # required so @dataclass can resolve cls.__module__
-    spec.loader.exec_module(mod)
-    return mod
-
-
-sbs_mod = _load("nsos_sbs_test", "presentation/side-by-side/sbs.py")
-report_mod = _load("nsos_report_test", "presentation/exec-report/report_generator.py")
 
 
 def _baseline():
@@ -110,15 +98,6 @@ def test_sbs_artifact_written(tmp_path):
     data = json.loads(p.read_text())
     assert len(data["columns"]) == len(sbs.columns)
     assert data["recommended_sow_id"] == sbs.recommended_sow_id
-
-
-def test_from_run_reads_run_candidates(tmp_path):
-    b = _baseline()
-    assembly.assemble_sows(findings_mod.run_findings(b), artifacts_dir=tmp_path / "r1" / "sow")
-    baseline_path = ROOT / "client" / "snapshots" / BASELINE_TENANT / "baseline.json"
-    sbs = sbs_mod.from_run("r1", runs_root=tmp_path, baseline_path=baseline_path)
-    assert 2 <= len(sbs.columns) <= 3
-    assert (tmp_path / "r1" / "presentation" / "side-by-side.json").exists()
 
 
 # ── decision report ───────────────────────────────────────────────────────────

@@ -396,32 +396,3 @@ def run_findings(baseline: dict, *, out_path: Path | str | None = None) -> list[
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text("\n".join(json.dumps(f, allow_nan=False) for f in findings) + ("\n" if findings else ""))
     return findings
-
-
-def from_snapshot(tenant_id: str, *, run_id: str | None = None,
-                  snapshots_root: Path | None = None,
-                  runs_root: Path | None = None) -> list[dict]:
-    """Load a tenant baseline, run findings, write to runs/{run_id}/gauntlet/financial/findings.jsonl."""
-    repo = Path(__file__).resolve().parents[3]
-    root = snapshots_root or (repo / "client" / "snapshots")
-    baseline = json.loads((root / tenant_id / "baseline.json").read_text())
-    rid = run_id or tenant_id
-    runs = runs_root or (repo / "runs")
-    out = runs / rid / "gauntlet" / "financial" / "findings.jsonl"
-    return run_findings(baseline, out_path=out)
-
-
-def _main() -> int:
-    import argparse
-
-    p = argparse.ArgumentParser(description="Emit financial findings from a tenant baseline")
-    p.add_argument("--tenant", required=True)
-    p.add_argument("--run-id", default=None)
-    args = p.parse_args()
-    findings = from_snapshot(args.tenant, run_id=args.run_id)
-    print(json.dumps(findings, indent=2))
-    return 0 if findings else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(_main())

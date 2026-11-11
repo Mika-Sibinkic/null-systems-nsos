@@ -6,14 +6,12 @@ same confidence, so the number on the web page is the number in the report.
 Deterministic and offline.
 """
 from __future__ import annotations
-
-import importlib
 import json
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Optional
 
-_findings = importlib.import_module("engine.meta-levels.financial.findings")
+import engine.meta_levels.financial.findings as _findings
 
 
 @dataclass
@@ -77,17 +75,3 @@ def from_snapshot(tenant_id: str, *, snapshots_root: Optional[Path] = None) -> T
     root = snapshots_root or (Path(__file__).resolve().parents[2] / "client" / "snapshots")
     baseline = json.loads((root / tenant_id / "baseline.json").read_text())
     return teaser_finding(baseline)
-
-
-def _main() -> int:
-    import argparse
-    p = argparse.ArgumentParser(description="teaser finding from a tenant baseline")
-    p.add_argument("--tenant", required=True)
-    args = p.parse_args()
-    res = from_snapshot(args.tenant)
-    print(json.dumps(res.to_finding(), indent=2))
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(_main())

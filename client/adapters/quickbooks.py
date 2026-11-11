@@ -179,34 +179,3 @@ def validate_baseline(baseline: dict[str, Any]) -> list[str]:
     validator = jsonschema.Draft7Validator(schema)
     return [f"{'/'.join(map(str, e.path))}: {e.message}"
             for e in validator.iter_errors(baseline)]
-
-
-def _main() -> int:
-    import argparse
-    p = argparse.ArgumentParser(description="QuickBooks read-only adapter -> baseline.json")
-    p.add_argument("--export", required=True, help="Path to a QuickBooks export JSON")
-    p.add_argument("--tenant", required=True, help="tenant_id")
-    p.add_argument("--firm", help="Optional firm.json for firm-level context")
-    p.add_argument("--out-root", help="Override snapshots root (default client/snapshots)")
-    args = p.parse_args()
-
-    with open(args.export) as f:
-        export = json.load(f)
-    firm = None
-    if args.firm:
-        with open(args.firm) as f:
-            firm = json.load(f)
-    baseline = build_baseline(export, args.tenant, firm=firm)
-    errs = validate_baseline(baseline)
-    if errs:
-        print("baseline INVALID:")
-        for e in errs:
-            print(f"  ! {e}")
-        return 1
-    out = write_baseline(baseline, snapshots_root=Path(args.out_root) if args.out_root else None)
-    print(f"baseline written + valid: {out}")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(_main())

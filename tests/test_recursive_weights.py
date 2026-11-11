@@ -1,13 +1,11 @@
 """Tests for engine/council/recursive_weights.py and council.py."""
 from __future__ import annotations
 import sys
-from pathlib import Path
+
+from engine.council import rank_findings, run_council
+from engine.council.recursive_weights import cosine, z_norm
 
 # Allow importing from engine/ without packaging
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-from engine.council import rank_findings, run_council  # noqa: E402
-from engine.council.recursive_weights import cosine, z_norm  # noqa: E402
 
 
 def _emb(*xs):

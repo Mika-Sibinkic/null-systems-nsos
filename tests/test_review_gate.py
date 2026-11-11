@@ -1,19 +1,21 @@
 """Tests for the financial review_gate (P2.T4) + quality_judge offline mode."""
-import importlib
 import json
-import os
-import sys
 from pathlib import Path
 
+import pytest
+
+from engine.gauntlets import quality_judge as qj
+import engine.meta_levels.financial.review_gate as review_gate
+import engine.meta_levels.financial.findings as findings_mod
+
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
-# Enable offline-deterministic judge for the whole module so the gate is testable
-# without a live LLM key (the build pipeline sets this env too).
-os.environ["NSOS_JUDGE_OFFLINE_DETERMINISTIC"] = "1"
 
-review_gate = importlib.import_module("engine.meta-levels.financial.review_gate")
-findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+@pytest.fixture(autouse=True)
+def offline_judge(monkeypatch):
+    """Offline-deterministic judge, so the gate is testable without a model key."""
+    monkeypatch.setenv("NSOS_JUDGE_OFFLINE_DETERMINISTIC", "1")
+
 
 BASELINE = json.loads(
     (ROOT / "client" / "snapshots" / "synth-acme-services" / "baseline.json").read_text()
@@ -69,9 +71,6 @@ def test_real_findings_mostly_clear():
 
 
 def test_quality_judge_offline_deterministic_scores():
-    sys.path.insert(0, str(ROOT / "engine" / "gauntlets"))
-    qj = importlib.import_module("quality_judge")
-    importlib.reload(qj)  # pick up the env var
     s = qj.score(
         "Switching primary cloud supplier saves $42,000/year. Evidence: QuickBooks $84k/yr to Provider X. "
         "Recommend re-platform. Confidence: HIGH."

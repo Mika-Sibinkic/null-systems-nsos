@@ -13,8 +13,6 @@ the report as pending review and stay out of every total.
 from __future__ import annotations
 
 import argparse
-import importlib
-import importlib.util
 import json
 import os
 import sys
@@ -33,27 +31,16 @@ TENANT_ID = "synth-acme-services"
 RUN_ID = "synthetic-client-a"
 COMMAND = "python scripts/run_synthetic.py"
 
-
-def _load(name: str, rel: str):
-    """Load a module from a hyphenated directory (not importable by name)."""
-    if name in sys.modules:
-        return sys.modules[name]
-    spec = importlib.util.spec_from_file_location(name, str(ROOT / rel))
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod  # @dataclass resolves cls.__module__ through sys.modules
-    spec.loader.exec_module(mod)
-    return mod
-
-
-onboarding = importlib.import_module("client.onboarding.onboarding")
-findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
-review_gate = importlib.import_module("engine.meta-levels.financial.review_gate")
-council_mod = importlib.import_module("engine.council.council")
-assembly = importlib.import_module("engine.sow.assembly")
-sbs_mod = _load("nsos_sbs", "presentation/side-by-side/sbs.py")
-report_mod = _load("nsos_report", "presentation/exec-report/report_generator.py")
-packet_mod = _load("nsos_packet", "presentation/handoff/packet.py")
-outcome_loop = _load("nsos_outcome_loop", "learning/feedback/outcome_loop.py")
+# Imported after the sys.path line above: this file runs as a script.
+import client.onboarding.onboarding as onboarding
+import engine.meta_levels.financial.findings as findings_mod
+import engine.meta_levels.financial.review_gate as review_gate
+import engine.council.council as council_mod
+import engine.sow.assembly as assembly
+import presentation.side_by_side.sbs as sbs_mod
+import presentation.exec_report.report_generator as report_mod
+import presentation.handoff.packet as packet_mod
+import learning.feedback.outcome_loop as outcome_loop
 
 
 def run(out: Path) -> dict:
@@ -93,7 +80,7 @@ def run(out: Path) -> dict:
         cleared, council_scores={r.finding_id: r.final for r in ranked},
         artifacts_dir=out / "sow")
 
-    # 6. side-by-side (WWOD + pillar grade + metrics), the artifact the web review page reads
+    # 6. side-by-side (WWOD + pillar grade + metrics)
     sbs = sbs_mod.build_side_by_side(sows, baseline)
     sbs_mod.write_artifact(sbs, out / "presentation" / "side-by-side.json")
 

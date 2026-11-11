@@ -12,7 +12,7 @@ for a dollar or hour figure, an evidence word, a confidence word and a next
 step. That is all "passes the quality gate" means offline.
 
 Without the flag and without a working model, score() returns
-status='unavailable'; the review gate and `--gate` treat that as a fail.
+status='unavailable' and gate_decision() holds the text (fails closed).
 """
 
 from __future__ import annotations
@@ -108,7 +108,9 @@ RUBRIC_PROMPT = _build_rubric_prompt()
 # fall back to a deterministic structural rubric (mirrors council.deterministic_judge:
 # a reproducible offline scorer so the build can verify gating logic without a key).
 # Default OFF — production keeps the fail-closed live-LLM behavior untouched.
-OFFLINE_DETERMINISTIC = os.environ.get("NSOS_JUDGE_OFFLINE_DETERMINISTIC", "") in ("1", "true", "yes")
+# Read on every call, so the mode never depends on which module imported this first.
+def offline_deterministic() -> bool:
+    return os.environ.get("NSOS_JUDGE_OFFLINE_DETERMINISTIC", "") in ("1", "true", "yes")
 
 _DOLLAR_RE = re.compile(r"\$\s?\d")
 _HOURS_RE = re.compile(r"\b\d[\d,\.]*\s*(hours?|hrs?|hr/?yr|hours?/year)\b", re.I)
@@ -196,7 +198,7 @@ def score(output_text: str, context: Optional[Dict[str, Any]] = None) -> Dict[st
     """Score an NSOS output. Never raises — returns a dict with status + scores.
 
     On judge-unavailable (provider down, parse failure), returns status='unavailable'
-    with neutral scores that fail-open (do NOT gate).
+    with null scores; gate_decision() holds anything with that status.
     """
     ctx_lines = []
     if context:
@@ -212,7 +214,7 @@ def score(output_text: str, context: Optional[Dict[str, Any]] = None) -> Dict[st
     ctx_block = ("CONTEXT:\n" + "\n".join(ctx_lines) + "\n\n") if ctx_lines else ""
     prompt = f"{ctx_block}NSOS OUTPUT:\n{output_text[:3000]}"
 
-    if OFFLINE_DETERMINISTIC:
+    if offline_deterministic():
         # Checked before any model call: offline means nothing leaves the machine,
         # even when NIM_API_KEY happens to be set in the shell.
         return _deterministic_score(output_text)
@@ -236,10 +238,10 @@ def score(output_text: str, context: Optional[Dict[str, Any]] = None) -> Dict[st
 def gate_decision(scores: Dict[str, Any]) -> bool:
     """Return True if output should be SUPPRESSED (gated), False to surface normally.
 
-    Fails open on unavailable judge — always surface when we can't score.
+    Fails closed: text the judge could not score is held.
     """
     if scores.get("status") != "ok":
-        return False
+        return True
     r = scores.get("relevance") or 0
     a = scores.get("actionability") or 0
     c = scores.get("calibration") or 0
@@ -280,12 +282,9 @@ def main() -> int:
     gated = gate_decision(scores)
     print(json.dumps({"scores": scores, "gated": gated}, indent=2, default=str))
     if args.gate:
-        # Fail-closed for the build pipeline: an unscoreable output must NOT pass silently.
-        if scores.get("status") != "ok":
-            print("GATE: FAIL — judge unavailable (fail-closed)", file=sys.stderr)
-            return 1
         if gated:
-            print("GATE: FAIL — output below quality threshold", file=sys.stderr)
+            why = "below quality threshold" if scores.get("status") == "ok" else "judge unavailable"
+            print(f"GATE: FAIL — {why}", file=sys.stderr)
             return 1
         print("GATE: PASS")
     return 0

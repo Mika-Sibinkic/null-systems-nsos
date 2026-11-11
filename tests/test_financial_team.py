@@ -1,14 +1,11 @@
 """Tests for the financial data->findings engine."""
 import json
-import sys
 from pathlib import Path
 
+import engine.meta_levels.financial.findings as findings_mod
+
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
-import importlib  # noqa: E402
-
-findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
 
 BASELINE = json.loads(
     (ROOT / "client" / "snapshots" / "synth-acme-services" / "baseline.json").read_text()

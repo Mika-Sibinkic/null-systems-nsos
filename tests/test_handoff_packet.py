@@ -4,31 +4,18 @@ Covers `presentation/handoff/packet.py`. Builds REAL SOW candidates from the
 synthetic tenant baseline -> side-by-side -> selected-SOW packet, and verifies
 the packet exports as JSON + markdown with every number source-traced.
 """
-import importlib
-import importlib.util
 import json
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+import engine.sow.assembly as assembly
+import engine.meta_levels.financial.findings as findings_mod
+import presentation.side_by_side.sbs as sbs_mod
+import presentation.handoff.packet as packet_mod
 
-assembly = importlib.import_module("engine.sow.assembly")
-findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+ROOT = Path(__file__).resolve().parents[1]
+
 
 BASELINE_TENANT = "synth-acme-services"
-
-
-def _load(name: str, rel: str):
-    spec = importlib.util.spec_from_file_location(name, str(ROOT / rel))
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
-
-
-sbs_mod = _load("nsos_sbs_ho", "presentation/side-by-side/sbs.py")
-packet_mod = _load("nsos_packet", "presentation/handoff/packet.py")
 
 
 def _baseline():
@@ -116,16 +103,3 @@ def test_export_writes_json_and_markdown(tmp_path):
     data = json.loads(json_path.read_text())
     assert data["selected_sow_id"] == p.selected_sow_id
     assert data["source"]
-
-
-def test_from_run_exports_under_run_dir(tmp_path):
-    sbs_path = tmp_path / "synthetic-client-a" / "presentation" / "side-by-side.json"
-    sbs_path.parent.mkdir(parents=True)
-    sbs_path.write_text(json.dumps(_sbs_dict()))
-    packet_mod.from_run("synthetic-client-a", runs_root=tmp_path, tenant_id=BASELINE_TENANT,
-                        firm_path=ROOT / "examples" / "synthetic-client-a" / "firm.json")
-    artifact = tmp_path / "synthetic-client-a" / "handoff" / "fde-handoff-packet.json"
-    assert artifact.exists()
-    data = json.loads(artifact.read_text())
-    assert data["run_id"] == "synthetic-client-a"
-    assert data["impact_usd"] > 0

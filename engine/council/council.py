@@ -1,8 +1,7 @@
 """Council orchestrator — pairwise judge tournament -> Borda positions -> recursive weights.
 
-Called after the meta-teams have produced findings. The default judge is
-deterministic (higher impact_usd wins) so runs are reproducible offline; pass
-`judge=engine.router.nim_client.judge_pair` to rank with a live model.
+Called after the meta-teams have produced findings. The only judge today is
+deterministic_judge (higher impact_usd wins). No model ranks findings yet.
 """
 from __future__ import annotations
 from collections import defaultdict
@@ -17,11 +16,7 @@ from .recursive_weights import rank_findings, ScoreBreakdown
 
 
 def deterministic_judge(a: dict, b: dict) -> str:
-    """Offline-deterministic judge for tests. Picks higher impact_usd as winner.
-
-    Production path: `engine.router.nim_client.judge_pair` (NIM v4 llama-3.3-70b).
-    This function remains the offline fallback so tests can run without network.
-    """
+    """The council's judge: the higher impact_usd wins."""
     if a.get("impact_usd", 0) > b.get("impact_usd", 0):
         return "A"
     if b.get("impact_usd", 0) > a.get("impact_usd", 0):

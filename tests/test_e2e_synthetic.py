@@ -8,8 +8,6 @@ checks the money flow with the real grounded_numbers and quality_judge probes.
 Every artifact lands under pytest's tmp_path, so the suite never depends on a
 previous run having left files in runs/.
 """
-import importlib
-import importlib.util
 import os
 import subprocess
 import sys
@@ -17,15 +15,12 @@ from pathlib import Path
 
 import pytest
 
+import client.adapters.quickbooks as qb
+import scripts.run_synthetic as pipe
+import engine.sow.metrics as metrics
+
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
-_spec = importlib.util.spec_from_file_location("run_synthetic", ROOT / "scripts" / "run_synthetic.py")
-pipe = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(pipe)
-
-qb = importlib.import_module("client.adapters.quickbooks")
-metrics = importlib.import_module("engine.sow.metrics")
 
 EXPOSURE_METHODS = {"vendor_concentration", "customer_concentration", "ar_overdue"}
 

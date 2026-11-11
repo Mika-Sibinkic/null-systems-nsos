@@ -72,15 +72,6 @@ def token_secret_mode() -> str:
     return "configured" if os.environ.get(_TOKEN_SECRET_ENV) else "dev-only"
 
 
-def require_live_model() -> None:
-    """Dependency for routes that need a real model. Fails closed, never fabricates."""
-    if model_mode() != "live":
-        raise HTTPException(
-            status_code=503,
-            detail=f"live model required but {_MODEL_KEY_ENV} is not configured",
-        )
-
-
 # ── response models ───────────────────────────────────────────────────────────
 
 class Health(BaseModel):

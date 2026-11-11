@@ -1,17 +1,16 @@
 """Tests for client/adapters/quickbooks.py — read-only QB export -> baseline.json."""
 import json
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
-from client.adapters.quickbooks import (  # noqa: E402
+from client.adapters.quickbooks import (
     QuickBooksAdapter,
     build_baseline,
     validate_baseline,
     write_baseline,
 )
+
+ROOT = Path(__file__).resolve().parents[1]
+
 
 EXPORT_PATH = ROOT / "examples" / "synthetic-client-a" / "quickbooks_export.json"
 FIRM_PATH = ROOT / "examples" / "synthetic-client-a" / "firm.json"
@@ -113,8 +112,7 @@ def _lens_export():
 
 
 def test_ar_overdue_counts_only_overdue_open_balance():
-    import importlib
-    findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+    import engine.meta_levels.financial.findings as findings_mod
     a = findings_mod.a_ar_overdue(build_baseline(_lens_export(), "lens"))
     assert a["overdue_count"] == 1
     assert a["exposure_usd"] == 1000.0

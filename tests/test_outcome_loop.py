@@ -1,28 +1,14 @@
 """Tests for the outcome flywheel — predicted vs realized (P5.T1)."""
-import importlib
-import importlib.util
 import json
-import sys
 from pathlib import Path
 
+import engine.sow.assembly as assembly
+import engine.meta_levels.financial.findings as findings_mod
+import learning.feedback.outcome_loop as ol
+import presentation.side_by_side.sbs as sbs_mod
+import presentation.handoff.packet as packet_mod
+
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
-assembly = importlib.import_module("engine.sow.assembly")
-findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
-
-
-def _load(name: str, rel: str):
-    spec = importlib.util.spec_from_file_location(name, str(ROOT / rel))
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
-
-
-ol = _load("nsos_outcome_loop", "learning/feedback/outcome_loop.py")
-sbs_mod = _load("nsos_sbs_ol", "presentation/side-by-side/sbs.py")
-packet_mod = _load("nsos_packet_ol", "presentation/handoff/packet.py")
 
 
 def _baseline():

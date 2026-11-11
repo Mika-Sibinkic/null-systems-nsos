@@ -1,16 +1,15 @@
 """Tests for engine/teaser — <1h cheap high-signal finding from baseline.json."""
 import json
-import sys
 import time
 from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+from client.adapters.quickbooks import build_baseline
+from engine.teaser.teaser import teaser_finding, from_snapshot, TeaserResult
 
-from client.adapters.quickbooks import build_baseline  # noqa: E402
-from engine.teaser.teaser import teaser_finding, from_snapshot, TeaserResult  # noqa: E402
+ROOT = Path(__file__).resolve().parents[1]
+
 
 EXPORT = json.loads((ROOT / "examples" / "synthetic-client-a" / "quickbooks_export.json").read_text())
 FIRM = json.loads((ROOT / "examples" / "synthetic-client-a" / "firm.json").read_text())
@@ -45,9 +44,8 @@ def test_teaser_is_fast():
 
 def test_teaser_is_a_finding_the_report_also_shows():
     """Web page and report agree: the teaser is the report's scope-cycle finding, same number."""
-    import importlib
-    findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
-    review_gate = importlib.import_module("engine.meta-levels.financial.review_gate")
+    import engine.meta_levels.financial.findings as findings_mod
+    import engine.meta_levels.financial.review_gate as review_gate
     res = teaser_finding(_baseline())
     full = next(f for f in findings_mod.run_findings(_baseline()) if f["method"] == "scope_cycle_time")
     assert res.method == "scope_cycle_time_leak"
@@ -87,8 +85,7 @@ def _two_deals(period=True):
 
 
 def test_teaser_matches_full_findings_on_scope_cycle():
-    import importlib
-    findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+    import engine.meta_levels.financial.findings as findings_mod
     full = findings_mod.ANALYTICS["scope_cycle_time"](_two_deals())
     t = teaser_finding(_two_deals())
     assert full["avg_days"] == 6.0  # the 0-day deal counts

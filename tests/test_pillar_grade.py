@@ -1,15 +1,13 @@
 """Tests for the 5-pillar deployability grade (P3.T3)."""
-import importlib
 import json
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+import engine.sow.pillar_grade as pg
+import engine.sow.assembly as assembly
+import engine.meta_levels.financial.findings as findings_mod
 
-pg = importlib.import_module("engine.sow.pillar_grade")
-assembly = importlib.import_module("engine.sow.assembly")
-findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+ROOT = Path(__file__).resolve().parents[1]
+
 
 BASELINE_TENANT = "synth-acme-services"
 
