@@ -171,9 +171,9 @@ class ConnectorSecretStore:
 
     The web surface NEVER calls store()/_get_secret(). It only ever calls
     issue_scoped_token(), which returns a token with read scopes — never the secret.
-    In production this is backed by a secrets manager; here it's an in-memory map so
-    the contract is testable. The secret value never appears in any return value
-    exposed to a frontend caller.
+    There is no live connector: this is an in-memory map that pins the
+    server-side-only rule in tests. The secret value never appears in any return
+    value exposed to a frontend caller.
     """
     _secrets: dict[tuple[str, str], str] = field(default_factory=dict)
 

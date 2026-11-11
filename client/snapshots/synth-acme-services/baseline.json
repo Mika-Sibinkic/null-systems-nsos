@@ -1,6 +1,6 @@
 {
   "tenant_id": "synth-acme-services",
-  "generated_at": "2026-11-11T07:09:44.940751+00:00",
+  "generated_at": "2026-11-11T09:29:23.843690+00:00",
   "schema_version": 1,
   "sources": [
     {
@@ -146,7 +146,7 @@
   "provenance": {
     "adapter": "quickbooks",
     "adapter_version": "1.0.0",
-    "source_export_sha256": "846864180d9ec8af752a62bd105fa35cd63fc609231914515275fc1a295c0961"
+    "source_export_sha256": "e68ecfd562d6c8019c6f4047c67a65d0eb3cc28c4ced1f7245db53153bc73893"
   },
   "firm": {
     "firm_name": "Acme Services",

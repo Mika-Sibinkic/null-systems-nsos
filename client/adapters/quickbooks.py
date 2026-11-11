@@ -1,20 +1,15 @@
-"""QuickBooks read-only adapter.
+"""Adapter for a QuickBooks-like export.
 
-Maps a QuickBooks Online export (Reports + Invoice + Purchase entities) into the
-provider-neutral accounting view of schemas/baseline.json, then writes the full
-baseline snapshot to client/snapshots/{tenant_id}/baseline.json.
+Maps the export into the provider-neutral accounting view of schemas/baseline.json,
+then writes the full baseline snapshot to client/snapshots/{tenant_id}/baseline.json.
 
-Read-only by contract: the adapter accepts an already-exported JSON blob (or a path
-to one). It never calls a mutating QB API. In production the export is fetched by a
-server-side connector holding the QB OAuth token (see client/onboarding/auth.py); the
-web surface never sees that token. Here we accept the export directly so the mapping
-logic is unit-testable offline.
-
-CLI:
-  python3 -m client.adapters.quickbooks \
-      --export examples/synthetic-client-a/quickbooks_export.json \
-      --tenant synth-acme-services \
-      --firm examples/synthetic-client-a/firm.json
+The input is a QuickBooks-like JSON shape defined by
+examples/synthetic-client-a/quickbooks_export.json: flat ProfitAndLoss totals,
+Purchases already summed per vendor, and invoices carrying MetaData_FirstContact and
+MetaData_ScopeSent. No real QuickBooks file or API response is parsed yet. The
+first-contact and scope-sent dates are not QuickBooks fields; they would come from a
+CRM. The adapter reads a JSON blob (or a path to one) and calls no API.
+scripts/run_synthetic.py is how it runs end to end.
 """
 from __future__ import annotations
 
@@ -34,7 +29,7 @@ SCHEMA_VERSION = 1
 
 
 class QuickBooksAdapter:
-    """Read-only mapper from a QBO export dict to the baseline accounting view."""
+    """Read-only mapper from an export dict to the baseline accounting view."""
 
     def __init__(self, export: dict[str, Any]):
         if not isinstance(export, dict):

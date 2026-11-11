@@ -1,5 +1,9 @@
 """Onboarding session — the server-side flow that turns a connect into a baseline.
 
+There is no live connector yet. The demo stores a placeholder string as the
+"secret" and passes the export in directly; the flow below is the contract the
+tests pin, not a running integration.
+
 Client-view flow:
   1. Operator connects a source (QuickBooks). The OAuth secret is handed to the
      SERVER-SIDE ConnectorSecretStore — it never reaches the web surface.

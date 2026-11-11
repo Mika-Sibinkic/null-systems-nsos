@@ -1,6 +1,6 @@
 # NSOS: diagnostic engine for small and mid-sized firms
 
-NSOS (Null Systems Operating System) reads a firm's accounting export, finds where money and hours leak, and bundles the findings into two or three scored statements of work (SOWs). Every dollar in the output points at the export line it starts from and names the assumption that turns it into a yearly figure. The output is a short decision report written for the owner.
+NSOS (Null Systems Operating System) reads a firm's accounting export (today a QuickBooks-like JSON shape, see Limits), finds where money and hours leak, and bundles the findings into two or three scored statements of work (SOWs). Every dollar in the output points at the export line it starts from and names the assumption that turns it into a yearly figure. The output is a short decision report written for the owner.
 
 Built by [Null Systems](https://github.com/Mika-Sibinkic) as an in-house product. MIT licensed.
 
@@ -15,7 +15,7 @@ Internal prototype. It runs end to end on one fabricated client. Nothing is depl
 
 What works today, all exercised by the test suite from a clean clone with no API keys:
 
-- QuickBooks export → schema-valid tenant snapshot. Connector secrets stay server-side; the web layer gets a scoped token.
+- Export → schema-valid tenant snapshot. The input is a QuickBooks-like JSON shape defined by `examples/synthetic-client-a/quickbooks_export.json`. There is no live connector; `ConnectorSecretStore` is an in-memory stand-in that pins the server-side-only rule in tests.
 - Financial team → grounded findings (vendor and customer concentration, overdue receivables, advisory spend, proposal cycle time, margin). The engine rejects any `impact_usd`, `impact_hours` or `exposure_usd` that lacks a source trace and a confidence.
 - Two or three SOW candidates, ranked by annual impact, each with a WWOD score, a deployability grade, and EBITDA and payback metrics checked by the same grounding probe.
 - Owner-facing report, side-by-side comparison, and an FDE handoff packet (JSON and markdown).
@@ -55,6 +55,7 @@ To change what counts as a finding, edit the thresholds and benchmarks at the to
 ### Limits
 
 - There is one tenant and it is fabricated. No real firm's books have been through this.
+- No real QuickBooks file or API response is parsed yet. The adapter reads a JSON shape this repo defines: flat P&L totals, purchases already summed per vendor, and invoice fields `MetaData_FirstContact` and `MetaData_ScopeSent`. Those two dates are not QuickBooks fields; they would come from a CRM. The proposal-scoping finding depends on them.
 - The recommended option's $1,400,000/yr is an assumed 5 points of revenue on a 60% gross margin (`MARGIN_RECOVERY_PTS` in `findings.py`), not a leak measured in the export.
 - EBITDA lift divides by net income, because the export has no depreciation, amortization or interest lines. Real EBITDA is higher, so the true lift is lower. The report prints "+45% of net income" so the base is in view.
 - The scoping finding ($11,875/yr) counts only the 7 deals in the export's invoice list. Those invoices total $1.45M against $28M of revenue, so the yearly figure covers that sample, not the whole book of business.

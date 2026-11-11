@@ -1,5 +1,5 @@
 {
-  "_comment": "Synthetic QuickBooks Online API export shape (read-only). Mirrors the QBO Reports + Invoice + Purchase entities. Used to exercise client/adapters/quickbooks.py without touching a real QB account. All data fabricated for synth-acme-services.",
+  "_comment": "Synthetic, QuickBooks-like export. This file defines the shape; real QuickBooks output looks different (its P&L is nested, its purchases are per transaction, and MetaData_FirstContact / MetaData_ScopeSent are not QuickBooks fields; they would come from a CRM). Used to exercise client/adapters/quickbooks.py. All data fabricated for synth-acme-services.",
   "realmId": "9130350000000001",
   "companyName": "Acme Services",
   "currency": "USD",
