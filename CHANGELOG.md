@@ -105,7 +105,7 @@ The dated entries below are what went into 1.0.0.
   - `tests/test_e2e_synthetic.py` — full real pipe on synthetic-client-a: onboarding → QB snapshot →
     grounded findings → council → 2–3 scored SOWs → side-by-side → report → FDE packet → flywheel
     prediction. Runs on a fabricated QuickBooks fixture.
-- **Decided** Tier-2: offline-deterministic no-regression mode for `eval_harness`
+- **Decided** offline-deterministic no-regression mode for `eval_harness`
   (`NSOS_EVAL_OFFLINE_DETERMINISTIC`), mirroring the 2026-06-02 quality_judge precedent; production
   stays fail-closed, offline mode never fabricates an "adopt". Record:
   `docs/decisions/2026-06-07-offline-deterministic-eval-harness.md`.
@@ -114,10 +114,9 @@ The dated entries below are what went into 1.0.0.
   all green.
 
 ### 2026-05-28 — Conglomeration foundation (Phase 0 + 0.5)
-- **Decided** Tier-2 architecture: monorepo (Python `engine/` + Next.js `web/`), NIM-primary brain,
+- **Decided** architecture: monorepo (Python `engine/` + Next.js `web/`), NIM-primary brain,
   WWOD × 5-pillar SOW scoring. Record: `docs/decisions/2026-05-28-saas-conglomeration-architecture.md`.
-  Rollback baseline: `c6b1f83`.
-- **Added** living docs, all in `dev`:
+- **Added** living docs:
   - `docs/PRODUCT.md` — product description + product-description changelog (the thesis and 5-stage flow).
   - `docs/STATE.md` — build state per component.
   - `docs/ROADMAP.md` — phased plan, recursive to STATE (checkbox tracker).
@@ -127,12 +126,12 @@ The dated entries below are what went into 1.0.0.
 - **Added** `docs/site/index.html` — clickable product mind map (Mermaid, nodes colored by real build
   state, click → in-page description panels deep-linking to the docs).
 - **Added** `.github/workflows/ci.yml` — CI scaffold (python tests gate; web + docs-sync jobs land Phase 1).
-- **Preserved** prior bootstrap WIP as baseline commit `c6b1f83` (council protocol, NIM-only
+- **Preserved** prior bootstrap work as the baseline (council protocol, NIM-only
   sanitization replacing `llm_adapter.py` → `nim_client.py`, lifted engine).
 
 ### Hardening folded into the roadmap
 - Outcome flywheel (`learning/feedback/`) as first-class + recurring tier (Phase 5).
 - Grounded-numbers gate: every $/hrs source-traced + confidence-banded (Phase 2).
-- Eval-set versioned as IP, cold-started from prior Null Systems engagements (cross-cutting).
+- Eval set built from the realized outcomes of consenting engagements (cross-cutting).
 - `quality_judge` human-in-loop gate on client-facing output (Phase 2).
-- <1h time-to-value teaser at onboarding (Phase 1).
+- A teaser finding at onboarding, before the full run (Phase 1).

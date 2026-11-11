@@ -1,65 +1,39 @@
 ---
-choice: SaaS conglomeration architecture — monorepo (Python engine + Next.js surface), NIM-primary brain, WWOD×5-pillar SOW scoring
-tier: 2
+choice: One monorepo (Python engine + Next.js web) with one model client
 date: 2026-05-28
-status: accepted
+status: accepted; amended 2026-11-11
 alternatives_considered:
-  - name: Port the desktop prototype's Electron app as the product surface
-    reject_reason: Wrong form factor. The desktop prototype is a single-operator app; an SMB SaaS needs a multi-tenant web surface. It contributes patterns (auth, tool-auth tiers, connector ingestion, operator-shell UX), not code.
-  - name: Two repos (engine repo + separate surface repo)
-    reject_reason: Splits CI, source-of-truth, and typed contracts across boundaries for a solo→small-team product. Monorepo gives one-command bring-up (Build-quality pillar) and one promotion gate.
-  - name: Headless-first (engine + API/MCP only, surface later)
-    reject_reason: The seamless onboarding UX is the product wedge — it's how an SMB operator gets to first value. Deferring it defers the thing clients actually buy.
-  - name: Cross the brains (use the desktop prototype's Claude-CLI orchestration in the engine)
-    reject_reason: The engine is deliberately NIM-primary (cost, independence, no client data to a frontier vendor). Crossing it would break the cost model and the data-trust story. Claude stays a gated escalation tier only.
-corroborating_signals:
-  - Direct code/doc sweep 2026-05-28 (this repo): council→recursive_weights→report_generator works end-to-end on examples/synthetic-client-a (report.md, $1.38M/yr). client/adapters + engine/meta-levels empty.
-  - docs/ARCHITECTURE.md (this repo): client-view flow + layer map + LangGraph orchestration + multi-tenant isolation already specified.
-  - Engineering bar (5 pillars): Build-quality one-command bring-up; Throughput durable execution + spend caps; Audit-replayable decision records.
-  - WWOD: upstream reasoning_engine.predict + meta/wwod_recursion.py + knowledge/operator_patterns.jsonl (read-only lift source; Tier-3, do not edit in place).
-confidence:
-  primary_claim: VERIFIED
-  cost_estimate: LIKELY
+  - name: Two repos (engine repo + separate web repo)
+    reject_reason: Splits CI, source of truth and typed contracts across a boundary for a small product. One repo gives one-command bring-up and one CI workflow.
+  - name: Headless first (engine + API only, web later)
+    reject_reason: Onboarding is how an owner gets to a first result. Deferring the web surface defers the part people try first.
 verification_probe: |
-  1. `git -C null-systems-nsos branch --show-current` == dev; baseline parent commit == c6b1f83.
-  2. `python3 tests/test_recursive_weights.py` → ALL PASS (proves last-mile engine intact post-branch).
-  3. Repo layout shows engine/ (Python) + web/ (Next.js) as monorepo siblings; one .github/workflows/ci.yml gates both.
-  4. No edits land in the upstream prototype repo (salvage is lift-out only).
-rollback:
-  commit_sha: c6b1f83746d294cfa7aa176fd7e98f154c5a703f
-  steps:
-    - git checkout main
-    - git branch -D dev          # discard the conglomeration branch
-    - (engine/ on main is untouched by this decision; no data migration to reverse)
+  engine/ (Python) and web/ (Next.js) are siblings in this repo, and one
+  .github/workflows/ci.yml runs both.
+rollback: none recorded; there is no data migration to reverse.
 superseded_by: null
 ---
 
 ## Context
 
-Null Systems is productizing its consulting practice into an AI B2B SaaS for SMBs: an operator
-onboards their existing infra (accounting, CRM, comms, ops), the NSOS diagnostic reads ops /
-timelines / dollars-missed / bottlenecks graded by Null Systems' acquired consulting signaling,
-and outputs 2–3 SOWs with quantified success metrics that the operator chooses between. FDEs deploy
-the chosen high-leverage work. Thesis: turn old-economy SMBs into AI-native companies → EBITDA
-multiples. This decision sets the founding architecture for that build.
+Null Systems is turning its consulting diagnostic into a product for small and mid-sized firms. An owner connects their accounting and other systems, NSOS reads them, and it outputs 2-3 SOWs with quantified success metrics for the owner to pick between. An engineer then does the chosen work. This record set the founding layout. The design was adapted from an earlier private prototype; no code from it is in this repo.
 
 ## Decision
 
-Build in a single monorepo at `null-systems-nsos`: keep the existing **Python `engine/`** (the
-diagnostic brain, NIM-primary with Claude as a gated escalation tier only) and add a new
-**Next.js/Vercel `web/`** surface for SMB onboarding + SOW review. The desktop prototype contributes **patterns
-only** (re-implemented in the web stack), not Electron code. SOWs are scored by the bridge of
-**WWOD** (which SOW a Null Systems consultant would push) × the **5-pillar engineering bar** (is it
-deployable). The existing `engine/gauntlets/` + `learning/promotion-gate/` harness is the CI spine;
-GitHub Actions adds lint/typecheck/test on top.
+One monorepo: the Python `engine/` and a Next.js `web/` surface for onboarding. Every model call goes through one client, `engine/router/nim_client.py`. Each SOW is scored by how hard a consultant would push it (WWOD) and by a deployability grade.
 
 ## Consequences
 
-- **Easier:** one source of truth, one CI/promotion gate, one-command bring-up; clean web↔engine
-  HTTP/MCP boundary; cost model and data-trust story stay intact (NIM-primary, no client data to a
-  frontier vendor).
-- **Harder:** must maintain a polyglot monorepo (Python + TS); the web surface is net-new build;
-  durable execution for multi-hour diagnostic runs is not yet built (sync skeleton today).
-- **Committed to:** NIM-primary brain; multi-tenant isolation by `tenant_id`; every client-facing
-  number is source-traced + confidence-banded (LLM narrates, math computes). (The docs-sync CI
-  check this record also committed to was removed on 2026-11-11; STATE and ROADMAP are kept by hand.)
+- **Easier:** one source of truth, one CI workflow, one-command bring-up, and a plain HTTP boundary between web and engine.
+- **Harder:** a two-language repo (Python and TypeScript). Durable execution for long runs is not built; a run is one synchronous process.
+- **Committed to:** tenant isolation by `tenant_id`, and every client-facing number source-traced and confidence-banded (the model may narrate, arithmetic computes).
+
+## Amended 2026-11-11
+
+The original record claimed more than the code does. What is true:
+
+- **Where data goes.** With `NIM_API_KEY` set and `NSOS_JUDGE_OFFLINE_DETERMINISTIC` unset, prompts, which include finding text, go to `NIM_BASE_URL`, by default NVIDIA's hosted API. The original "no client data to a frontier vendor" does not hold for that path. Offline, which is how the tests and the demo run, nothing leaves the machine.
+- **No Claude tier.** `nim_client` is the only model client, and its only caller is the quality judge.
+- **No promotion gate.** `learning/promotion-gate/` was removed. CI is `.github/workflows/ci.yml`.
+- **No rollback commit.** The commit the original record named predates the published history, so the reference was removed.
+- **The deployability grade is a placeholder.** One of its five checks in `engine/sow/pillar_grade.py` returns a fixed score.

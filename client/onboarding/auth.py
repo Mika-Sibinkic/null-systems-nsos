@@ -1,6 +1,6 @@
 """Scoped-token auth for the onboarding surface (scoped-token / tool-auth pattern).
 
-Engineering-bar pillar 1 (Security) hard rules enforced here:
+Security rules enforced here:
   - No secrets in the frontend. The web surface never holds a connector OAuth token.
     It holds a server-issued, scoped, short-lived bearer token and nothing else.
   - No direct frontend <-> source-system. A first-party backend (this module + the

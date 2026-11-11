@@ -1,6 +1,6 @@
 # Council Protocol — Recursive-Weight Scoring
 
-> The design for how meta-team findings collapse into one ranked list for the report. What `engine/council/` does today: one judge per pair (`nim_client.judge_pair`, or offline the higher `impact_usd` wins), Borda positions, and the composite below. The embeddings are fixed 4-number placeholders (`_emb_for` in `findings.py`, two constant vectors in `run_synthetic.py`), so priority and novelty change nothing measured: giving every finding the same embedding leaves the demo report byte-identical. Offline, option order is effectively impact order.
+> The design for how meta-team findings collapse into one ranked list for the report. What `engine/council/` does today: one judge per pair, the impact rule (`council.deterministic_judge`: the higher `impact_usd` wins), Borda positions, and the composite below. No model ranks findings yet. The embeddings are fixed 4-number placeholders (`_emb_for` in `findings.py`, two constant vectors in `run_synthetic.py`), so priority and novelty change nothing measured: giving every finding the same embedding leaves the demo report byte-identical. Option order is impact order.
 
 ## Inputs
 
@@ -21,7 +21,7 @@ Each meta-team produces a `Finding` JSON object:
 
 Plus from the tenant snapshot:
 - `ceo_priorities`: ranked list with weights (e.g., `[{"text": "raise net retention", "weight": 1.0}, ...]`)
-- `known_baseline`: list of items the CEO already mentioned as known, with embeddings
+- `known_baseline`: list of items the owner already mentioned as known, with embeddings
 
 ## Scoring algorithm
 
@@ -30,7 +30,7 @@ def rank_findings(findings, ceo_priorities, known_baseline):
     """Recursive-weight Borda + multiplicative weighting.
 
     Per finding, compute:
-      - prio:     max cosine sim to a CEO priority, weighted by priority rank
+      - prio:     max cosine sim to an owner priority, weighted by priority rank
       - novelty:  1 - max sim to known_baseline (higher = newer)
       - corrob:   log2(1 + #distinct teams that surfaced this finding-cluster)
       - impact:   z-normalized blend of $ and hours
@@ -48,24 +48,24 @@ def rank_findings(findings, ceo_priorities, known_baseline):
 
         composite = 0.30*prio + 0.25*novelty + 0.20*corrob + 0.25*impact
 
-        # Pairwise LLM-judge tournament gives Borda position
-        borda = borda_count(f, findings, judge=judge_pair)
+        # Pairwise judge tournament gives Borda position
+        borda = borda_count(f, findings, judge=deterministic_judge)
 
         scored.append((f, borda * (1 + composite)))
     return sorted(scored, key=lambda t: -t[1])
 ```
 
-## Pairwise LLM-judge tournament
+## Pairwise judge tournament
 
-Built: for N findings, a full round-robin when N ≤ 20, else `O(N log N)` sampled pairs. Each pair goes to one judge, `nim_client.judge_pair` (one call to `meta/llama-3.3-70b-instruct`), which returns A, B or TIE. Borda position = N - (rank assigned by wins).
+Built: for N findings, a full round-robin when N ≤ 20, else `O(N log N)` sampled pairs. Each pair goes to `council.deterministic_judge`, which returns A, B or TIE by comparing `impact_usd`. Borda position = N - (rank assigned by wins).
 
-Not built: a multi-model judge ensemble with majority vote.
+Not built: a model judge. `run_council(judge=...)` accepts one, but no caller passes it.
 
 ## Hyperparameters
 
 The `0.30 / 0.25 / 0.20 / 0.25` weights are fixed in `recursive_weights.py`. Per-engagement calibration is not built. The plan:
 1. Run on 2–3 pilot reports.
-2. Have the operator (or, eventually, the client engagement lead) manually rank the top 10 findings.
+2. Have the consultant (or, eventually, the client's engagement lead) rank the top 10 findings by hand.
 3. Fit weights to minimize Spearman distance from manual rank.
 4. Persist tuned weights to `client/snapshots/{tenant_id}/council-weights.json`.
 

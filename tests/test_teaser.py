@@ -1,4 +1,4 @@
-"""Tests for engine/teaser — <1h cheap high-signal finding from baseline.json."""
+"""Tests for engine/teaser: one finding from baseline.json, no model call."""
 import json
 import time
 from pathlib import Path
@@ -39,7 +39,7 @@ def test_teaser_finding_passes_grounded_numbers_shape():
 def test_teaser_is_fast():
     start = time.time()
     teaser_finding(_baseline())
-    assert (time.time() - start) < 1.0, "teaser must be near-instant (well inside <1h budget)"
+    assert (time.time() - start) < 1.0, "teaser is pure arithmetic and should take well under a second"
 
 
 def test_teaser_is_a_finding_the_report_also_shows():

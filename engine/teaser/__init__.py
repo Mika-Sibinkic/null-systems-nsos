@@ -1,4 +1,4 @@
-"""<1h teaser — one cheap, high-signal finding to hook the operator while the full run proceeds async."""
+"""Teaser: one finding from the snapshot, for the web onboarding demo."""
 from .teaser import teaser_finding, TeaserResult
 
 __all__ = ["teaser_finding", "TeaserResult"]

@@ -12,7 +12,7 @@ BASELINE_TENANT = "synth-acme-services"
 
 def _real_findings() -> list[dict]:
     """Use the real financial findings engine over the synthetic baseline —
-    no fixtures, real data per the engineering bar."""
+    no fixtures."""
     import json
     baseline = json.loads(
         (ROOT / "client" / "snapshots" / BASELINE_TENANT / "baseline.json").read_text()

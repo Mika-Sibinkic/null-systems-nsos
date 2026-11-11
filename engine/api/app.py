@@ -12,7 +12,7 @@ Endpoints
                             Enabled only while VINNY_TOKEN_SECRET is unset (the
                             dev signing secret is in use). With a production
                             secret configured this endpoint does not exist (404).
-  GET  /teaser?tenant=ID    the <1h teaser finding for one tenant snapshot.
+  GET  /teaser?tenant=ID    the teaser finding for one tenant snapshot.
                             Requires `Authorization: Bearer <scoped token>` whose
                             tenant matches and whose scopes include snapshot:read.
 
@@ -25,8 +25,7 @@ Model mode
   NIM_API_KEY set     -> "live"
   NIM_API_KEY unset   -> "offline-deterministic"
   The teaser is pure arithmetic over the snapshot and works in both modes.
-  Any route that needs a live model declares `Depends(require_live_model)` and
-  fails closed with a 503 JSON error instead of fabricating a result.
+  No route uses a model today; /health only reports the mode.
 
 Run:  python -m engine.api      (host/port from NSOS_API_HOST / NSOS_API_PORT)
 """

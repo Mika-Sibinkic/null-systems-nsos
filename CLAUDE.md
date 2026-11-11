@@ -4,24 +4,24 @@ Instructions for any coding agent (or human) working in this codebase.
 
 ## What this is
 
-NSOS is a diagnostic engine for small and mid-sized firms: it ingests a firm's
-data snapshot, runs question batteries per domain team, ranks findings in a
-council, bundles them into 2 to 3 scored statements of work, and renders a
-CEO-language report. Client-facing name: "Vinny". See `README.md` and
-`docs/ARCHITECTURE.md` first, then `docs/STATE.md` (what is built) and
-`docs/ROADMAP.md` (what is next).
+NSOS is a diagnostic engine for small and mid-sized firms: it reads a firm's
+data snapshot, turns it into grounded findings (one team today, financial),
+ranks them, bundles them into 2 to 3 scored statements of work, and renders a
+report in the owner's language. The report prints the name "Vinny". Read
+`README.md` first; its Status and Limits sections are the one record of what
+is built.
 
 ## Layer ownership
 
 | Layer | Purpose |
 |---|---|
 | `client/` | Tenant-specific code: onboarding, connector adapters, snapshots (gitignored except the synthetic example) |
-| `engine/` | Reusable diagnostic intelligence: meta-level teams, council, SOW scoring, quality judge, NIM client, HTTP API |
+| `engine/` | Reusable diagnostic logic: the financial team (`meta_levels/`), council, SOW scoring, quality judge, NIM client, HTTP API |
 | `learning/` | Cross-run improvement: outcome ledger |
 | `presentation/` | Engine output → executive report, side-by-side, FDE handoff packet |
-| `schemas/` | JSON contracts shared across layers |
-| `web/` | Next.js surface (onboarding + diagnostic review); holds only a scoped token, never a connector secret |
-| `mcp-servers/` | Correction MCP server |
+| `schemas/` | `baseline.json`, the tenant snapshot contract |
+| `web/` | Next.js onboarding demo; holds only a scoped token, never a connector secret |
+| `mcp-servers/` | Correction MCP server, a separate tool the diagnostic does not use |
 | `examples/` | Synthetic client used by tests and smoke runs |
 
 ## Rules
@@ -43,7 +43,7 @@ CEO-language report. Client-facing name: "Vinny". See `README.md` and
    scans for hardcoded secrets.
 7. **Operator identity is parameterized** (`OPERATOR_NAME`, `COMPANY_NAME`);
    never hardcode a person's name.
-8. **Keep STATE honest.** When a change makes `docs/STATE.md` or
-   `docs/ROADMAP.md` wrong, fix them in the same change.
+8. **Keep the README honest.** When a change makes its Status, Limits or
+   numbers wrong, fix them in the same change.
 9. **Architecture-level changes** (new provider, schema change, council weight
    change) get a decision record under `docs/decisions/` before the code.

@@ -1,7 +1,6 @@
 """5-pillar deployability grade for a SOW (P3.T3).
 
-Each candidate SOW is graded against the Null Systems engineering bar's five
-pillars — the same bar every NSOS architectural decision is graded against:
+Each candidate SOW is graded on five checks ("pillars"):
 
   1. Security          — is the engagement's data path safe to deploy? (no
                          frontend secrets, server-side proxy, per-resource authz)
@@ -17,7 +16,8 @@ pillars — the same bar every NSOS architectural decision is graded against:
 This is the *deployability* grade — not "is the finding true" (that's the
 grounded-numbers gate) but "if we sell and deploy this SOW as an FDE engagement,
 does it clear the bar we hold our own builds to." A SOW that scores low on a
-pillar gets a blocking flag the operator sees before choosing.
+pillar gets a blocking flag the owner sees before choosing. The security check
+returns a fixed score, so the grade is a placeholder.
 
 Deterministic, offline. Grades from SOW + finding attributes; no LLM.
 """

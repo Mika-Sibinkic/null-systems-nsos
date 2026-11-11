@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pillar5_security audit probe — engineering-bar pillars 1/2/4 (security/compliance/throughput).
+"""pillar5_security audit probe: security, compliance and throughput checks.
 
 Graduated checks: a violation that EXISTS fails (exit 1); a control whose feature isn't built yet
 is reported as a NOTE (does not fail) so it never false-blocks an early phase. Real secret in the
