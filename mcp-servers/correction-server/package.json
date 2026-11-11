@@ -10,6 +10,6 @@
     "seed": "node -e \"import('./corrections-store.js').then(m => m.seedFromFile('seed-corrections.json'))\""
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "~1.32.2"
   }
 }

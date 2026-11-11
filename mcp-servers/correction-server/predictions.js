@@ -6,8 +6,8 @@
  * and computes residuals per category to determine learning phase.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import { readJson, writeJson } from './corrections-store.js';
 
 // ── Configuration ──────────────────────────────────────────────────────────
 
@@ -41,34 +41,10 @@ const RESIDUAL_CHANGES = {
 
 // ── Data Access ────────────────────────────────────────────────────────────
 
-function ensureDir() {
-  if (!existsSync(CORRECTIONS_DIR)) {
-    mkdirSync(CORRECTIONS_DIR, { recursive: true });
-  }
-}
-
-function loadPredictions() {
-  ensureDir();
-  if (!existsSync(PREDICTIONS_FILE)) return [];
-  try { return JSON.parse(readFileSync(PREDICTIONS_FILE, 'utf-8')); }
-  catch { return []; }
-}
-
-function savePredictions(predictions) {
-  ensureDir();  writeFileSync(PREDICTIONS_FILE, JSON.stringify(predictions, null, 2));
-}
-
-function loadResiduals() {
-  ensureDir();
-  if (!existsSync(RESIDUALS_FILE)) return {};
-  try { return JSON.parse(readFileSync(RESIDUALS_FILE, 'utf-8')); }
-  catch { return {}; }
-}
-
-function saveResiduals(residuals) {
-  ensureDir();
-  writeFileSync(RESIDUALS_FILE, JSON.stringify(residuals, null, 2));
-}
+const loadPredictions = () => readJson(PREDICTIONS_FILE, []);
+const savePredictions = (predictions) => writeJson(PREDICTIONS_FILE, predictions, 2);
+const loadResiduals = () => readJson(RESIDUALS_FILE, {});
+const saveResiduals = (residuals) => writeJson(RESIDUALS_FILE, residuals, 2);
 
 // ── Core Operations ────────────────────────────────────────────────────────
 

@@ -5,8 +5,8 @@
  * Designed for <10,000 corrections (covers years of daily usage).
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, renameSync } from 'fs';
+import { dirname, join } from 'path';
 
 // ── Configuration ──────────────────────────────────────────────────────────
 
@@ -35,49 +35,35 @@ const STOP_WORDS = new Set([
 
 // ── Initialization ─────────────────────────────────────────────────────────
 
-function ensureDir() {
-  if (!existsSync(CORRECTIONS_DIR)) {
-    mkdirSync(CORRECTIONS_DIR, { recursive: true });
+// A file that fails to parse is moved aside, never replaced by an empty store.
+// Shared with predictions.js.
+export function readJson(file, fallback) {
+  if (!existsSync(file)) return fallback;
+  const text = readFileSync(file, 'utf-8');
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    const aside = `${file}.corrupt-${Date.now()}`;
+    renameSync(file, aside);
+    console.error(`[corrections] ${file} is not valid JSON (${err.message}); moved to ${aside}`);
+    return fallback;
   }
 }
 
-function loadCorrections() {
-  ensureDir();
-  if (!existsSync(CORRECTIONS_FILE)) return [];
-  try {
-    return JSON.parse(readFileSync(CORRECTIONS_FILE, 'utf-8'));
-  } catch { return []; }
+// Write to a temp file in the same dir, then rename: a crash leaves the old file or the new one.
+export function writeJson(file, data, space) {
+  mkdirSync(dirname(file), { recursive: true });
+  const tmp = `${file}.tmp-${process.pid}`;
+  writeFileSync(tmp, JSON.stringify(data, null, space));
+  renameSync(tmp, file);
 }
 
-function saveCorrections(corrections) {
-  ensureDir();
-  writeFileSync(CORRECTIONS_FILE, JSON.stringify(corrections, null, 2));
-}
-
-function loadIndex() {
-  ensureDir();  if (!existsSync(INDEX_FILE)) return {};
-  try {
-    return JSON.parse(readFileSync(INDEX_FILE, 'utf-8'));
-  } catch { return {}; }
-}
-
-function saveIndex(index) {
-  ensureDir();
-  writeFileSync(INDEX_FILE, JSON.stringify(index));
-}
-
-function loadStats() {
-  ensureDir();
-  if (!existsSync(STATS_FILE)) return { patterns: {}, total: 0, lastUpdated: null };
-  try {
-    return JSON.parse(readFileSync(STATS_FILE, 'utf-8'));
-  } catch { return { patterns: {}, total: 0, lastUpdated: null }; }
-}
-
-function saveStats(stats) {
-  ensureDir();
-  writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
-}
+const loadCorrections = () => readJson(CORRECTIONS_FILE, []);
+const saveCorrections = (corrections) => writeJson(CORRECTIONS_FILE, corrections, 2);
+const loadIndex = () => readJson(INDEX_FILE, {});
+const saveIndex = (index) => writeJson(INDEX_FILE, index);
+const loadStats = () => readJson(STATS_FILE, { patterns: {}, total: 0, lastUpdated: null });
+const saveStats = (stats) => writeJson(STATS_FILE, stats, 2);
 
 // ── Tokenization ───────────────────────────────────────────────────────────
 
