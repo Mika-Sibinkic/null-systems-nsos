@@ -21,8 +21,10 @@ interface is the same shape so a durable-execution backend drops in later):
 from __future__ import annotations
 
 import json
+import sys
 import time
 from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -35,21 +37,35 @@ MAX_ATTEMPTS = 3
 
 
 def _utc_now() -> str:
-    import subprocess
-
-    return subprocess.check_output(["date", "-u", "+%FT%TZ"]).decode().strip()
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _append(journal: Path, obj: dict) -> None:
+    # No default=str: a result that cannot round-trip through JSON must fail here,
+    # not replay later as its repr().
+    line = json.dumps(obj) + "\n"
     journal.parent.mkdir(parents=True, exist_ok=True)
-    with open(journal, "a") as f:
-        f.write(json.dumps(obj, default=str) + "\n")
+    with open(journal, "a+b") as f:
+        if f.tell() > 0:
+            f.seek(-1, 2)
+            if f.read(1) != b"\n":
+                line = "\n" + line  # a crash left a torn last line; start a fresh one
+        f.write(line.encode())
 
 
 def _load(journal: Path) -> list[dict]:
     if not journal.exists():
         return []
-    return [json.loads(line) for line in journal.read_text().splitlines() if line.strip()]
+    rows = []
+    for n, line in enumerate(journal.read_text().splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            # A crash mid-append leaves one torn line; _append starts the next row fresh.
+            print(f"durable: skipping torn line {n} of {journal}", file=sys.stderr)
+    return rows
 
 
 class RetryExhausted(RuntimeError):
@@ -68,13 +84,19 @@ class RunResult:
         return asdict(self)
 
 
-def completed_result(run_id: str, *, journal: Path | None = None) -> Any | None:
-    """Return the recorded result for run_id if it already completed, else None."""
-    j = journal or DEFAULT_JOURNAL
-    for row in _load(j):
+def _completed_row(run_id: str, journal: Path) -> dict | None:
+    for row in _load(journal):
         if row.get("run_id") == run_id and row.get("event") == "completed":
-            return row.get("result")
+            return row
     return None
+
+
+def completed_result(run_id: str, *, journal: Path | None = None) -> Any | None:
+    """Return the recorded result for run_id if it already completed, else None.
+
+    None is also a valid recorded result; run_once keys on the row, not this value."""
+    row = _completed_row(run_id, journal or DEFAULT_JOURNAL)
+    return row.get("result") if row else None
 
 
 def run_once(
@@ -90,9 +112,9 @@ def run_once(
     (`status='replayed'`). Otherwise executes (optionally with retry/backoff),
     journals the result, and returns it (`status='completed'`)."""
     j = journal or DEFAULT_JOURNAL
-    prior = completed_result(run_id, journal=j)
+    prior = _completed_row(run_id, j)
     if prior is not None:
-        return RunResult(run_id=run_id, status="replayed", result=prior, attempts=0,
+        return RunResult(run_id=run_id, status="replayed", result=prior.get("result"), attempts=0,
                          journaled_at=_utc_now())
 
     _append(j, {"ts": _utc_now(), "run_id": run_id, "event": "start"})

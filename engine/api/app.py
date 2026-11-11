@@ -27,11 +27,13 @@ Run:  python -m engine.api      (host/port from NSOS_API_HOST / NSOS_API_PORT)
 """
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -41,7 +43,7 @@ from client.onboarding.auth import (
     authorize,
     issue_token,
 )
-from engine.teaser.teaser import from_snapshot
+from engine.teaser.teaser import teaser_finding
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SNAPSHOTS_ROOT = ROOT / "client" / "snapshots"
@@ -122,6 +124,12 @@ def create_app(snapshots_root: Optional[Path] = None) -> FastAPI:
         # One error shape for every failure: {"error": "<reason>"}.
         return JSONResponse(status_code=exc.status_code, content={"error": str(exc.detail)})
 
+    @app.exception_handler(RequestValidationError)
+    async def _json_validation_errors(_: Request, exc: RequestValidationError) -> JSONResponse:
+        first = exc.errors()[0] if exc.errors() else {}
+        where = ".".join(str(part) for part in first.get("loc", ()))
+        return JSONResponse(status_code=422, content={"error": f"{where}: {first.get('msg', 'invalid request')}"})
+
     @app.get("/health", response_model=Health)
     def health() -> Health:
         return Health(model_mode=model_mode(), token_secret=token_secret_mode())
@@ -131,7 +139,10 @@ def create_app(snapshots_root: Optional[Path] = None) -> FastAPI:
         if token_secret_mode() != "dev-only":
             # Production signing secret in use: this affordance must not exist.
             raise HTTPException(status_code=404, detail="not found")
-        token = issue_token(body.tenant_id, DEV_TOKEN_SCOPES)
+        try:
+            token = issue_token(body.tenant_id, DEV_TOKEN_SCOPES)
+        except AuthError as e:
+            raise HTTPException(status_code=422, detail=str(e))
         return DevToken(
             token=token,
             tenant_id=body.tenant_id,
@@ -145,10 +156,17 @@ def create_app(snapshots_root: Optional[Path] = None) -> FastAPI:
             authorize(_bearer(request), tenant_id=tenant, scope=TEASER_SCOPE)
         except AuthError:
             raise HTTPException(status_code=401, detail="unauthorized")
+        # authorize() has already checked `tenant` against TENANT_ID_RE, so it is a safe path segment.
         try:
-            result = from_snapshot(tenant, snapshots_root=app.state.snapshots_root)
-        except FileNotFoundError:
+            baseline = json.loads((app.state.snapshots_root / tenant / "baseline.json").read_text())
+        except OSError:
             raise HTTPException(status_code=404, detail=f"no snapshot for tenant {tenant!r}")
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=f"baseline is not valid JSON: {e}")
+        if not isinstance(baseline, dict):
+            raise HTTPException(status_code=422, detail="baseline must be a JSON object")
+        try:
+            result = teaser_finding(baseline)
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e))
         return TeaserFinding(**result.to_finding())

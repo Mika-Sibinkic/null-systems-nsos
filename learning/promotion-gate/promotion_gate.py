@@ -20,17 +20,15 @@ def now_iso() -> str:
 
 
 def regression_runner(repo_path: Path) -> dict:
-    test_path = repo_path / "tests" / "test_recursive_weights.py"
-    if not test_path.exists():
-        return {"gate": "regression", "pass": False, "reason": f"test suite not found at {test_path}"}
+    """Run the whole pytest suite in repo_path; the gate is its exit code."""
     try:
         result = subprocess.run(
-            ["python3", str(test_path)], capture_output=True, text=True, timeout=120,
+            [sys.executable, "-m", "pytest", "-q"], cwd=repo_path,
+            capture_output=True, text=True, timeout=600,
         )
-        passed = "ALL PASS" in result.stdout
         return {
             "gate": "regression",
-            "pass": passed,
+            "pass": result.returncode == 0,
             "stdout_tail": result.stdout.strip().splitlines()[-3:],
             "rc": result.returncode,
         }
@@ -44,14 +42,13 @@ def gauntlet_score_check(repo_path: Path, baseline: float = 74.6, tolerance: flo
         return {
             "gate": "gauntlet",
             "pass": False,
-            "reason": f"no recent score file: {score_file.relative_to(repo_path)}",
-            "note": "fallback: must run gauntlet harness first",
+            "reason": f"not wired: nothing in this repo writes {score_file.relative_to(repo_path)} yet",
         }
     score = json.loads(score_file.read_text()).get("score", 0)
-    delta = abs(score - baseline)
+    delta = score - baseline
     return {
         "gate": "gauntlet",
-        "pass": delta <= tolerance,
+        "pass": score >= baseline - tolerance,  # one-sided: only a drop is a regression
         "score": score,
         "baseline": baseline,
         "delta": delta,
@@ -62,7 +59,8 @@ def gauntlet_score_check(repo_path: Path, baseline: float = 74.6, tolerance: flo
 def performance_analyzer(repo_path: Path, latency_pct: float = 10.0, cost_pct: float = 5.0) -> dict:
     perf_file = repo_path / "runs" / "perf-delta.json"
     if not perf_file.exists():
-        return {"gate": "performance", "pass": False, "reason": f"no perf delta file"}
+        return {"gate": "performance", "pass": False,
+                "reason": f"not wired: nothing in this repo writes {perf_file.relative_to(repo_path)} yet"}
     perf = json.loads(perf_file.read_text())
     lat_delta = perf.get("latency_pct", 0)
     cost_delta = perf.get("cost_pct", 0)

@@ -35,6 +35,11 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 NSOS_DIR = Path(__file__).resolve().parent
+_REPO = str(NSOS_DIR.parents[1])
+if _REPO not in sys.path:  # also importable when run as `python engine/gauntlets/quality_judge.py`
+    sys.path.insert(0, _REPO)
+from engine.router.nim_client import call_nim  # noqa: E402  the one LLM client (CLAUDE.md rule 3)
+
 DB_PATH = NSOS_DIR / "quality.db"
 LOGS_DIR = NSOS_DIR / "logs"
 RULES_PATH = NSOS_DIR / "quality_rules.json"
@@ -97,17 +102,16 @@ _THRESH = _RULES.get("thresholds", {})
 SUM_THRESHOLD = float(os.environ.get("NSOS_JUDGE_SUM_THRESHOLD", str(_THRESH.get("sum_threshold", 9))))
 CONF_THRESHOLD = float(os.environ.get("NSOS_JUDGE_CONF_THRESHOLD", str(_THRESH.get("confidence_threshold", 0.5))))
 
-# ── LLM routing ─────────────────────────────────────────────────────────────
-# Defaults to fast tier. Rubric is terse; expect <150 tokens.
+# ── LLM call ────────────────────────────────────────────────────────────────
+# call_nim's default model is the fast tier. Rubric is terse; expect <150 tokens.
 _JUDGE_CALL = _RULES.get("judge_call", {})
-JUDGE_TIER = _JUDGE_CALL.get("tier", "fast")
 JUDGE_MAX_TOKENS = int(_JUDGE_CALL.get("max_tokens", 400))
 JUDGE_TEMPERATURE = float(_JUDGE_CALL.get("temperature", 0.1))
 
 RUBRIC_PROMPT = _build_rubric_prompt()
 
 # ── offline-deterministic judge ──────────────────────────────────────────────
-# When no LLM adapter is configured (CI, offline build, no NIM key) the live
+# When no model is configured (CI, offline build, no NIM key) the live
 # rubric call returns None and the gate fails CLOSED — correct for production,
 # but it would block a synthetic offline build from ever verifying client-facing
 # output. So, ONLY when explicitly enabled via NSOS_JUDGE_OFFLINE_DETERMINISTIC=1,
@@ -155,23 +159,16 @@ def _deterministic_score(output_text: str) -> Dict[str, Any]:
 
 
 def _call_judge_llm(prompt: str) -> Optional[str]:
-    """Run the rubric call via the configured fast tier. Returns raw string or None on failure."""
+    """Run the rubric call through nim_client. Returns raw string or None on failure."""
     try:
-        sys.path.insert(0, str(NSOS_DIR))
-        from llm_adapter import call_llm  # noqa: WPS433
-    except Exception as e:
-        _log_judge_error(f"llm_adapter import failed: {e}")
-        return None
-    try:
-        return call_llm(
-            prompt=prompt,
+        return call_nim(
+            prompt,
             system=RUBRIC_PROMPT,
-            tier=JUDGE_TIER,
             temperature=JUDGE_TEMPERATURE,
             max_tokens=JUDGE_MAX_TOKENS,
         )
     except Exception as e:
-        _log_judge_error(f"call_llm failed: {e}")
+        _log_judge_error(f"call_nim failed: {e}")
         return None
 
 

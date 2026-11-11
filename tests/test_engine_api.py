@@ -150,3 +150,95 @@ def test_live_model_route_passes_with_key(monkeypatch):
     monkeypatch.setenv("NIM_API_KEY", "set-for-test-only")
     c = TestClient(_app_with_live_route(create_app()))
     assert c.get("/_test/needs-model").status_code == 200
+
+
+# ── trust boundary: tenant ids, malformed tokens, validation errors ───────────
+
+def _forged_bearer(tenant: str) -> dict:
+    """A token signed with the dev secret but carrying a tenant issue_token refuses."""
+    import base64, hashlib, hmac
+    from client.onboarding.auth import _DEV_SECRET
+    claims = {"tenant_id": tenant, "scopes": ["snapshot:read"], "iat": 0, "exp": 2**40}
+    payload = base64.urlsafe_b64encode(json.dumps(claims).encode()).rstrip(b"=").decode()
+    sig = base64.urlsafe_b64encode(
+        hmac.new(_DEV_SECRET.encode(), payload.encode(), hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+    return {"authorization": f"Bearer {payload}.{sig}"}
+
+
+@pytest.mark.parametrize("bad", ["/tmp/x", "../../../../tmp/x"])
+def test_path_like_tenant_is_refused_at_mint_and_at_teaser(client, bad):
+    r = client.post("/dev/scoped-token", json={"tenant_id": bad})
+    assert r.status_code == 422
+    assert "error" in r.json()
+    r = client.get("/teaser", params={"tenant": bad}, headers=_forged_bearer(bad))
+    assert r.status_code == 401
+    assert r.json() == {"error": "unauthorized"}
+
+
+def test_non_ascii_bearer_is_401_json(client):
+    r = client.get("/teaser", params={"tenant": TENANT},
+                   headers=[(b"authorization", b"Bearer a.\xc3\xa9")])
+    assert r.status_code == 401
+    assert r.json() == {"error": "unauthorized"}
+
+
+def test_missing_tenant_query_is_422_json(client):
+    r = client.get("/teaser", headers=_bearer(TENANT))
+    assert r.status_code == 422
+    assert set(r.json()) == {"error"}
+
+
+def test_json_array_baseline_is_422_json(tmp_path, monkeypatch):
+    monkeypatch.delenv("VINNY_TOKEN_SECRET", raising=False)
+    (tmp_path / "t1").mkdir()
+    (tmp_path / "t1" / "baseline.json").write_text("[]")
+    r = TestClient(create_app(snapshots_root=tmp_path)).get(
+        "/teaser", params={"tenant": "t1"}, headers=_bearer("t1"))
+    assert r.status_code == 422
+    assert set(r.json()) == {"error"}
+
+
+def test_tenant_path_that_is_a_file_is_404_json(tmp_path, monkeypatch):
+    monkeypatch.delenv("VINNY_TOKEN_SECRET", raising=False)
+    (tmp_path / "t1").write_text("not a directory")
+    r = TestClient(create_app(snapshots_root=tmp_path)).get(
+        "/teaser", params={"tenant": "t1"}, headers=_bearer("t1"))
+    assert r.status_code == 404
+    assert set(r.json()) == {"error"}
+
+
+def test_empty_token_secret_is_dev_only_and_signs_with_a_real_key(monkeypatch):
+    from client.onboarding import auth
+    monkeypatch.setenv("VINNY_TOKEN_SECRET", "")
+    c = TestClient(create_app())
+    assert c.get("/health").json()["token_secret"] == "dev-only"
+    assert auth._secret() == auth._DEV_SECRET.encode()
+    assert c.post("/dev/scoped-token", json={"tenant_id": TENANT}).status_code == 200
+
+
+# ── python -m engine.api refuses to expose dev tokens on the network ──────────
+
+def test_main_refuses_non_loopback_host_without_token_secret(monkeypatch):
+    import engine.api.__main__ as entry
+    monkeypatch.setattr(entry.uvicorn, "run", lambda *a, **k: pytest.fail("server started"))
+    monkeypatch.setenv("NSOS_API_HOST", "0.0.0.0")
+    monkeypatch.delenv("VINNY_TOKEN_SECRET", raising=False)
+    with pytest.raises(SystemExit) as exc:
+        entry.main()
+    assert "VINNY_TOKEN_SECRET" in str(exc.value.code)
+
+
+@pytest.mark.parametrize("host,secret", [("127.0.0.1", None), ("localhost", None), ("::1", None),
+                                         ("0.0.0.0", "set-for-test-only")])
+def test_main_starts_on_loopback_or_with_token_secret(monkeypatch, host, secret):
+    import engine.api.__main__ as entry
+    started = []
+    monkeypatch.setattr(entry.uvicorn, "run", lambda *a, **k: started.append(k["host"]))
+    monkeypatch.setenv("NSOS_API_HOST", host)
+    if secret:
+        monkeypatch.setenv("VINNY_TOKEN_SECRET", secret)
+    else:
+        monkeypatch.delenv("VINNY_TOKEN_SECRET", raising=False)
+    entry.main()
+    assert started == [host]

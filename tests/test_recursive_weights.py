@@ -57,7 +57,7 @@ def test_run_council_endtoend_deterministic():
         {"id": "b", "team": "operational", "impact_usd": 200000, "impact_hours": 400, "embedding": _emb(0.5, 0.5)},
         {"id": "c", "team": "strategic", "impact_usd": 100000, "impact_hours": 200, "embedding": _emb(0.5, 0.5)},
     ]
-    ranked = run_council(findings, ceo_priorities=[], known_baseline=[], debate_rounds=1)
+    ranked = run_council(findings, ceo_priorities=[], known_baseline=[])
     assert ranked[0].finding_id == "b"
     assert all(r.borda > 0 for r in ranked)
 

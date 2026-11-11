@@ -4,6 +4,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -36,6 +38,51 @@ def test_run_once_idempotent_on_run_id(tmp_path):
     assert r2.status == "replayed"
     assert r2.result == {"sows": 3}
     assert calls["n"] == 1, "fn must run at most once per run_id"
+
+
+def test_run_once_runs_none_returning_fn_once(tmp_path):
+    j = tmp_path / "journal.jsonl"
+    calls = {"n": 0}
+
+    def fn():
+        calls["n"] += 1
+
+    durable.run_once("run-none", fn, journal=j)
+    r2 = durable.run_once("run-none", fn, journal=j)
+    assert r2.status == "replayed"
+    assert calls["n"] == 1, "a None result still counts as completed"
+
+
+def test_run_once_refuses_non_json_result(tmp_path):
+    from dataclasses import dataclass
+
+    @dataclass
+    class Sow:
+        title: str
+
+    with pytest.raises(TypeError):
+        durable.run_once("run-dc", lambda: Sow("x"), journal=tmp_path / "journal.jsonl")
+
+
+def test_torn_final_line_does_not_block_run_once(tmp_path, capsys):
+    j = tmp_path / "journal.jsonl"
+    j.write_text('{"ts": "2026-01-01T00:00:00Z", "run_id": "old", "event": "start"}\n{"ts": "2026-01-0')
+    calls = {"n": 0}
+
+    def fn():
+        calls["n"] += 1
+        return {"sows": 2}
+
+    r1 = durable.run_once("run-t", fn, journal=j)
+    r2 = durable.run_once("run-t", fn, journal=j)
+    assert (r1.status, r2.status, calls["n"]) == ("completed", "replayed", 1)
+    assert r2.result == {"sows": 2}
+    assert "torn" in capsys.readouterr().err
+
+
+def test_utc_now_format():
+    import re
+    assert re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", durable._utc_now())
 
 
 def test_with_retry_succeeds_after_transient_failures(tmp_path):

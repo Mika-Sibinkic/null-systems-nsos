@@ -45,6 +45,24 @@ def test_expired_token_rejected():
         verify_token(tok, now=2000)
 
 
+@pytest.mark.parametrize("claims", [[], {"scopes": []}, {"tenant_id": "tenant-a", "exp": "soon"}])
+def test_signed_token_with_wrong_claims_shape_is_auth_error(claims):
+    import base64, hashlib, hmac
+    from client.onboarding.auth import _DEV_SECRET
+    payload = base64.urlsafe_b64encode(json.dumps(claims).encode()).rstrip(b"=").decode()
+    sig = base64.urlsafe_b64encode(
+        hmac.new(_DEV_SECRET.encode(), payload.encode(), hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+    with pytest.raises(AuthError):
+        verify_token(f"{payload}.{sig}")
+
+
+@pytest.mark.parametrize("bad", ["", "/tmp/x", "../x", "Tenant-A", "-a", "a" * 65, "a\n"])
+def test_refuses_to_issue_for_invalid_tenant_id(bad):
+    with pytest.raises(AuthError):
+        issue_token(bad, ["snapshot:read"])
+
+
 def test_refuses_to_issue_non_read_scope():
     # The web surface can never be granted a write/secret scope.
     with pytest.raises(AuthError):
