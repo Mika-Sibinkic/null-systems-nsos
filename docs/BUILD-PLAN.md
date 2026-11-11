@@ -4,6 +4,7 @@
 > [ROADMAP.md](./ROADMAP.md) and the architecture in
 > [decisions/2026-05-28-saas-conglomeration-architecture.md](./decisions/2026-05-28-saas-conglomeration-architecture.md).
 > Research backing it: an internal salvage analysis of the earlier desktop prototype (not included in this repo).
+> Historical. The module lists below describe the tree on 2026-05-28; many lifted modules were deleted on 2026-11-11 because nothing used them. [STATE.md](./STATE.md) is current.
 
 ## Context
 
@@ -79,7 +80,7 @@ Prove the whole pipe depth-one before breadth: **one connector → one team → 
 
 ---
 
-## Founder / engineer / market hardening (Karpathy · Tan · LeCun lens)
+## Founder / engineer / market hardening
 
 Syntheses of their public stances `[LIKELY]`. Full detail lives in the internal salvage analysis (not included in this repo).
 

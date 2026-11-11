@@ -73,21 +73,14 @@ The `0.30 / 0.25 / 0.20 / 0.25` weights are tunable per engagement. Calibration:
 3. Fit weights to minimize Spearman distance from manual rank.
 4. Persist tuned weights to `client/snapshots/{tenant_id}/council-weights.json`.
 
-## Council debate (the "debate" part)
+## Council debate
 
-The Borda + composite gives a candidate ranking. Then a **debate node** runs:
-1. Each meta-team gets to nominate 1 finding for "promote up the ranking" with a 100-token rationale.
-2. Each meta-team gets to nominate 1 finding for "demote — too speculative / too small" with a 100-token rationale.
-3. Council judge reads all rationales, decides whether to adjust ranks (max 3 swaps per debate round).
-4. Repeat for 2 rounds or until no swaps occur.
-
-This catches cases where pure scoring missed cross-cutting context (e.g., a financial finding that the operational team can confirm is already underway).
+Not built. `engine/council/council.py` stops at Borda plus the composite score. A debate step would only matter once more than one team nominates findings, and there is one team today.
 
 ## Artifacts
 
-- `runs/{run_id}/council/candidates.jsonl` — pre-debate ranked list with all signals broken out
-- `runs/{run_id}/council/debate-rounds.jsonl` — every nomination + rationale + decision
-- `runs/{run_id}/council/final.jsonl` — post-debate ranked list, fed to the reporter
+- `runs/{run_id}/council/candidates.jsonl` — ranked list with all signals broken out
+- `runs/{run_id}/council/final.jsonl` — the same ranking, fed to the reporter
 
 ## Failure modes + recovery
 
@@ -95,4 +88,3 @@ This catches cases where pure scoring missed cross-cutting context (e.g., a fina
 |---|---|---|
 | Judge ensemble disagrees often | high tie rate (>30%) on pairwise comparisons | escalate to Anthropic Claude judge for ties |
 | All findings score low | composite < 0.2 for top 3 | snapshot data is too thin — request more sources or interviews from client |
-| Debate rounds never converge | swaps continue past round 5 | freeze ranking, log warning, ship with caveat in report |

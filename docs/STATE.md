@@ -12,7 +12,7 @@ The whole path runs end to end on one fabricated QuickBooks fixture (`examples/s
 QuickBooks adapter → `baseline.json` → scoped-token onboarding and teaser → financial team findings,
 each `impact_usd` source-traced and confidence-banded → council ranking → two or three scored SOW
 candidates → owner-facing report, side-by-side and FDE handoff packet → outcome ledger.
-`tests/test_e2e_synthetic.py` runs it. Vendor concentration, customer concentration and overdue AR
+`tests/test_e2e_synthetic.py` runs it, and `python scripts/run_synthetic.py` writes every artifact under `runs/synthetic-client-a/`. Vendor concentration, customer concentration and overdue AR
 count as exposure and stay out of annual impact ([decision](./decisions/2026-11-11-exposure-is-not-impact.md)).
 Five of six domain teams, non-QuickBooks connectors and the review page's engine routes are not built.
 
@@ -35,14 +35,11 @@ Five of six domain teams, non-QuickBooks connectors and the review page's engine
 | Component | State | Path | Notes |
 |---|---|---|---|
 | Promotion gate (5-gate) | partial | `learning/promotion-gate/promotion_gate.py` | reads `runs/latest-gauntlet-score.json` and `runs/perf-delta.json`, which are produced outside the repo |
-| Eval harness (A/B) | built | `engine/gauntlets/eval_harness.py` | |
-| Gauntlet (self-play) | built | `engine/gauntlets/gauntlet.py` | |
 | Quality judge (3-layer) | built | `engine/gauntlets/quality_judge.py` | |
-| GitHub Actions CI | built | `.github/workflows/ci.yml` | pytest, engine API smoke, web typecheck + build on every push and PR |
-| docs_sync gate | built | `scripts/check_docs_sync.py` | fails on source-vs-docs drift; `[skip-docs-sync]` override; not run by CI |
+| GitHub Actions CI | built | `.github/workflows/ci.yml` | pytest (3.11, 3.14), secret scan, demo run diffed against `examples/`, engine API smoke; web audit, typecheck, `npm test`, build; MCP server audit and stdio smoke. Not yet run on GitHub |
+| docs_sync gate | built | `scripts/check_docs_sync.py` | fails on source-vs-docs drift; `[skip-docs-sync]` override; CI runs it on pull requests |
 | Unit tests | built | `tests/` | `python -m pytest -q`, offline, no keys |
 | Quality judge offline-deterministic fallback | built | `engine/gauntlets/quality_judge.py` | opt-in `NSOS_JUDGE_OFFLINE_DETERMINISTIC=1`; prod stays fail-closed ([decision](./decisions/2026-06-02-offline-deterministic-quality-judge.md)) |
-| Eval harness offline no-regression fallback | built | `engine/gauntlets/eval_harness.py` | opt-in `NSOS_EVAL_OFFLINE_DETERMINISTIC=1`; resolves to tie/no-regression, never "adopt"; prod stays error-on-no-LLM ([decision](./decisions/2026-06-07-offline-deterministic-eval-harness.md)) |
 
 <a id="client"></a>
 ## Client ingestion
@@ -69,7 +66,7 @@ Five of six domain teams, non-QuickBooks connectors and the review page's engine
 | Side-by-side comparison | built | `presentation/side-by-side/sbs.py`: WWOD + pillar grade + metrics → comparison matrix + one recommendation; markdown + JSON |
 | FDE handoff packet | built | `presentation/handoff/packet.py`: selected SOW → JSON + markdown brief; gaps/blockers become the FDE validation checklist |
 | Narrative | planned | `presentation/narrative/` (empty) |
-| Grounded-numbers gate | built | `engine/meta-levels/financial/findings.py` (`assert_grounded`, fail-closed) + `scripts/probes/grounded_numbers.py` |
+| Grounded-numbers gate | built | `engine/meta-levels/financial/findings.py` (`assert_grounded`, fail-closed) + `scripts/probes/grounded_numbers.py`; both check `impact_usd`, `impact_hours` and `exposure_usd` |
 
 <a id="flywheel"></a>
 ## Outcome ledger
@@ -86,7 +83,7 @@ Five of six domain teams, non-QuickBooks connectors and the review page's engine
 
 | Component | State | Path |
 |---|---|---|
-| Next.js app | built | `web/`: App Router, `tsc --noEmit` clean, Next 14.2.35 |
+| Next.js app | built | `web/`: App Router, `tsc --noEmit` clean, Next 16.4.1, Node 20.9+ |
 | Onboarding page + first-finding UX | built | `web/app/onboarding/page.tsx` |
 | Engine HTTP boundary (scoped token only) | built | `web/lib/engine.ts` + `web/app/api/teaser/route.ts`: calls `engine/api` over `ENGINE_URL` with a timeout; `engine_unreachable` fallback only when the engine cannot be reached, engine errors surface as 502 |
 | SOW review/choose UI | partial | `web/app/diagnostic/[runId]/page.tsx`: the page exists; the `/api/runs/[runId]/*` routes it calls and the engine routes behind them are not built |

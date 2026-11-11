@@ -1,5 +1,7 @@
 # Architecture — NSOS Productized Diagnostic Platform
 
+> This is the target design. What exists today is in [STATE.md](./STATE.md): one financial team, a council with no debate step, and no LangGraph or AutoGen.
+
 ## Client-view flow (the one a CEO actually sees)
 
 1. **Onboarding (30 min, no FDE present).** Client connects accounting/ERP, CRM, ops dashboards, comms (Slack/email), and uploads 1–3 exec interviews recorded via Pocket AI or similar. Under the hood, NSOS hits each source through provider-specific adapters and snapshots a baseline of the firm's reality.
@@ -31,8 +33,7 @@
 │   └──────────────────┘  └──────────────────────────────────────────┘  │
 │        │                                                              │
 │        ▼ (each team uses)                                            │
-│   gauntlets/   reasoning/   gaps/   prediction-residual/   vector-index/ │
-│   cascade-handler/   router/                                          │
+│   gauntlets/ (quality judge)   reasoning/   router/ (nim_client)      │
 └────────────────────────────────────────────────────────────────────────┘
                                    ▲
                           (consumes snapshot)

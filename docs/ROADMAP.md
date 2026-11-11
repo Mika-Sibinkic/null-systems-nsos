@@ -16,7 +16,7 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 - [x] Tier-2 decision record written
 - [x] Living docs (PRODUCT/STATE/ROADMAP/GTM/UPDATE-PROTOCOL)
 - [x] Clickable product mind map (`docs/site/`)
-- [x] Git remote + CI (pytest + web build on every push)
+- [x] Git remote + CI (pytest, demo run, API smoke, web and MCP jobs on every push)
 > State: [STATE#docs](./STATE.md#docs), [STATE#harness](./STATE.md#harness)
 
 <a id="phase1"></a>
@@ -62,7 +62,7 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 - [x] Wire `learning/feedback/` — capture predicted vs realized per shipped SOW (`outcome_loop.py` + `schema.json`; append-only ledger → eval-set deltas)
 - [x] Monitoring/recurring tier hook (land-and-expand) — `learning/feedback/monitoring.py` (cadence + realized-impact stub) + `engine/run/durable.py` (idempotency + retry/backoff)
 - [x] E2E on synthetic-client-a through the **real** pipe — `tests/test_e2e_synthetic.py` (fabricated QuickBooks fixture)
-- [x] `promotion_gate.evaluate_proposal()` wired; the gauntlet and perf inputs it reads are produced outside the repo; `eval_harness` no regression (offline-deterministic mode, [decision](./decisions/2026-06-07-offline-deterministic-eval-harness.md))
+- [x] `promotion_gate.evaluate_proposal()` wired; its regression gate runs the real pytest suite; the gauntlet and perf inputs it reads are produced outside the repo. `eval_harness` was deleted on 2026-11-11 because nothing called it.
 - **Success:** full pipe runs end-to-end; flywheel captures its first (synthetic) outcome. Met.
 > State: [STATE#flywheel](./STATE.md#flywheel)
 

@@ -16,7 +16,7 @@ Internal prototype. It runs end to end on one fabricated client. Nothing is depl
 What works today, all exercised by the test suite from a clean clone with no API keys:
 
 - QuickBooks export → schema-valid tenant snapshot. Connector secrets stay server-side; the web layer gets a scoped token.
-- Financial team → grounded findings (vendor and customer concentration, overdue receivables, advisory spend, proposal cycle time, margin). The engine rejects any `impact_usd` or `impact_hours` that lacks a source trace and a confidence.
+- Financial team → grounded findings (vendor and customer concentration, overdue receivables, advisory spend, proposal cycle time, margin). The engine rejects any `impact_usd`, `impact_hours` or `exposure_usd` that lacks a source trace and a confidence.
 - Council ranking → two or three SOW candidates, each with a WWOD score, a deployability grade, and EBITDA and payback metrics checked by the same grounding probe.
 - Owner-facing report, side-by-side comparison, and an FDE handoff packet (JSON and markdown).
 - Outcome ledger (predicted vs realized, append-only), idempotent runs with capped retry, and a promotion gate for engine changes.
@@ -34,8 +34,23 @@ cat runs/synthetic-client-a/presentation/report.md
 An excerpt of the committed copy, `examples/synthetic-client-a/report.md`:
 
 ```text
-INTEGRATOR: replace this block with 10-15 lines of examples/synthetic-client-a/report.md from the final run.
+## Side-by-side
+
+| Dimension | Expand margin and rationalize cost base | De-risk and grow the revenue base | Reduce supplier concentration risk |
+|---|---|---|---|
+| **Annual impact** | $1,400,000/yr | $11,875/yr | $0/yr |
+| **At risk (not in totals)** | — | $188,000 at risk | $8,400,000 at risk |
+| **EBITDA lift** | +45% | +0% | +0% |
+| **Payback** | 2 months | 182 months | — |
+| **Leadership hours freed / yr** | — | 48 hrs/yr | — |
+| **Consultant conviction** | 54% | 24% | 26% |
+| **Deployability grade** | A | B ⚠ | B ⚠ |
+| **Evidence confidence** | 70% | 70% | 80% |
 ```
+
+The middle option is a bad deal, and the report says so. Its $11,875 a year against an assumed $180,000 engagement cost is a 182-month payback, and the report flags it as below the engagement-viability floor. One finding (advisory spend, confidence 0.60) is held for a person to review and is not in any option. CI reruns the demo and fails if its report differs from the committed copy.
+
+To change what counts as a finding, edit the thresholds and benchmarks at the top of `engine/meta-levels/financial/findings.py`. The engagement cost behind payback is `DEFAULT_ENGAGEMENT_COST_USD` in `engine/sow/metrics.py`.
 
 ### Limits
 
@@ -47,7 +62,7 @@ INTEGRATOR: replace this block with 10-15 lines of examples/synthetic-client-a/r
 
 ## Why it is built this way
 
-A firm's books are sensitive, so the default is local. The snapshot is a file on disk, and the tests and the demo run with no model key. Every dollar has to point at the export line it came from, because an owner who checks one number and finds it wrong stops trusting the rest. When a step needs a model and there is no key, the engine fails with an error, a 503 from the API. The offline modes the tests use are opt-in flags. The eval harness's offline mode scores every comparison as a tie, so it cannot approve a change.
+A firm's books are sensitive, so the default is local. The snapshot is a file on disk, and the tests and the demo run with no model key. Every dollar has to point at the export line it came from, because an owner who checks one number and finds it wrong stops trusting the rest. When a step needs a model and there is no key, the engine fails with an error, a 503 from the API. The offline judge the tests and the demo use is an opt-in flag, `NSOS_JUDGE_OFFLINE_DETERMINISTIC=1`. Without it and without a key, the judge fails closed and the review gate holds every finding.
 
 ## Glossary
 
@@ -74,15 +89,15 @@ Flow: `client/` snapshot → `engine/meta-levels/*` findings → `engine/council
 
 ## Design rules and what checks them
 
-- Every `impact_usd` or `impact_hours` carries a source and a confidence. `assert_grounded` in `engine/meta-levels/financial/findings.py` raises on an ungrounded finding. `tests/test_sow_metrics.py` and `tests/test_e2e_synthetic.py` run `scripts/probes/grounded_numbers.py` on the real artifacts, and CI runs both through pytest.
+- Every `impact_usd`, `impact_hours` or `exposure_usd` carries a source and a confidence. `assert_grounded` in `engine/meta-levels/financial/findings.py` raises on an ungrounded finding. `tests/test_sow_metrics.py` and `tests/test_e2e_synthetic.py` run `scripts/probes/grounded_numbers.py` on the real artifacts, and CI runs both through pytest.
 - The engine API boots and serves the teaser. CI starts `python -m engine.api` and curls `/health` and `/teaser`.
-- The web layer never holds a connector secret. `scripts/probes/pillar5_security.py` scans for secret literals. Nothing runs it automatically yet; run it by hand.
+- The web layer never holds a connector secret. `scripts/probes/pillar5_security.py` scans for secret literals, and CI runs it.
 - Every LLM call goes through `engine/router/nim_client.py`. No test checks this yet. It is a review rule.
-- Docs follow code. `scripts/check_docs_sync.py origin/main...HEAD` fails when source changes without `docs/STATE.md`, `docs/ROADMAP.md` or `docs/site/index.html`. `tests/test_docs_sync.py` tests the script; CI does not run it on the diff.
+- Docs follow code. `scripts/check_docs_sync.py origin/main...HEAD` fails when source changes without `docs/STATE.md`, `docs/ROADMAP.md` or `docs/site/index.html`. `tests/test_docs_sync.py` tests the script, and CI runs it on every pull request.
 
 ## Run it locally
 
-Python 3.11+ and Node 18.17+. Checked on Python 3.14.7 and Node 22.22.3.
+Python 3.11+ and Node 20.9+ (Next 16 needs it). Checked on Python 3.11.15, Python 3.14.7 and Node 22.22.3.
 
 ```
 git clone https://github.com/Mika-Sibinkic/null-systems-nsos.git
@@ -117,7 +132,7 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:3000/onboarding and press connect. The finding shown is the engine's teaser for `synth-acme-services`. Stop the engine and press connect again to see the `engine_unreachable` fallback. An engine error comes back as a 502 carrying the engine's JSON error. This shows the same JSON:
+Open http://localhost:3000/onboarding and press "Connect & get first finding". The finding shown is the engine's teaser for `synth-acme-services`. Stop the engine and press connect again to see the `engine_unreachable` fallback. An engine error comes back as a 502 carrying the engine's JSON error. This shows the same JSON:
 
 ```
 curl -s -X POST http://localhost:3000/api/teaser
@@ -155,7 +170,9 @@ node index.js
 
 Coverage is by layer: adapter and schema, onboarding auth, teaser, council weights, financial findings, review gate, SOW assembly, scoring and metrics, side-by-side report, handoff packet, outcome ledger, durable execution, the docs-sync script, the engine HTTP API, and one end-to-end run through the real pipeline.
 
-CI (`.github/workflows/ci.yml`) runs `python -m pytest -q`, the engine API smoke test, and `npm ci && npm run typecheck && npm run build` on every push and pull request.
+On a clean clone, `python -m pytest -q` reports 193 passed. Over 5 runs on an Apple M4 the suite took 1.0 to 1.5 s. The web app has 4 `node --test` cases for the engine client (`cd web && npm test`).
+
+CI (`.github/workflows/ci.yml`) runs the same commands on every push and pull request: pytest on Python 3.11 and 3.14, the secret scan, the demo run diffed against `examples/`, and the engine API smoke test. For `web/` it runs `npm ci`, `npm audit --audit-level=high`, typecheck, `npm test` and `npm run build`. It also installs the correction MCP server, audits it and checks that it lists its 10 tools. On pull requests it runs the docs-sync check. There is no linter; `tsc --noEmit` is the only static check.
 
 ## Built with AI agents in the loop
 

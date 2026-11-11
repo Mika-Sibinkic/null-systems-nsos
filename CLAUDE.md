@@ -16,12 +16,12 @@ CEO-language report. Client-facing name: "Vinny". See `README.md` and
 | Layer | Purpose |
 |---|---|
 | `client/` | Tenant-specific code: onboarding, connector adapters, snapshots (gitignored except the synthetic example) |
-| `engine/` | Reusable diagnostic intelligence: meta-level teams, council, SOW scoring, reasoning, gauntlets, router |
+| `engine/` | Reusable diagnostic intelligence: meta-level teams, council, SOW scoring, quality judge, NIM client, HTTP API |
 | `learning/` | Cross-run improvement: outcome flywheel, promotion gate |
 | `presentation/` | Engine output → executive report, side-by-side, FDE handoff packet |
 | `schemas/` | JSON contracts shared across layers |
 | `web/` | Next.js surface (onboarding + diagnostic review); holds only a scoped token, never a connector secret |
-| `mcp-servers/` | MCP servers (correction store, engine exposure) |
+| `mcp-servers/` | Correction MCP server |
 | `examples/` | Synthetic client used by tests and smoke runs |
 
 ## Rules
@@ -29,13 +29,12 @@ CEO-language report. Client-facing name: "Vinny". See `README.md` and
 1. **Tests first for new code.** `python -m pytest -q` must stay green; the
    suite runs offline against `examples/synthetic-client-a` and
    `client/snapshots/synth-acme-services` with no API keys.
-2. **Every number is grounded.** A finding or metric that carries `impact_usd`
-   or `impact_hours` must carry a source trace and a confidence.
+2. **Every number is grounded.** A finding or metric that carries `impact_usd`,
+   `impact_hours` or `exposure_usd` must carry a source trace and a confidence.
    `scripts/probes/grounded_numbers.py` enforces this and the tests run it.
 3. **Every LLM call goes through `engine/router/nim_client.py`.** Do not import
    a second provider client elsewhere. Offline-deterministic modes
-   (`NSOS_JUDGE_OFFLINE_DETERMINISTIC`, `NSOS_EVAL_OFFLINE_DETERMINISTIC`)
-   exist for tests; production stays fail-closed.
+   (`NSOS_JUDGE_OFFLINE_DETERMINISTIC`) exist for tests and the demo; production stays fail-closed.
 4. **No tenant-specific code in `engine/`.** That belongs in `client/`.
 5. `presentation/` reads from `engine/` outputs; `engine/` never writes to
    `presentation/`.

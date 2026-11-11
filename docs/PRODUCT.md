@@ -87,4 +87,4 @@ patterns lifted from the earlier desktop prototype. Diagnostic runs use durable 
 - **2026-05-28** — Initial product description. Defined thesis, 5-stage client flow (onboarding →
   diagnostic → council → 2–3 scored SOWs → FDE handoff + flywheel), defensibility, surface. Added the
   <1h teaser, grounded-numbers requirement, WWOD×5-pillar SOW scoring, and the outcome flywheel /
-  recurring tier as first-class (per Karpathy/Tan/LeCun hardening pass).
+  recurring tier as first-class.

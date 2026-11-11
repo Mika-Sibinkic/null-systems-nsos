@@ -117,7 +117,7 @@ flowchart TB
     end
 
     subgraph COUN_BOX["3 · Council — engine/council"]
-        COUN["council.py<br/>pairwise judge + debate<br/>status: built"]:::built
+        COUN["council.py<br/>pairwise judge + Borda<br/>status: built"]:::built
         RW["recursive_weights.py<br/>prio·novelty·corrob·impact<br/>status: built"]:::built
     end
 
@@ -143,7 +143,6 @@ flowchart TB
 
     subgraph GOV_BOX["CI / governance — the spine"]
         PG["promotion_gate.py<br/>5-gate<br/>status: partial"]:::partial
-        EVH["eval_harness.py<br/>A/B<br/>status: built"]:::built
         CI["GitHub Actions<br/>status: built"]:::built
     end
 
@@ -179,7 +178,6 @@ flowchart TB
 
     %% governance gates everything that merges
     PG -. gates merge .-> CI
-    EVH -. no-regression .-> PG
     CI -. blocks bad merge .-> SOW
 
     %% --- clickable: jump to description panels ---
@@ -213,7 +211,6 @@ flowchart TB
     click MON "#flywheel" "Recurring tier"
     click EVAL "#flywheel" "Eval set IP"
     click PG "#governance" "Promotion gate"
-    click EVH "#governance" "Eval harness"
     click CI "#governance" "CI"
     click REAS "#governance" "Engine core"
     click NIM "#governance" "NIM-only router"
@@ -252,7 +249,7 @@ flowchart TB
     <h2>3 · Council ranking</h2>
     <p>Findings reconvene in a council weighted by recursive context — alignment with the CEO's stated
     priorities, novelty vs known baseline, cross-team corroboration, projected $/hours impact. Pairwise
-    LLM-judge tournament + debate, not scalar scoring. <b>Works today.</b></p>
+    judge tournament feeding a Borda ranking, not scalar scoring. The debate step is not built. <b>Works today.</b></p>
     <p class="file">engine/council/council.py · recursive_weights.py · status: built</p>
     <p><a href="../PRODUCT.md#council">PRODUCT.md → council</a> · <a href="../COUNCIL-PROTOCOL.md">COUNCIL-PROTOCOL.md</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
@@ -302,9 +299,9 @@ flowchart TB
   <section id="governance">
     <h2>CI / governance + engine core</h2>
     <p>The spine: <span class="file">promotion_gate.py</span> (5-gate: regression + gauntlet ±5 + perf +
-    council corroboration + operator sign-off) and <span class="file">eval_harness.py</span> (A/B,
-    net-positive-on-all-metrics) judge engine changes; the gauntlet and perf inputs are produced outside the repo.
-    GitHub Actions runs pytest, an engine API smoke test, and the web typecheck and build. Engine core
+    council corroboration + operator sign-off) judges engine changes; the gauntlet and perf inputs are produced outside the repo.
+    GitHub Actions runs pytest, the secret scan, the demo run, an engine API smoke test, the web audit, typecheck, tests and
+    build, the correction MCP server smoke test, and docs-sync on pull requests. Engine core
     (reasoning_engine, NIM-only router) is lifted.</p>
     <p class="file">learning/promotion-gate · engine/gauntlets · engine/reasoning · engine/router · status: built; promotion gate partial</p>
     <p><a href="../STATE.md#harness">STATE.md → harness</a> · <a href="../STATE.md#engine">STATE.md → engine</a> · <a href="../decisions/2026-05-28-saas-conglomeration-architecture.md">decision record</a></p>

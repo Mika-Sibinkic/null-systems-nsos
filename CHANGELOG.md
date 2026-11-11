@@ -6,7 +6,25 @@ Keep-a-Changelog; the diagnostic engine's internal pattern/eval promotions are t
 
 ## [Unreleased] — dev branch
 
-### 2026-11-11 — Launch pass: docs match the code
+### 2026-11-11 — Launch pass
+- **Fixed** vendor and customer concentration and overdue AR are exposure (`exposure_usd`), never annual
+  impact ([decision](docs/decisions/2026-11-11-exposure-is-not-impact.md)). Overdue AR is the open
+  balance as of the export date. Undefined EBITDA lift and payback are `None`, not `Infinity`.
+- **Added** `scripts/run_synthetic.py`, the one demo pipeline; the review gate holds low-confidence
+  findings out of every total. `examples/synthetic-client-a/report.md` is its real output.
+- **Fixed** security: `tenant_id` is validated at the token boundary and in the baseline schema; the
+  engine refuses to serve dev tokens off loopback; a torn corrections file is moved aside, not erased;
+  the live judge goes through `nim_client` and fails closed.
+- **Fixed** `run_once` keys on the completed row; the promotion gate's gauntlet check is one-sided and
+  its regression gate runs the real suite.
+- **Removed** unused lifted modules (router handlers, meta router, cascade handler, vector index, most
+  of `engine/reasoning/`, eval harness, gauntlet, iterate), `engine/_deprecated/`, `deploy/` and the
+  unused exec-report template.
+- **Changed** web: Next 16.4.1 and React 19.2 (Node 20.9+), `npm audit` clean, `ENGINE_URL` defaults to
+  `127.0.0.1`, a bad `ENGINE_TIMEOUT_MS` is rejected, `next-env.d.ts` is no longer tracked.
+- **Changed** CI: pytest on Python 3.11 and 3.14, secret scan, demo run diffed against `examples/`,
+  web `npm test`, MCP server audit and smoke, docs-sync on pull requests, pinned action SHAs.
+- **Changed** `grounded_numbers.py` checks `exposure_usd` too.
 - **Changed** `README.md`: venv quickstart that works on a stock Mac, one demo command, env-var
   table, correction MCP server lines, an output excerpt, a limits list, and which test or CI step
   enforces each design rule.
