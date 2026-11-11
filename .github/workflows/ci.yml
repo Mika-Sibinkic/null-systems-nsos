@@ -68,6 +68,7 @@ jobs:
           cache-dependency-path: mcp-servers/correction-server/package-lock.json
       - run: npm ci
       - run: npm audit --audit-level=high
+      - run: npm test
       - name: stdio smoke (initialize + tools/list returns 10 tools)
         run: |
           printf '%s\n' \

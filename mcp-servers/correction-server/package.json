@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
+    "test": "node --test",
     "index-session": "node -e \"import('./session-parser.js').then(m => m.indexSessionFromCLI())\"",
     "seed": "node -e \"import('./corrections-store.js').then(m => m.seedFromFile('seed-corrections.json'))\""
   },

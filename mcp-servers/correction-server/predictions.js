@@ -119,7 +119,8 @@ export function logOutcome({
   const computedResidual = predictionCorrect ? 0 : Math.abs(residualChange);
 
   // Update prediction record
-  pred.outcome = actual;  pred.outcome_type = outcome_type;
+  pred.outcome = actual;
+  pred.outcome_type = outcome_type;
   pred.operator_words = operator_words;
   pred.residual = computedResidual;
   pred.prediction_correct = predictionCorrect;
@@ -140,6 +141,7 @@ export function logOutcome({
   }
 
   const catData = residuals[cat];
+  const oldPhase = getCurrentPhase(catData); // before this outcome is counted
   catData.cumulative_residual += residualChange;
   catData.cumulative_residual = Math.max(0, catData.cumulative_residual); // floor at 0
   catData.total_predictions++;
@@ -148,7 +150,7 @@ export function logOutcome({
   catData.last_tested_session = pred.session_id;
   catData.sessions_since_test = 0;
 
-  // Check for phase transition  const oldPhase = getCurrentPhase(catData);
+  // Check for phase transition
   const accuracy = catData.correct_predictions / catData.total_predictions;
   const newPhase = computePhase(catData.total_predictions, accuracy);
 
