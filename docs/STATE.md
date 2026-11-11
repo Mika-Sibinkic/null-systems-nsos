@@ -1,7 +1,7 @@
 <a id="top"></a>
 # STATE: what is built
 
-> Single source of "where we are." Updated on every milestone merge (see [UPDATE-PROTOCOL](./UPDATE-PROTOCOL.md)).
+> Where the build is. `docs/ROADMAP.md` has what is next.
 > Status words: **built** (code and tests exist) · **partial** (exists, not wired end to end) · **planned** (empty) · **external** (outside service).
 > Last updated: 2026-11-11 (launch pass).
 
@@ -21,12 +21,11 @@ Five of six domain teams, non-QuickBooks connectors and the review page's engine
 
 | Component | State | Path | Notes |
 |---|---|---|---|
-| Council (pairwise judge + Borda) | built | `engine/council/council.py` | deterministic judge fallback for tests |
-| Recursive-weight scoring | built | `engine/council/recursive_weights.py` | 0.30 prio + 0.25 novelty + 0.20 corrob + 0.25 impact, z-normed $/hrs |
-| Reasoning engine (lifted) | built | `engine/reasoning/reasoning_engine.py` | `predict()` backs WWOD SOW scoring |
-| NIM client (lifted, only model client) | built | `engine/router/nim_client.py` | `judge_pair` for council; live path untested without a key |
-| Engine HTTP API (FastAPI) | built | `engine/api/app.py` | `GET /health`, `GET /teaser` (scoped token, per-tenant authz), dev-only `POST /dev/scoped-token` (404 once `VINNY_TOKEN_SECRET` is set); `require_live_model` fails closed 503 without `NIM_API_KEY`; `python -m engine.api` |
-| Meta-teams: financial | built | `engine/meta-levels/financial/` | question battery (`questions.jsonl` + `team.py`), data→findings engine (`findings.py`); in-engine grounding gate (fail-closed); FDE-review gate (`review_gate.py`) |
+| Council (pairwise judge + Borda) | built | `engine/council/council.py` | offline the judge picks the higher `impact_usd` |
+| Recursive-weight scoring | partial | `engine/council/recursive_weights.py` | 0.30 prio + 0.25 novelty + 0.20 corrob + 0.25 impact, z-normed $/hrs. Embeddings are fixed placeholders, so priority and novelty change nothing measured |
+| NIM client (only model client) | built | `engine/router/nim_client.py` | `judge_pair` for council; never called in offline mode; live path untested without a key |
+| Engine HTTP API (FastAPI) | built | `engine/api/app.py` | `GET /health`, `GET /teaser` (scoped token, per-tenant authz), dev-only `POST /dev/scoped-token` (404 once `VINNY_TOKEN_SECRET` is set); without that secret the app answers only loopback callers; `require_live_model` fails closed 503 without `NIM_API_KEY`; `python -m engine.api` |
+| Meta-teams: financial | built | `engine/meta-levels/financial/` | data→findings engine (`findings.py`); in-engine grounding gate (fail-closed); FDE-review gate (`review_gate.py`) |
 | Meta-teams: other 5 | planned | `engine/meta-levels/{operational,organizational,customer,technology,strategic}/` | empty |
 
 <a id="harness"></a>
@@ -34,10 +33,8 @@ Five of six domain teams, non-QuickBooks connectors and the review page's engine
 
 | Component | State | Path | Notes |
 |---|---|---|---|
-| Promotion gate (5-gate) | partial | `learning/promotion-gate/promotion_gate.py` | reads `runs/latest-gauntlet-score.json` and `runs/perf-delta.json`, which are produced outside the repo |
-| Quality judge (3-layer) | built | `engine/gauntlets/quality_judge.py` | |
-| GitHub Actions CI | built | `.github/workflows/ci.yml` | pytest (3.11, 3.14), secret scan, demo run diffed against `examples/`, engine API smoke; web audit, typecheck, `npm test`, build; MCP server audit and stdio smoke. Not yet run on GitHub |
-| docs_sync gate | built | `scripts/check_docs_sync.py` | fails on source-vs-docs drift; `[skip-docs-sync]` override; CI runs it on pull requests |
+| Quality judge | built | `engine/gauntlets/quality_judge.py` | rubric scorer via `nim_client`; offline mode is a structural regex check (a figure, an evidence word, a confidence word, a next step) |
+| GitHub Actions CI | built | `.github/workflows/ci.yml` | pytest (3.11, 3.14), secret scan, demo run diffed against `examples/`, engine API smoke; web audit, typecheck, `npm test`, build; MCP server audit and stdio smoke. The 2026-09-29 version passed on GitHub; the launch version has not run yet |
 | Unit tests | built | `tests/` | `python -m pytest -q`, offline, no keys |
 | Quality judge offline-deterministic fallback | built | `engine/gauntlets/quality_judge.py` | opt-in `NSOS_JUDGE_OFFLINE_DETERMINISTIC=1`; prod stays fail-closed ([decision](./decisions/2026-06-02-offline-deterministic-quality-judge.md)) |
 
@@ -51,16 +48,16 @@ Five of six domain teams, non-QuickBooks connectors and the review page's engine
 | QuickBooks adapter | built | `client/adapters/quickbooks.py`: read-only QB export → `baseline.json` (schema-valid) |
 | Connectors (HubSpot, Slack, Pocket) | planned | `client/adapters/`: QuickBooks only so far |
 | Tenant snapshots | built | `client/snapshots/{tenant}/baseline.json` + `schemas/baseline.json` |
-| <1h teaser signal | built | `engine/teaser/teaser.py`: one grounded finding from the snapshot |
+| Teaser | built | `engine/teaser/teaser.py`: the report's scope-cycle finding, same number and confidence |
 
 <a id="sow"></a>
 ## SOW output, scoring and presentation
 
 | Component | State | Path |
 |---|---|---|
-| Exec report generator | built | `presentation/exec-report/report_generator.py`: `render_sow_report` renders the scored SOWs side by side; passes the quality_judge gate |
+| Exec report generator | built | `presentation/exec-report/report_generator.py`: `render_sow_report` renders the scored SOWs side by side; passes the offline quality_judge regex check |
 | SOW assembly (bundle findings → 2–3 candidates) | built | `engine/sow/assembly.py`: thrust taxonomy, impact-weighted confidence, source-traced union |
-| WWOD SOW scoring | built | `engine/sow/wwod_score.py`: `predict()` policy + deterministic deal-quality prior; cold start falls back to the prior; confidence + gaps[] |
+| WWOD SOW scoring | partial | `engine/sow/wwod_score.py`: deterministic deal-quality prior + confidence + gaps[]; no learned signal until past engagements are on record |
 | 5-pillar deployability grade | partial | `engine/sow/pillar_grade.py`: security/compliance/build/throughput/audit-replayable; the security pillar is a constant, so the grade is a placeholder |
 | Quantified success metrics | built | `engine/sow/metrics.py`: EBITDA %/yr + hrs/yr + payback months per SOW, source-traced; grounded-numbers probe validates the artifact |
 | Side-by-side comparison | built | `presentation/side-by-side/sbs.py`: WWOD + pillar grade + metrics → comparison matrix + one recommendation; markdown + JSON |
@@ -74,8 +71,6 @@ Five of six domain teams, non-QuickBooks connectors and the review page's engine
 | Component | State | Path |
 |---|---|---|
 | Feedback (predicted vs realized) | built | `learning/feedback/outcome_loop.py` + `schema.json`: append-only ledger; paired deltas + accuracy ratio → eval-set export |
-| Durable execution (idempotency + retry/backoff) | built | `engine/run/durable.py`: at-most-once on `run_id`; capped exponential retry (1/4/16s, max 3); every attempt journaled |
-| Monitoring / recurring-diagnostic tier | partial | `learning/feedback/monitoring.py`: re-run cadence (`next_run_due`/`due_tenants`) + realized-impact stub |
 | RL / external-signals / self-triggers | planned | `learning/{rl,external-signals,self-triggers}/` (empty) |
 
 <a id="surface"></a>
@@ -83,7 +78,7 @@ Five of six domain teams, non-QuickBooks connectors and the review page's engine
 
 | Component | State | Path |
 |---|---|---|
-| Next.js app | built | `web/`: App Router, `tsc --noEmit` clean, Next 16.4.1, Node 20.9+ |
+| Next.js app | built | `web/`: App Router, `tsc --noEmit` clean, Next 16.4.1, Node 22.6+ |
 | Onboarding page + first-finding UX | built | `web/app/onboarding/page.tsx` |
 | Engine HTTP boundary (scoped token only) | built | `web/lib/engine.ts` + `web/app/api/teaser/route.ts`: calls `engine/api` over `ENGINE_URL` with a timeout; `engine_unreachable` fallback only when the engine cannot be reached, engine errors surface as 502 |
 | SOW review/choose UI | partial | `web/app/diagnostic/[runId]/page.tsx`: the page exists; the `/api/runs/[runId]/*` routes it calls and the engine routes behind them are not built |
@@ -94,5 +89,4 @@ Five of six domain teams, non-QuickBooks connectors and the review page's engine
 | Component | State | Path |
 |---|---|---|
 | Decision record (Tier-2 architecture) | built | `docs/decisions/2026-05-28-saas-conglomeration-architecture.md` |
-| PRODUCT / STATE / ROADMAP / GTM / UPDATE-PROTOCOL | built | `docs/` |
-| Clickable product map | built | `docs/site/index.html` |
+| STATE / ROADMAP / ARCHITECTURE / COUNCIL-PROTOCOL | built | `docs/` |

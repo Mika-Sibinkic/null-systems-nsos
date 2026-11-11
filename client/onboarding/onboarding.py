@@ -1,6 +1,6 @@
 """Onboarding session — the server-side flow that turns a connect into a baseline.
 
-Client-view flow (PRODUCT.md#onboarding):
+Client-view flow:
   1. Operator connects a source (QuickBooks). The OAuth secret is handed to the
      SERVER-SIDE ConnectorSecretStore — it never reaches the web surface.
   2. The web surface receives a scoped, short-lived token (read scopes only).

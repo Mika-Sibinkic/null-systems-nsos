@@ -17,7 +17,6 @@ corroborating_signals:
   - docs/ARCHITECTURE.md (this repo): client-view flow + layer map + LangGraph orchestration + multi-tenant isolation already specified.
   - Engineering bar (5 pillars): Build-quality one-command bring-up; Throughput durable execution + spend caps; Audit-replayable decision records.
   - WWOD: upstream reasoning_engine.predict + meta/wwod_recursion.py + knowledge/operator_patterns.jsonl (read-only lift source; Tier-3, do not edit in place).
-  - Founder/engineer/market lens (Karpathy/Tan/LeCun synthesis [LIKELY]): outcome flywheel as moat, grounded numbers, eval-set-as-asset, GTM/unit-economics.
 confidence:
   primary_claim: VERIFIED
   cost_estimate: LIKELY
@@ -62,5 +61,5 @@ GitHub Actions adds lint/typecheck/test on top.
 - **Harder:** must maintain a polyglot monorepo (Python + TS); the web surface is net-new build;
   durable execution for multi-hour diagnostic runs is not yet built (sync skeleton today).
 - **Committed to:** NIM-primary brain; multi-tenant isolation by `tenant_id`; every client-facing
-  number is source-traced + confidence-banded (LLM narrates, math computes); docs/viz kept
-  recursively in sync with state via the UPDATE-PROTOCOL CI check.
+  number is source-traced + confidence-banded (LLM narrates, math computes). (The docs-sync CI
+  check this record also committed to was removed on 2026-11-11; STATE and ROADMAP are kept by hand.)

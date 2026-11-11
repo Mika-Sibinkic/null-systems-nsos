@@ -36,18 +36,6 @@ jobs:
           TOKEN=$(curl -sf -X POST http://127.0.0.1:8000/dev/scoped-token -H 'content-type: application/json' -d '{"tenant_id":"synth-acme-services"}' | python -c 'import json,sys; print(json.load(sys.stdin)["token"])')
           curl -sf "http://127.0.0.1:8000/teaser?tenant=synth-acme-services" -H "authorization: Bearer $TOKEN" | python -c 'import json,sys; f=json.load(sys.stdin); assert f["team"]=="teaser" and f["impact_usd"]>0, f; print(f["headline"])'
 
-  docs-sync:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
-          fetch-depth: 0
-      - name: source changes come with a docs/STATE.md or docs/ROADMAP.md update
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: python3 scripts/check_docs_sync.py "origin/$BASE_REF...HEAD"
-
   web:
     runs-on: ubuntu-latest
     defaults:

@@ -1,10 +1,8 @@
 <a id="top"></a>
-# ROADMAP — future plans, recursive to state
+# ROADMAP: what is done and what is next
 
-> Each phase links to its [STATE.md](./STATE.md) entry + success criteria + the decision record it
-> depends on. Reading top-down tells you what's done, what's next, and why. Checkboxes update on
-> every milestone merge per [UPDATE-PROTOCOL](./UPDATE-PROTOCOL.md). This is the recursive tracker:
-> ROADMAP says where we're going, STATE says where we are, they reconcile at every merge.
+> Each phase links to its [STATE.md](./STATE.md) entry and its success criteria. A box is ticked
+> only when the thing has run.
 
 Strategy: **vertical slice first** — prove the whole pipe at depth-one (one connector → one team →
 real findings → scored SOWs → operator choice) before going wide. Governs decision:
@@ -14,9 +12,8 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 ## Phase 0 — Repo + governance  ·  done (2026-05-28)
 - [x] `dev` branch off baseline `c6b1f83`
 - [x] Tier-2 decision record written
-- [x] Living docs (PRODUCT/STATE/ROADMAP/GTM/UPDATE-PROTOCOL)
-- [x] Clickable product mind map (`docs/site/`)
-- [x] Git remote + CI (pytest, demo run, API smoke, web and MCP jobs on every push)
+- [x] STATE and ROADMAP docs
+- [x] Git remote + CI. The 2026-09-29 workflow passed on GitHub; the launch version's demo-diff, web-test and MCP jobs have not run there yet
 > State: [STATE#docs](./STATE.md#docs), [STATE#harness](./STATE.md#harness)
 
 <a id="phase1"></a>
@@ -26,13 +23,11 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 - [x] Tenant isolation by `tenant_id` (per-tenant authz in `client/onboarding/auth.py`)
 - [x] <1h **teaser** path (one cheap high-signal finding, grounded)
 - [x] Next.js web surface (`tsc --noEmit` clean) + engine HTTP boundary
-- [x] `scripts/check_docs_sync.py` docs-sync gate
 - **Success:** met. Synthetic tenant's QuickBooks data lands as a valid `baseline.json`; teaser renders.
 > State: [STATE#client](./STATE.md#client), [STATE#surface](./STATE.md#surface)
 
 <a id="phase2"></a>
 ## Phase 2 — Financial meta-team executes  ·  done (2026-06-02)
-- [x] Expand `sample-financial.jsonl` → financial question battery (`engine/meta-levels/financial/questions.jsonl` + `team.py`, 6 questions, 6/6 answered from baseline)
 - [x] `engine/meta-levels/financial/` runs gauntlet vs `baseline.json` → grounded `findings.jsonl`
 - [x] Bottleneck / time-leak / dollars-missed logic (`findings.py`: vendor/customer concentration, overdue-AR, advisory-spend, scope cycle-time, margin)
 - [x] **Grounded-numbers gate**: every `impact_usd`/`impact_hours` source-traced + confidence-banded; unsourced number → rejected in-engine (`assert_grounded`, fail-closed) + `scripts/probes/grounded_numbers.py`
@@ -51,7 +46,7 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 
 <a id="phase4"></a>
 ## Phase 4 — SOW presentation + operator choice  ·  partial
-- [x] `report_generator.py` → 2–3 SOWs, CEO-language, side-by-side (`render_sow_report` + `presentation/side-by-side/sbs.py`; passes quality_judge gate)
+- [x] `report_generator.py` → 2–3 SOWs, CEO-language, side-by-side (`render_sow_report` + `presentation/side-by-side/sbs.py`; passes the offline quality_judge regex check)
 - [x] FDE handoff packet: `presentation/handoff/packet.py` exports JSON + markdown brief
 - [ ] Web: operator reviews + picks. `web/app/diagnostic/[runId]/page.tsx` exists; the `/api/runs/[runId]/*` routes it calls and the engine routes behind them are not built
 - **Success:** operator can compare and select a SOW in the web UI; packet exports. Packet exports; selection in the web UI is not met.
@@ -60,19 +55,17 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 <a id="phase5"></a>
 ## Phase 5 — Outcome flywheel + E2E gate  ·  done
 - [x] Wire `learning/feedback/` — capture predicted vs realized per shipped SOW (`outcome_loop.py` + `schema.json`; append-only ledger → eval-set deltas)
-- [x] Monitoring/recurring tier hook (land-and-expand) — `learning/feedback/monitoring.py` (cadence + realized-impact stub) + `engine/run/durable.py` (idempotency + retry/backoff)
 - [x] E2E on synthetic-client-a through the **real** pipe — `tests/test_e2e_synthetic.py` (fabricated QuickBooks fixture)
-- [x] `promotion_gate.evaluate_proposal()` wired; its regression gate runs the real pytest suite; the gauntlet and perf inputs it reads are produced outside the repo. `eval_harness` was deleted on 2026-11-11 because nothing called it.
 - **Success:** full pipe runs end-to-end; flywheel captures its first (synthetic) outcome. Met.
 > State: [STATE#flywheel](./STATE.md#flywheel)
 
 <a id="cross"></a>
 ## Cross-cutting (apply every phase)
-- [ ] Eval set versioned as IP; cold-start from prior Null Systems engagements ([GTM#eval](./GTM.md#eval))
-- [x] Durable execution for multi-hour runs (queue + retries + idempotency on `run_id`) — `engine/run/durable.py` (at-most-once on run_id; capped exponential backoff; durable-backend interface ready)
+- [ ] Eval set from realized outcomes; cold-start from prior Null Systems engagements
+- [ ] Durable execution for multi-hour runs (queue + retries + idempotency on `run_id`)
 - [ ] Per-tenant LLM spend cap; cache identical gauntlet calls
 - [ ] Messy-real-data robustness (dirty QuickBooks exports), not just happy path
-- [ ] Trust collateral: DPA + SOC2 path + "no shared-model training" ([GTM#trust](./GTM.md#trust))
+- [ ] Trust collateral: DPA and a SOC2 path
 
 <a id="stage"></a>
 ## Stage gate

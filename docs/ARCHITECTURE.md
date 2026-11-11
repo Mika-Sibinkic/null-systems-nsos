@@ -25,7 +25,7 @@
 │   ┌──────────────────┐  ┌──────────────────────────────────────────┐  │
 │   │ meta-levels/     │  │ council/                                 │  │
 │   │  financial       │──▶│ debate-based consensus                   │  │
-│   │  operational     │  │ + recursive-weight scoring (Borda + Plackett-Luce-lite) │
+│   │  operational     │  │ + recursive-weight scoring (Borda)       │
 │   │  organizational  │  │                                          │  │
 │   │  customer        │──▶│ pairwise LLM-judge tournament            │  │
 │   │  technology      │  │                                          │  │
@@ -33,7 +33,7 @@
 │   └──────────────────┘  └──────────────────────────────────────────┘  │
 │        │                                                              │
 │        ▼ (each team uses)                                            │
-│   gauntlets/ (quality judge)   reasoning/   router/ (nim_client)      │
+│   gauntlets/ (quality judge)   router/ (nim_client)                   │
 └────────────────────────────────────────────────────────────────────────┘
                                    ▲
                           (consumes snapshot)
@@ -48,7 +48,6 @@
 │ learning/                                                              │
 │   rl/ (cross-run)   feedback/ (rejections + outcomes)                  │
 │   external-signals/ (HN, GH, Reddit)   self-triggers/ (cron)           │
-│   promotion-gate/ (regression + perf gate from internal pipeline)      │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -59,26 +58,25 @@ A LangGraph state machine wraps:
 - Council node (debate-based consensus over candidate findings)
 - Reporter node (CEO-language synthesis)
 
-Why LangGraph: durable state + replay (auditing client-facing diagnostics is a hard requirement). Why AutoGen group-chat inside teams: handles intra-team conversational dynamics. Why pairwise comparisons in council: outperforms scalar scoring for ranking (per 2025–2026 LLM-judge literature).
+Not built. Today `scripts/run_synthetic.py` calls each step in order in one process. The reason for LangGraph was durable state and replay, so a client-facing diagnostic can be audited.
 
 ## Data model
 
-- **Tenant snapshot** (`client/snapshots/{tenant_id}/baseline.json`): structured dump of all connected sources at onboarding time.
-- **Tenant priors** (`client/snapshots/{tenant_id}/priors.json`): CEO's stated objectives, weights, what's known-already.
-- **Gauntlet output** (`runs/{run_id}/gauntlet/{team}/findings.jsonl`): per-team raw findings.
-- **Council output** (`runs/{run_id}/council/ranked.jsonl`): ordered list with scores.
-- **Report** (`runs/{run_id}/report/exec-summary.md` + `pdf`): final deliverable.
+What `python scripts/run_synthetic.py` writes today, under `runs/synthetic-client-a/`:
 
-## LLM provider strategy
+- `snapshots/{tenant_id}/baseline.json`: the tenant snapshot built from the export.
+- `gauntlet/financial/findings.jsonl`: the financial team's findings.
+- `review/fde_queue.jsonl`: findings the review gate held for a person.
+- `sow/sow-candidates.jsonl`: the 2-3 SOW candidates.
+- `presentation/report.md` and `presentation/side-by-side.json`: the owner-facing report.
+- `handoff/fde-handoff-packet.json` and `.md`: the engineer's checklist.
+- `flywheel/outcome-ledger.jsonl`: predicted outcomes, append-only.
 
-Per provider research:
-- **NIM DeepSeek V3.2** — primary synthesis (council + reporter)
-- **NIM R1-distill-32b** — reserved for council judge tie-breaking
-- **Cerebras (free, 1M tok/day)** — bulk gauntlet calls (8k context cap is OK per question)
-- **Groq Llama 3.3 70B** — latency-critical fallback
-- **Anthropic** — escalation for genuinely hard reasoning (rare; requires explicit tier-gate)
+The CEO's stated objectives and known-already items come from `examples/synthetic-client-a/firm.json`. No council ranking file and no PDF are written.
 
-Routed by `engine/router/nim_client.py` with cascade handler attached.
+## LLM provider
+
+One client, `engine/router/nim_client.py`, and one default model, `meta/llama-3.3-70b-instruct` (`NIM_PRIMARY_MODEL`). With `NIM_API_KEY` set, prompts, which include finding text, go to `NIM_BASE_URL` (default: NVIDIA's hosted API). With `NSOS_JUDGE_OFFLINE_DETERMINISTIC=1` or no key, nothing leaves the machine. No other provider is wired.
 
 ## Multi-tenant isolation
 

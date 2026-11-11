@@ -17,7 +17,7 @@ CEO-language report. Client-facing name: "Vinny". See `README.md` and
 |---|---|
 | `client/` | Tenant-specific code: onboarding, connector adapters, snapshots (gitignored except the synthetic example) |
 | `engine/` | Reusable diagnostic intelligence: meta-level teams, council, SOW scoring, quality judge, NIM client, HTTP API |
-| `learning/` | Cross-run improvement: outcome flywheel, promotion gate |
+| `learning/` | Cross-run improvement: outcome ledger |
 | `presentation/` | Engine output → executive report, side-by-side, FDE handoff packet |
 | `schemas/` | JSON contracts shared across layers |
 | `web/` | Next.js surface (onboarding + diagnostic review); holds only a scoped token, never a connector secret |
@@ -43,8 +43,7 @@ CEO-language report. Client-facing name: "Vinny". See `README.md` and
    scans for hardcoded secrets.
 7. **Operator identity is parameterized** (`OPERATOR_NAME`, `COMPANY_NAME`);
    never hardcode a person's name.
-8. **Keep docs recursive to code.** Source changes under `engine/ client/ web/
-   learning/ presentation/` should be reflected in `docs/STATE.md` or
-   `docs/ROADMAP.md` in the same change (`scripts/check_docs_sync.py`).
+8. **Keep STATE honest.** When a change makes `docs/STATE.md` or
+   `docs/ROADMAP.md` wrong, fix them in the same change.
 9. **Architecture-level changes** (new provider, schema change, council weight
    change) get a decision record under `docs/decisions/` before the code.

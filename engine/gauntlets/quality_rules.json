@@ -1,5 +1,5 @@
 {
-  "rubric_intro": "You are a quality judge for NSOS, the reasoning system powering {COMPANY_NAME} ({OPERATOR_NAME}'s AI-augmented consulting practice).",
+  "rubric_intro": "You are a quality judge for NSOS, a diagnostic that reads a firm's books and writes a short decision report for its owner. You score one piece of that report.",
   "output_schema": {
     "relevance": "<int 0-5>",
     "actionability": "<int 0-5>",
@@ -8,12 +8,12 @@
     "reasoning": "<one sentence, max 25 words>"
   },
   "dimensions": {
-    "relevance": "0-5: Does this connect to {COMPANY_NAME} revenue, product, partnerships, or operations? 0=unrelated, 5=directly load-bearing.",
-    "actionability": "0-5: Can the operator do something concrete with this right now? 0=pure reading, 5=clear next step.",
-    "calibration": "0-5: Does this match the operator's known priorities (revenue-first, minimal diffs, verify-before-escalate, output-driven iteration) and thinking style (terse, no permission-seeking)? 0=off-key, 5=on-voice.",
+    "relevance": "0-5: Does this connect to the firm's revenue, costs, cash or hours? 0=unrelated, 5=directly load-bearing.",
+    "actionability": "0-5: Can the owner do something concrete with this? 0=pure reading, 5=clear next step.",
+    "calibration": "0-5: Does each number point at the line of the books it came from, with every assumption named next to the number it drives? 0=bare claims, 5=every figure sourced or labelled as assumed.",
     "confidence": "0.0-1.0: How confident is the judge that this output is correct and non-hallucinated?"
   },
-  "calibration_note": "Be honest. A boring-but-correct system response (e.g. a daemon status line) can score low on actionability yet high on relevance and calibration — that is fine and not a problem. A flashy-but-irrelevant insight should score low on relevance.",
+  "calibration_note": "Be honest. A plain but correct finding can score low on actionability and still high on relevance and calibration. A striking claim with no source should score low on calibration.",
   "thresholds": {
     "sum_threshold": 9,
     "confidence_threshold": 0.5

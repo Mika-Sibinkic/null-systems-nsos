@@ -1,6 +1,6 @@
 # Council Protocol — Recursive-Weight Scoring
 
-> Authoritative spec for how 6 meta-team findings collapse into a single ranked list of opportunities for the executive report.
+> The design for how meta-team findings collapse into one ranked list for the report. What `engine/council/` does today: one judge per pair (`nim_client.judge_pair`, or offline the higher `impact_usd` wins), Borda positions, and the composite below. The embeddings are fixed 4-number placeholders (`_emb_for` in `findings.py`, two constant vectors in `run_synthetic.py`), so priority and novelty change nothing measured: giving every finding the same embedding leaves the demo report byte-identical. Offline, option order is effectively impact order.
 
 ## Inputs
 
@@ -49,7 +49,7 @@ def rank_findings(findings, ceo_priorities, known_baseline):
         composite = 0.30*prio + 0.25*novelty + 0.20*corrob + 0.25*impact
 
         # Pairwise LLM-judge tournament gives Borda position
-        borda = borda_count(f, findings, judge=ensemble_judge)
+        borda = borda_count(f, findings, judge=judge_pair)
 
         scored.append((f, borda * (1 + composite)))
     return sorted(scored, key=lambda t: -t[1])
@@ -57,17 +57,13 @@ def rank_findings(findings, ceo_priorities, known_baseline):
 
 ## Pairwise LLM-judge tournament
 
-Why pairwise: 2025–2026 LLM-judge literature consistently shows pairwise comparisons outperform absolute scalar scoring for ranking tasks (lower variance, less position bias).
+Built: for N findings, a full round-robin when N ≤ 20, else `O(N log N)` sampled pairs. Each pair goes to one judge, `nim_client.judge_pair` (one call to `meta/llama-3.3-70b-instruct`), which returns A, B or TIE. Borda position = N - (rank assigned by wins).
 
-Implementation:
-- For N findings, sample `O(N log N)` pairs (full round-robin only when N ≤ 20).
-- Each pair → judge ensemble of 3 LLMs (NIM R1-distill + DeepSeek V3.2 + Groq Llama 3.3) returns "A wins" / "B wins" / "tie" with rationale.
-- Majority vote; ties broken by R1-distill (the "tiebreaker judge").
-- Borda position = N - (rank assigned by aggregated wins).
+Not built: a multi-model judge ensemble with majority vote.
 
 ## Hyperparameters
 
-The `0.30 / 0.25 / 0.20 / 0.25` weights are tunable per engagement. Calibration:
+The `0.30 / 0.25 / 0.20 / 0.25` weights are fixed in `recursive_weights.py`. Per-engagement calibration is not built. The plan:
 1. Run on 2–3 pilot reports.
 2. Have the operator (or, eventually, the client engagement lead) manually rank the top 10 findings.
 3. Fit weights to minimize Spearman distance from manual rank.
@@ -79,12 +75,10 @@ Not built. `engine/council/council.py` stops at Borda plus the composite score. 
 
 ## Artifacts
 
-- `runs/{run_id}/council/candidates.jsonl` — ranked list with all signals broken out
-- `runs/{run_id}/council/final.jsonl` — the same ranking, fed to the reporter
+`run_council(..., artifacts_dir=...)` writes `candidates.jsonl` and `final.jsonl` there. The demo run does not pass `artifacts_dir`, so it writes neither.
 
 ## Failure modes + recovery
 
 | Failure | Symptom | Recovery |
 |---|---|---|
-| Judge ensemble disagrees often | high tie rate (>30%) on pairwise comparisons | escalate to Anthropic Claude judge for ties |
 | All findings score low | composite < 0.2 for top 3 | snapshot data is too thin — request more sources or interviews from client |
