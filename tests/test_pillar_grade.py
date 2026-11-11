@@ -68,6 +68,18 @@ def test_tiny_impact_flags_throughput():
     assert g.scores["throughput"] < 0.6
 
 
+def test_the_size_floor_is_the_one_constant_in_metrics(monkeypatch):
+    import engine.sow.metrics as metrics
+    tiny = {
+        "id": "tiny", "title": "t", "objective": "o", "impact_usd": 12_000.0,
+        "impact_hours": 0.0, "confidence": 0.7, "finding_ids": ["x"],
+        "source": ["s1"], "findings": [{"id": "x", "source": ["s1"]}],
+    }
+    assert pg.grade_sow(tiny).blockers
+    monkeypatch.setattr(metrics, "MIN_WORTHWHILE_IMPACT_USD", 10_000.0)
+    assert not pg.grade_sow(tiny).blockers
+
+
 def test_high_impact_clears_throughput():
     big = {
         "id": "big", "title": "t", "objective": "o", "impact_usd": 8_400_000.0,

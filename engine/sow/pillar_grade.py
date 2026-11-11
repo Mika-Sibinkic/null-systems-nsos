@@ -1,23 +1,18 @@
-"""5-pillar deployability grade for a SOW (P3.T3).
+"""Five-check deployability grade for a SOW (P3.T3). A placeholder.
 
-Each candidate SOW is graded on five checks ("pillars"):
+Each candidate SOW is scored on five checks ("pillars"), each in [0, 1]:
 
-  1. Security          — is the engagement's data path safe to deploy? (no
-                         frontend secrets, server-side proxy, per-resource authz)
-  2. Compliance        — can it produce an audit trail? (source-traced findings =
-                         append-only evidence; PII-scrubbed)
-  3. Build quality     — is the underlying evidence sound? (grounded numbers,
-                         corroboration breadth, typed/source-checkable)
-  4. Throughput        — will it survive year-1 load? (durable-execution-ready,
-                         not a one-shot; impact justifies infra spend)
-  5. Audit-replayable  — can the decision be replayed? (every number names its
-                         source; confidence bands; rollback-able recommendation)
+  1. Security          — a fixed 0.9 for any SOW with findings.
+  2. Compliance        — share of findings with a source line. assert_grounded
+                         makes that 1.0 for every finding the engine emits.
+  3. Build quality     — grounded, confidence, and how many findings back it.
+  4. Throughput        — annual impact against MIN_WORTHWHILE_IMPACT_USD
+                         (engine/sow/metrics.py).
+  5. Audit-replayable  — source-traced and confidence-banded: 0.8 + 0.2 x confidence.
 
-This is the *deployability* grade — not "is the finding true" (that's the
-grounded-numbers gate) but "if we sell and deploy this SOW as an FDE engagement,
-does it clear the bar we hold our own builds to." A SOW that scores low on a
-pillar gets a blocking flag the owner sees before choosing. The security check
-returns a fixed score, so the grade is a placeholder.
+Three of the five are constant or close to it, so the letter mostly reflects
+annual impact against the floor and how many findings back the option. A check
+under BLOCK_THRESHOLD becomes a flag the owner sees before choosing.
 
 Deterministic, offline. Grades from SOW + finding attributes; no LLM.
 """
@@ -25,6 +20,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 from typing import Any, Sequence
+
+import engine.sow.metrics as _metrics
 
 PILLARS = ["security", "compliance", "build_quality", "throughput", "audit_replayable"]
 
@@ -100,17 +97,14 @@ def _score_build_quality(sow: Any) -> tuple[float, str]:
 
 
 def _score_throughput(sow: Any) -> tuple[float, str]:
-    """Throughput = will the engagement scale / is it worth durable infra. A SOW
-    whose annual impact comfortably exceeds infra+delivery cost clears it; a
-    sub-threshold impact is flagged (don't deploy heavy infra for a tiny win)."""
+    """Annual impact against the size floor; under it the option gets a flag."""
     impact = float(_attr(sow, "impact_usd", 0.0) or 0.0)
-    # $250k/yr is the rough floor where a durable FDE engagement pays for itself.
-    floor = 250_000.0
+    floor = _metrics.MIN_WORTHWHILE_IMPACT_USD
     if impact >= floor:
         score = min(1.0, 0.6 + 0.4 * min(1.0, impact / (4 * floor)))
-        return round(score, 4), f"${impact:,.0f}/yr impact justifies a durable FDE engagement"
+        return round(score, 4), f"${impact:,.0f}/yr is above the ${floor:,.0f}/yr size floor"
     return round(0.3 + 0.3 * (impact / floor), 4), (
-        f"${impact:,.0f}/yr is below the ${floor:,.0f}/yr where an engagement roughly pays for itself"
+        f"${impact:,.0f}/yr is below the ${floor:,.0f}/yr we assume an option needs to be worth an engagement"
     )
 
 

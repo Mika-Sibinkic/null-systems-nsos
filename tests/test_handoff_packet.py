@@ -83,6 +83,8 @@ def test_validation_checklist_is_gaps_plus_blockers():
         assert b in p.validation_checklist
     for g in col.get("gaps", []):
         assert g in p.validation_checklist
+    for a in sbs_mod.assumptions(col["source"]):
+        assert f"Confirm: {a}" in p.validation_checklist
 
 
 def test_markdown_brief_renders_scope_and_target():

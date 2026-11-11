@@ -79,6 +79,14 @@ def test_recommendation_prefers_deployable_high_conviction():
         assert rec.wwod_score == max(c.wwod_score for c in deployable)
 
 
+def test_recommended_options_assumption_is_the_thing_to_firm_up():
+    """The margin option's dollars are an assumption; the owner sees it first."""
+    sbs = sbs_mod.build_side_by_side(_sows(_baseline()), _baseline())
+    rec = next(c for c in sbs.columns if c.sow_id == sbs.recommended_sow_id)
+    assert rec.key_gap.startswith("Assumes 5 points of revenue recoverable")
+    assert "Before committing, confirm: 5 points of revenue recoverable" in sbs_mod.render_markdown(sbs)
+
+
 def test_markdown_table_renders_all_columns():
     b = _baseline()
     sbs = sbs_mod.build_side_by_side(_sows(b), b)

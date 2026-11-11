@@ -2,7 +2,7 @@
 
 When the owner selects one of the 2-3 scored SOW candidates, that
 choice becomes a real FDE engagement, not a PDF. This module exports the chosen
-SOW as a structured handoff packet the Field Deployment Engineer picks up: the
+SOW as a structured handoff packet the forward-deployed engineer (FDE) picks up: the
 scope, the quantified target, the source-traced evidence, the deployability
 flags to clear, and the success metrics the outcome flywheel (P5) will later
 measure predicted-vs-realized against.
@@ -14,7 +14,7 @@ Design (deterministic, offline, source-traced):
     the firm profile. No new dollar number is minted; every figure in the packet
     traces to a `source[]` line, so the grounded-numbers contract holds at the
     handoff boundary too.
-  - `gaps` from WWOD + pillar `blockers` become the FDE's *validation checklist*
+  - pillar `blockers`, each [LIKELY] assumption and the WWOD `gaps` become the FDE's *validation checklist*
     (the honest "confirm before deploying" list, the human-in-the-loop check carried
     all the way to the engagement).
   - The packet exports as both machine-readable JSON (engine/flywheel consumption)
@@ -26,6 +26,7 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 
 import engine.sow.metrics as _metrics
+from presentation.side_by_side.sbs import assumptions
 
 
 @dataclass
@@ -89,10 +90,11 @@ def build_packet(
     col = _column_for(side_by_side, selected_sow_id)
     gaps = list(col.get("gaps", []) or [])
     blockers = list(col.get("blockers", []) or [])
-    # the validation checklist is gaps + blockers, deduped, order-stable
+    # the validation checklist: blockers, then each assumption, then gaps; deduped, order-stable
+    confirm = [f"Confirm: {a}" for a in assumptions(col.get("source", []) or [])]
     seen: set[str] = set()
     checklist: list[str] = []
-    for item in [*blockers, *gaps]:
+    for item in [*blockers, *confirm, *gaps]:
         if item and item not in seen:
             seen.add(item)
             checklist.append(item)

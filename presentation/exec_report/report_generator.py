@@ -61,8 +61,10 @@ def render_sow_report(
     cost = engagement_cost_usd if engagement_cost_usd is not None else fmt.DEFAULT_ENGAGEMENT_COST_USD
     lines.append(f"- **Payback**: assumes the work costs ${cost:,.0f} per option.")
     lines.append(
-        "- **Deployability grade**: a placeholder. One of its five checks returns a fixed score. "
-        "⚠ marks an option too small to pay for an engagement."
+        "- **Deployability grade**: a placeholder. Three of its five checks are fixed today, so the "
+        "letter mostly reflects annual impact and how many findings back the option. ⚠ marks an "
+        f"option under ${fmt.MIN_WORTHWHILE_IMPACT_USD:,.0f}/yr, the size we assume an option needs "
+        "to be worth an engagement."
     )
     if any(wwod.COLD_START_GAP in col.gaps for col in sbs.columns):
         lines.append(f"- **Consultant conviction**: {wwod.COLD_START_GAP}.")
@@ -78,7 +80,7 @@ def render_sow_report(
 
     for i, col in enumerate(sbs.columns, start=1):
         rec_mark = " — **our recommendation**" if col.sow_id == sbs.recommended_sow_id else ""
-        assumed = [s.removesuffix(" [LIKELY]") for s in col.source if s.endswith("[LIKELY]")]
+        assumed = sbs_mod.assumptions(col.source)
         lines.append(f"## Option {i} — {col.title}{rec_mark}")
         lines.append("")
         lines.append(f"{col.objective}\n")

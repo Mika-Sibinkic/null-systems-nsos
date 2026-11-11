@@ -34,6 +34,9 @@ from typing import Any, Optional, Sequence
 
 # ── declared assumptions (source-tagged so payback is honest) ──────────────────
 DEFAULT_ENGAGEMENT_COST_USD = 180_000.0   # blended FDE engagement cost / thrust [LIKELY]
+# An option under this annual impact gets a ⚠ as too small to be worth an
+# engagement. A judgment set by hand [LIKELY], not derived from the cost above.
+MIN_WORTHWHILE_IMPACT_USD = 250_000.0
 
 
 def _attr(obj: Any, name: str, default=None):

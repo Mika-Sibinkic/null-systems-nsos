@@ -48,9 +48,9 @@ An excerpt of the committed copy, `examples/synthetic-client-a/report.md`:
 | **Evidence confidence** | 70% | 70% | 80% |
 ```
 
-The middle option is a bad deal, and the report says so. Its $11,875 a year against an assumed $180,000 engagement cost is a 182-month payback, and the report flags it: $11,875 a year is below the $250,000 a year where an engagement roughly pays for itself. One finding (advisory spend, confidence 0.60) is held for a person to review and is not in any option. CI is set to rerun the demo and fail if its report differs from the committed copy.
+The middle option is a bad deal, and the report says so. Its $11,875 a year against an assumed $180,000 engagement cost is a 182-month payback, and the report flags it as under the $250,000 a year we assume an option needs to be worth an engagement. That floor is a judgment, not derived from the cost. One finding (advisory spend, confidence 0.60) is held for a person to review and is not in any option. CI is set to rerun the demo and fail if its report differs from the committed copy.
 
-To change what counts as a finding, edit the thresholds and benchmarks at the top of `engine/meta_levels/financial/findings.py`. The engagement cost behind payback is `DEFAULT_ENGAGEMENT_COST_USD` in `engine/sow/metrics.py`.
+To change what counts as a finding, edit the thresholds and benchmarks at the top of `engine/meta_levels/financial/findings.py`. The engagement cost behind payback (`DEFAULT_ENGAGEMENT_COST_USD`) and the size floor behind the ⚠ (`MIN_WORTHWHILE_IMPACT_USD`) sit next to each other in `engine/sow/metrics.py`.
 
 ### Limits
 
@@ -59,7 +59,7 @@ To change what counts as a finding, edit the thresholds and benchmarks at the to
 - EBITDA lift divides by net income, because the export has no depreciation, amortization or interest lines. Real EBITDA is higher, so the true lift is lower. The report prints "+45% of net income" so the base is in view.
 - The scoping finding ($11,875/yr) counts only the 7 deals in the export's invoice list. Those invoices total $1.45M against $28M of revenue, so the yearly figure covers that sample, not the whole book of business.
 - Vendor concentration, customer concentration and overdue receivables show as dollars at risk and never count toward annual impact. A dependency is a risk, and overdue AR is one-time cash. The reasoning is in `docs/decisions/2026-11-11-exposure-is-not-impact.md`.
-- The deployability grade is a placeholder. Its security pillar returns a fixed score, so the letter grade says little yet.
+- The deployability grade is a placeholder. Three of its five checks are constant today, so the letter mostly reflects annual impact against $250,000/yr and the number of findings. On the demo, security is 0.9, compliance 1.0 and audit-replayable 0.94 to 0.96 for all three options; only throughput (1.0, 0.31, 0.30) and build quality (0.74 to 0.83) move (`grade_sow` on `runs/synthetic-client-a/sow/sow-candidates.jsonl`).
 - The live judge path, with `NIM_API_KEY` set, has never run in a test. Every test runs offline-deterministic, and offline the quality gate is a regex check for a figure, an evidence word, a confidence word and a next step.
 - Offline, every finding's text passes that regex check, so what the review gate holds is decided by its confidence floor (0.65) alone. Advisory spend has a fixed confidence of 0.60, so it is always held.
 - Options rank by annual impact (`impact_usd`), highest first. Nothing smarter ranks them yet.

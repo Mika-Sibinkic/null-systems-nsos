@@ -37,4 +37,4 @@ The original record claimed more than the code does. What is true:
 - **No promotion gate.** `learning/promotion-gate/` was removed. CI is `.github/workflows/ci.yml`.
 - **No rollback commit.** The commit the original record named predates the published history, so the reference was removed.
 - **No council.** `engine/council/` (pairwise judge, Borda positions, priority and novelty weights) was removed. Its only judge was "higher `impact_usd` wins" and its embeddings were fixed placeholders. With the council removed, the demo's report, side-by-side and handoff packet were byte-identical to the run with it; only the internal `rank_score` in `sow-candidates.jsonl` differed. SOWs now rank by `impact_usd`. A model ranker comes back with its own record and a measured difference in the output.
-- **The deployability grade is a placeholder.** One of its five checks in `engine/sow/pillar_grade.py` returns a fixed score.
+- **The deployability grade is a placeholder.** Three of its five checks in `engine/sow/pillar_grade.py` are constant today, so the letter mostly reflects annual impact against $250,000/yr and the number of findings.

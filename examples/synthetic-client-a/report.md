@@ -14,7 +14,7 @@ How to read the scores:
 
 - **EBITDA lift**: annual impact divided by your net income ($3,080,000), which stands in for EBITDA. Real EBITDA is higher, so the real lift is lower.
 - **Payback**: assumes the work costs $180,000 per option.
-- **Deployability grade**: a placeholder. One of its five checks returns a fixed score. ⚠ marks an option too small to pay for an engagement.
+- **Deployability grade**: a placeholder. Three of its five checks are fixed today, so the letter mostly reflects annual impact and how many findings back the option. ⚠ marks an option under $250,000/yr, the size we assume an option needs to be worth an engagement.
 - **Consultant conviction**: we have no past engagement like this on record, so the conviction score rests only on size, confidence and how many findings back it.
 - **Evidence confidence**: set per type of finding, not measured for each number.
 - **One finding**: Options 1 and 3 each rest on one finding. A second, independent finding would make them firmer.
@@ -46,7 +46,7 @@ Collect overdue receivables and cut proposal scoping time.
 - **Leadership hours freed**: 48 hours/year
 - **Payback**: 182 months
 - **Consultant conviction**: 24% (how hard we'd push this)
-- **Deployability grade**: B ⚠ $11,875/yr is below the $250,000/yr where an engagement roughly pays for itself
+- **Deployability grade**: B ⚠ $11,875/yr is below the $250,000/yr we assume an option needs to be worth an engagement
 - **Evidence confidence**: 70%, from 3 lines of your accounting
 
 ---
@@ -60,7 +60,7 @@ Diversify the vendor base so one supplier failure or price shock cannot stall de
 - **EBITDA lift**: +0% of net income
 - **Payback**: —
 - **Consultant conviction**: 26% (how hard we'd push this)
-- **Deployability grade**: B ⚠ $0/yr is below the $250,000/yr where an engagement roughly pays for itself
+- **Deployability grade**: B ⚠ $0/yr is below the $250,000/yr we assume an option needs to be worth an engagement
 - **Evidence confidence**: 80%, from 2 lines of your accounting
 
 ---
@@ -77,9 +77,9 @@ Diversify the vendor base so one supplier failure or price shock cannot stall de
 | **Consultant conviction** | 54% | 24% | 26% |
 | **Deployability grade** | A | B ⚠ | B ⚠ |
 | **Evidence confidence** | 70% | 70% | 80% |
-| **Key thing to firm up** | — | $11,875/yr is below the $250,000/yr where an engagement roughly pays for itself | $0/yr is below the $250,000/yr where an engagement roughly pays for itself |
+| **Key thing to firm up** | Assumes 5 points of revenue recoverable when gross margin is under 65% | $11,875/yr is below the $250,000/yr we assume an option needs to be worth an engagement | $0/yr is below the $250,000/yr we assume an option needs to be worth an engagement |
 
-**Our recommendation: Expand margin.** $1,400,000/yr with a payback of 2 months.
+**Our recommendation: Expand margin.** $1,400,000/yr with a payback of 2 months. Before committing, confirm: 5 points of revenue recoverable when gross margin is under 65%.
 
 ---
 

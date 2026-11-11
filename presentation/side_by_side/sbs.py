@@ -94,6 +94,11 @@ class SideBySide:
         }
 
 
+def assumptions(source: Sequence[str]) -> list[str]:
+    """The [LIKELY] lines of a source trace, without the tag."""
+    return [s.removesuffix(" [LIKELY]") for s in source if s.endswith(" [LIKELY]")]
+
+
 def owner_gaps(gaps: Sequence[str]) -> list[str]:
     """Gaps specific to one option; the report states the shared ones once."""
     return [g for g in gaps if g not in (_wwod.COLD_START_GAP, _wwod.SINGLE_FINDING_GAP)]
@@ -138,8 +143,10 @@ def build_columns(
         g = _grade.grade_sow(s)
         m = _metrics.metrics_for(s, baseline, **cost_kw)
         gaps = list(w.gaps)
-        specific = owner_gaps(gaps)
-        key_gap = (g.blockers[0] if g.blockers else (specific[0] if specific else ""))
+        source = list(_attr(s, "source", []) or [])
+        # what to firm up first: a blocker, else the biggest assumption, else a specific gap
+        firm_up = [f"Assumes {a}" for a in assumptions(source)] + owner_gaps(gaps)
+        key_gap = g.blockers[0] if g.blockers else (firm_up[0] if firm_up else "")
         cols.append(
             SBSColumn(
                 sow_id=_attr(s, "id", "unknown"),
@@ -157,7 +164,7 @@ def build_columns(
                 blockers=list(g.blockers),
                 gaps=gaps,
                 key_gap=key_gap,
-                source=list(_attr(s, "source", []) or []),
+                source=source,
                 exposure_usd=float(_attr(s, "exposure_usd", 0.0) or 0.0),
                 ebitda_base_label=m.ebitda_base_label,
             )
@@ -208,9 +215,9 @@ def render_markdown(sbs: SideBySide) -> str:
                 f"\n\n**Our recommendation: {rec.title}.** ${rec.impact_usd:,.0f}/yr "
                 f"with a payback of {_metrics.fmt_payback(rec.payback_months)}."
             )
-            specific = owner_gaps(rec.gaps)
-            if specific:
-                out += f" Before committing, confirm: {specific[0]}."
+            confirm = assumptions(rec.source) + owner_gaps(rec.gaps)
+            if confirm:
+                out += f" Before committing, confirm: {confirm[0]}."
     return out
 
 
