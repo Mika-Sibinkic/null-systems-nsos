@@ -1,8 +1,6 @@
 # Changelog
 
-All notable changes to NSOS. Format loosely follows
-Keep-a-Changelog; the diagnostic engine's internal pattern/eval promotions are tracked separately by
-`learning/promotion-gate/ledger.jsonl`.
+All notable changes to NSOS. Format loosely follows Keep-a-Changelog.
 
 ## [1.0.0] - 2026-11-11
 
@@ -17,14 +15,39 @@ through it yet.
   They stay out of annual impact, EBITDA lift and payback. Before this, an $8.4M supplier dependency
   was booked as $8.4M a year of savings and a +273% EBITDA lift.
 - Findings under 0.65 confidence are listed as pending review and left out of every total.
-- 196 tests run offline with no API key.
+- 174 tests run offline with no API key and make no network call.
 
 The dated entries below are what went into 1.0.0.
+
+### 2026-11-11 — Launch review fixes
+- **Fixed** without `VINNY_TOKEN_SECRET` the API answers only loopback callers, however it is
+  started. The dev secret is public, so `uvicorn engine.api.app:app --host 0.0.0.0` used to mint and
+  accept forgeable tokens on the LAN.
+- **Fixed** `NSOS_JUDGE_OFFLINE_DETERMINISTIC=1` now skips the model call in `quality_judge.score` and
+  `nim_client.judge_pair`. Before, a `NIM_API_KEY` in the shell sent finding text to the model from
+  the tests and the demo.
+- **Fixed** overdue AR at risk is the open balance ($235,000 on the demo), not the 80% "recoverable"
+  estimate ($188,000). The unused 80% assumption is gone.
+- **Fixed** the teaser is the report's scope-cycle finding. The teaser-only cloud heuristic
+  ($33,600/yr at 0.60 confidence, below the review floor) is deleted. Web copy says the demo reads a
+  synthetic export.
+- **Changed** the margin option is titled "Expand margin"; it no longer promises cost work it does
+  not hold.
+- **Removed** code no run path used: `engine/reasoning/`, `engine/run/durable.py`,
+  `learning/feedback/monitoring.py`, `learning/promotion-gate/`, the financial question battery
+  (`team.py`, `questions.jsonl`), the quality judge's SQLite and confirmation-gate layers, an
+  unreferenced prompt file and `engine/SANITIZED.md`. The demo report is byte-identical.
+- **Removed** `docs/PRODUCT.md`, `GTM.md`, `BUILD-PLAN.md`, `EXEC-REPORT-SPEC.md`,
+  `UPDATE-PROTOCOL.md`, `site/index.html`, the eval-harness decision record, and the docs-sync script,
+  test and CI job.
+- **Changed** `SECURITY.md` points to GitHub private vulnerability reporting.
+- **Changed** README: Node 22.6+, NIM env vars, the margin, scoping-sample and council limits, and
+  test timings re-measured on a clean clone.
 
 ### 2026-11-11 — Launch pass
 - **Fixed** vendor and customer concentration and overdue AR are exposure (`exposure_usd`), never annual
   impact ([decision](docs/decisions/2026-11-11-exposure-is-not-impact.md)). Overdue AR is the open
-  balance as of the export date. Undefined EBITDA lift and payback are `None`, not `Infinity`.
+  balance as of the export date (made true by the review fixes above). Undefined EBITDA lift and payback are `None`, not `Infinity`.
 - **Added** `scripts/run_synthetic.py`, the one demo pipeline; the review gate holds low-confidence
   findings out of every total. `examples/synthetic-client-a/report.md` is its real output.
 - **Fixed** security: `tenant_id` is validated at the token boundary and in the baseline schema; the
@@ -35,7 +58,7 @@ The dated entries below are what went into 1.0.0.
 - **Removed** unused lifted modules (router handlers, meta router, cascade handler, vector index, most
   of `engine/reasoning/`, eval harness, gauntlet, iterate), `engine/_deprecated/`, `deploy/` and the
   unused exec-report template.
-- **Changed** web: Next 16.4.1 and React 19.2 (Node 20.9+), `npm audit` clean, `ENGINE_URL` defaults to
+- **Changed** web: Next 16.4.1 and React 19.2 (Node 22.6+ for `npm test`), `npm audit` clean, `ENGINE_URL` defaults to
   `127.0.0.1`, a bad `ENGINE_TIMEOUT_MS` is rejected, `next-env.d.ts` is no longer tracked.
 - **Changed** CI: pytest on Python 3.11 and 3.14, secret scan, demo run diffed against `examples/`,
   web `npm test`, MCP server audit and smoke, docs-sync on pull requests, pinned action SHAs.
