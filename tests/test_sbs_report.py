@@ -63,7 +63,7 @@ def test_every_column_carries_all_scoring_layers():
     for c in sbs.columns:
         # metrics
         assert c.ebitda_uplift_pct >= 0.0
-        assert c.payback_months >= 0.0
+        assert c.payback_months is None or c.payback_months >= 0.0
         # wwod
         assert 0.0 <= c.wwod_score <= 1.0
         assert 0.0 <= c.wwod_confidence <= 1.0

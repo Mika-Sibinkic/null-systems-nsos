@@ -65,8 +65,8 @@ class SBSColumn:
     impact_usd: float
     impact_hours: float
     confidence: float
-    ebitda_uplift_pct: float
-    payback_months: float
+    ebitda_uplift_pct: float | None  # None when the EBITDA base is not positive
+    payback_months: float | None     # None when the SOW has no dollar impact
     wwod_score: float
     wwod_confidence: float
     grade: str
@@ -104,9 +104,9 @@ def _format_cell(key: str, col: SBSColumn) -> str:
     if key == "exposure_usd":
         return f"${col.exposure_usd:,.0f} at risk" if col.exposure_usd else "—"
     if key == "ebitda_uplift_pct":
-        return f"+{col.ebitda_uplift_pct:.0f}% EBITDA"
+        return _metrics.fmt_ebitda(col.ebitda_uplift_pct)
     if key == "payback_months":
-        return "—" if col.payback_months in (None, float("inf")) else f"{col.payback_months:.0f} mo"
+        return _metrics.fmt_payback(col.payback_months)
     if key == "impact_hours":
         return f"{col.impact_hours:.0f} hrs/yr" if col.impact_hours else "—"
     if key == "wwod_score":
@@ -211,7 +211,7 @@ def render_markdown(sbs: SideBySide) -> str:
 def write_artifact(sbs: SideBySide, path: Path | str) -> Path:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps(sbs.to_dict(), indent=2, default=str))
+    p.write_text(json.dumps(sbs.to_dict(), indent=2, default=str, allow_nan=False))
     return p
 
 

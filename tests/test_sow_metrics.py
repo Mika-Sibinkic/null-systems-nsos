@@ -29,7 +29,7 @@ def test_every_sow_gets_the_three_metrics():
     for m in metrics.metrics_for_all(_real_sows(b), b):
         assert m.ebitda_uplift_pct >= 0.0
         assert m.hours_reclaimed_per_year >= 0.0
-        assert m.payback_months >= 0.0
+        assert m.payback_months is None or m.payback_months >= 0.0  # None = no $ impact
 
 
 def test_ebitda_base_traces_to_net_income():
@@ -53,7 +53,7 @@ def test_payback_months_inverse_to_impact():
     sows = _real_sows(b)
     ms = {m.sow_id: m for m in metrics.metrics_for_all(sows, b)}
     # bigger impact => shorter payback
-    by_impact = sorted(ms.values(), key=lambda m: -m.impact_usd)
+    by_impact = sorted((m for m in ms.values() if m.impact_usd > 0), key=lambda m: -m.impact_usd)
     paybacks = [m.payback_months for m in by_impact]
     assert paybacks == sorted(paybacks), "payback should rise as impact falls"
 
@@ -95,3 +95,35 @@ def test_attach_metrics_embeds_block():
         assert "metrics" in d
         assert "ebitda_uplift_pct" in d["metrics"]
         assert "payback_months" in d["metrics"]
+
+
+# ── undefined metrics are None, never Infinity ────────────────────────────────
+
+def _strict_loads(text):
+    def _reject(c):
+        raise ValueError(f"non-JSON constant {c}")
+    return json.loads(text, parse_constant=_reject)
+
+
+def test_loss_firm_has_no_ebitda_uplift():
+    loss = {"accounting": {"profit_and_loss": {"NetIncome": -200000}}}
+    m = metrics.metrics_for({"id": "s", "impact_usd": 50000, "confidence": 0.7}, loss)
+    assert m.ebitda_uplift_pct is None
+
+
+def test_hours_only_sow_serializes_without_infinity(tmp_path):
+    sow = {"id": "hours-only", "impact_usd": 0, "impact_hours": 40, "confidence": 0.7, "source": ["x=1"]}
+    m = metrics.metrics_for(sow, _baseline())
+    assert m.payback_months is None
+    metrics.metrics_for_all([sow], _baseline(), artifacts_dir=tmp_path)
+    rec = _strict_loads((tmp_path / "metrics.jsonl").read_text())
+    assert rec["payback_months"] is None
+
+
+def test_payback_and_ebitda_formatting():
+    assert metrics.fmt_payback(0.26) == "<1 month"
+    assert metrics.fmt_payback(1.14) == "1 month"
+    assert metrics.fmt_payback(3.32) == "3 months"
+    assert metrics.fmt_payback(None) == "—"
+    assert metrics.fmt_ebitda(61.56) == "+62%"
+    assert metrics.fmt_ebitda(None) == "— (EBITDA base not positive)"

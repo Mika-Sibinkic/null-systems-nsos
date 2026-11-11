@@ -13,6 +13,10 @@ does over findings:
   - **payback months** — months for the SOW's annualized impact to recover the
     declared FDE engagement cost.
 
+A metric that is undefined is None, never Infinity: no EBITDA lift when the base
+is not positive, no payback when the SOW carries no dollar impact. The
+`fmt_*` helpers are the one place that turns those into report text.
+
 EBITDA base is read from the baseline P&L (NetIncome as the conservative EBITDA
 proxy when no explicit D&A/interest lines are present — source-traced). The
 engagement cost is a declared, source-tagged assumption ([LIKELY]) so payback is
@@ -27,11 +31,10 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Optional, Sequence
 
 # ── declared assumptions (source-tagged so payback is honest) ──────────────────
 DEFAULT_ENGAGEMENT_COST_USD = 180_000.0   # blended FDE engagement cost / thrust [LIKELY]
-EBITDA_FLOOR_USD = 1.0                     # guard against divide-by-zero
 
 
 def _attr(obj: Any, name: str, default=None):
@@ -46,10 +49,10 @@ class SOWMetrics:
     impact_usd: float
     impact_hours: float
     ebitda_base_usd: float
-    ebitda_uplift_pct: float          # annual impact as % of EBITDA base
+    ebitda_uplift_pct: Optional[float]  # annual impact as % of EBITDA base; None if base <= 0
     hours_reclaimed_per_year: float
     engagement_cost_usd: float
-    payback_months: float
+    payback_months: Optional[float]     # None when there is no dollar impact
     confidence: float
     source: list[str] = field(default_factory=list)
 
@@ -80,8 +83,7 @@ def ebitda_base(baseline: dict) -> tuple[float, str]:
     # fallback: GrossProfit - operating expenses
     gross = float(pnl.get("GrossProfit", 0.0) or 0.0)
     opex = float(pnl.get("TotalExpenses", 0.0) or 0.0)
-    ebitda = gross - opex
-    return (max(ebitda, EBITDA_FLOOR_USD),
+    return (gross - opex,
             f"accounting.profit_and_loss.GrossProfit={gross:.0f} - TotalExpenses={opex:.0f}")
 
 
@@ -96,8 +98,8 @@ def metrics_for(
     conf = float(_attr(sow, "confidence", 0.0) or 0.0)
     base, base_src = ebitda_base(baseline)
 
-    ebitda_uplift_pct = round(100.0 * impact / max(base, EBITDA_FLOOR_USD), 2)
-    payback_months = round(12.0 * engagement_cost_usd / impact, 2) if impact > 0 else float("inf")
+    ebitda_uplift_pct = round(100.0 * impact / base, 2) if base > 0 else None
+    payback_months = round(12.0 * engagement_cost_usd / impact, 2) if impact > 0 else None
 
     # union the SOW's source lines + the EBITDA base + the cost assumption so
     # every metric number is traceable.
@@ -130,7 +132,7 @@ def metrics_for_all(
     if artifacts_dir:
         d = Path(artifacts_dir)
         d.mkdir(parents=True, exist_ok=True)
-        body = "\n".join(json.dumps(m.to_grounded_record()) for m in out) + ("\n" if out else "")
+        body = "\n".join(json.dumps(m.to_grounded_record(), allow_nan=False) for m in out) + ("\n" if out else "")
         # human-named artifact
         (d / "metrics.jsonl").write_text(body)
         # findings.jsonl-named copy so the standing grounded_numbers probe
@@ -152,3 +154,16 @@ def attach_metrics(
         d["metrics"] = metrics_for(s, baseline, engagement_cost_usd=engagement_cost_usd).to_dict()
         out.append(d)
     return out
+
+
+def fmt_payback(months: Optional[float]) -> str:
+    if months is None:
+        return "—"
+    if months < 1:
+        return "<1 month"
+    n = round(months)
+    return "1 month" if n == 1 else f"{n} months"
+
+
+def fmt_ebitda(pct: Optional[float]) -> str:
+    return "— (EBITDA base not positive)" if pct is None else f"+{pct:.0f}%"

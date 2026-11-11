@@ -26,10 +26,13 @@ finished build's delivery completeness; this one kicks the engagement off).
 """
 from __future__ import annotations
 
+import importlib
 import json
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Sequence
+
+_metrics = importlib.import_module("engine.sow.metrics")
 
 
 def _attr(obj: Any, name: str, default=None):
@@ -49,8 +52,8 @@ class HandoffPacket:
     # quantified target (all source-traced)
     impact_usd: float
     impact_hours: float
-    ebitda_uplift_pct: float
-    payback_months: float
+    ebitda_uplift_pct: float | None  # None when the EBITDA base is not positive
+    payback_months: float | None     # None when there is no dollar impact
     confidence: float
     # scoring carried into the engagement
     wwod_score: float
@@ -109,7 +112,7 @@ def build_packet(
     success_metrics = {
         "impact_usd": float(col.get("impact_usd", 0.0) or 0.0),
         "impact_hours": float(col.get("impact_hours", 0.0) or 0.0),
-        "ebitda_uplift_pct": float(col.get("ebitda_uplift_pct", 0.0) or 0.0),
+        "ebitda_uplift_pct": col.get("ebitda_uplift_pct"),
         "payback_months": col.get("payback_months"),
         "confidence": float(col.get("confidence", 0.0) or 0.0),
     }
@@ -123,7 +126,7 @@ def build_packet(
         objective=col.get("objective", ""),
         impact_usd=float(col.get("impact_usd", 0.0) or 0.0),
         impact_hours=float(col.get("impact_hours", 0.0) or 0.0),
-        ebitda_uplift_pct=float(col.get("ebitda_uplift_pct", 0.0) or 0.0),
+        ebitda_uplift_pct=col.get("ebitda_uplift_pct"),
         payback_months=col.get("payback_months"),
         confidence=float(col.get("confidence", 0.0) or 0.0),
         wwod_score=float(col.get("wwod_score", 0.0) or 0.0),
@@ -138,11 +141,6 @@ def build_packet(
 
 def render_markdown(p: HandoffPacket) -> str:
     """The engagement brief the FDE reads."""
-    payback = (
-        "—"
-        if p.payback_months in (None, float("inf"))
-        else f"{float(p.payback_months):.0f} months"
-    )
     lines: list[str] = []
     lines.append(f"# FDE Engagement Packet — {p.firm_name}")
     lines.append("")
@@ -154,10 +152,10 @@ def render_markdown(p: HandoffPacket) -> str:
     lines.append(f"- **Annual impact**: ${p.impact_usd:,.0f}/year")
     if p.exposure_usd:
         lines.append(f"- **At risk**: ${p.exposure_usd:,.0f} (exposure, not counted in the target)")
-    lines.append(f"- **EBITDA lift**: +{p.ebitda_uplift_pct:.0f}%")
+    lines.append(f"- **EBITDA lift**: {_metrics.fmt_ebitda(p.ebitda_uplift_pct)}")
     if p.impact_hours:
         lines.append(f"- **Leadership hours freed**: {p.impact_hours:.0f} hours/year")
-    lines.append(f"- **Payback**: {payback}")
+    lines.append(f"- **Payback**: {_metrics.fmt_payback(p.payback_months)}")
     lines.append(f"- **Evidence confidence**: {p.confidence:.0%}")
     lines.append(f"- **Consultant conviction (WWOD)**: {p.wwod_score:.0%}")
     lines.append(f"- **Deployability grade**: {p.deployability_grade}")
@@ -188,7 +186,7 @@ def export_packet(
     d.mkdir(parents=True, exist_ok=True)
     json_path = d / "fde-handoff-packet.json"
     md_path = d / "fde-handoff-packet.md"
-    json_path.write_text(json.dumps(p.to_dict(), indent=2, default=str))
+    json_path.write_text(json.dumps(p.to_dict(), indent=2, default=str, allow_nan=False))
     md_path.write_text(render_markdown(p))
     return json_path, md_path
 

@@ -114,6 +114,7 @@ def render_sow_report(
     grounded, action-bearing, confidence-tagged client-facing output.
     """
     sbs_mod = _load_sbs_module()
+    fmt = sbs_mod._metrics  # fmt_payback / fmt_ebitda: one formatter for every surface
     sbs = sbs_mod.build_side_by_side(
         sows, baseline, engagement_cost_usd=engagement_cost_usd
     )
@@ -139,14 +140,13 @@ def render_sow_report(
         lines.append(f"## Option {i} — {col.title}{rec_mark}")
         lines.append("")
         lines.append(f"{col.objective}\n")
-        payback = "—" if col.payback_months in (None, float("inf")) else f"{col.payback_months:.0f} months"
         lines.append(f"- **Annual impact**: based on your QuickBooks data, ${col.impact_usd:,.0f}/year")
         if col.exposure_usd:
             lines.append(f"- **At risk**: ${col.exposure_usd:,.0f} (exposure, not counted in annual impact, EBITDA or payback)")
-        lines.append(f"- **EBITDA lift**: +{col.ebitda_uplift_pct:.0f}%")
+        lines.append(f"- **EBITDA lift**: {fmt.fmt_ebitda(col.ebitda_uplift_pct)}")
         if col.impact_hours:
             lines.append(f"- **Leadership hours freed**: {col.impact_hours:.0f} hours/year")
-        lines.append(f"- **Payback**: {payback}")
+        lines.append(f"- **Payback**: {fmt.fmt_payback(col.payback_months)}")
         lines.append(f"- **Consultant conviction**: {col.wwod_score:.0%} (how hard we'd push this)")
         grade_note = f"{col.grade}" + (" — has a deployability flag, see below" if col.blockers else "")
         lines.append(f"- **Deployability grade**: {grade_note}")

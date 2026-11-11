@@ -373,7 +373,7 @@ def run_findings(baseline: dict, *, out_path: Path | str | None = None) -> list[
     if out_path:
         p = Path(out_path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text("\n".join(json.dumps(f) for f in findings) + ("\n" if findings else ""))
+        p.write_text("\n".join(json.dumps(f, allow_nan=False) for f in findings) + ("\n" if findings else ""))
     return findings
 
 
