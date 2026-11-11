@@ -47,6 +47,19 @@ def _acct(baseline: dict) -> dict:
     return acct
 
 
+def per_year(acct: dict) -> tuple[float, str]:
+    """Scale for a sum taken over the export period, and the label it earns.
+
+    A 2025-05-01..2026-04-30 export is 365 days, so its sums are already annual.
+    Without both dates we cannot annualize, so the number is labeled as-is.
+    """
+    try:
+        days = (date.fromisoformat(acct["period_end"]) - date.fromisoformat(acct["period_start"])).days + 1
+    except (KeyError, TypeError, ValueError):
+        days = 0
+    return (365.0 / days, "/yr") if days > 0 else (1.0, " over the export period")
+
+
 def _total_opex(acct: dict) -> float:
     """OPEX = operating expenses (exclude COGS). Prefer explicit P&L lines."""
     pnl = acct.get("profit_and_loss", {}) or {}
@@ -195,17 +208,22 @@ def a_scope_cycle_time(baseline: dict) -> Optional[dict]:
     n = len(delays)
     avg = sum(delays) / n
     excess = max(0.0, avg - SCOPE_TARGET_DAYS)
-    leaked_hours = excess * HOURS_PER_SCOPE_DELAY_DAY * n
+    scale, per = per_year(acct)
+    leaked_hours = excess * HOURS_PER_SCOPE_DELAY_DAY * n * scale
     impact = leaked_hours * BLENDED_PARTNER_RATE_USD_PER_HR
+    source = [f"accounting.invoices[{n}] avg first_contact->scope_sent={avg:.1f}d",
+              f"excess over {SCOPE_TARGET_DAYS:.0f}d @ {HOURS_PER_SCOPE_DELAY_DAY}hr/day @ ${BLENDED_PARTNER_RATE_USD_PER_HR:.0f}/hr [LIKELY]"]
+    if per == "/yr":
+        source.append(f"annualized x{scale:.3f} from accounting.period_start..period_end")
     return {
-        "summary": f"Avg scoping {avg:.1f} days vs {SCOPE_TARGET_DAYS:.0f}-day target across {n} deals; ~${impact:,.0f}/yr partner time",
+        "summary": f"Avg scoping {avg:.1f} days vs {SCOPE_TARGET_DAYS:.0f}-day target across {n} deals; ~${impact:,.0f}{per} partner time",
         "flagged": excess > 0,
         "avg_days": round(avg, 1),
         "target_days": SCOPE_TARGET_DAYS,
         "leaked_hours": round(leaked_hours, 1),
         "impact_usd": float(round(impact)),
-        "source": [f"accounting.invoices[{n}] avg first_contact->scope_sent={avg:.1f}d",
-                   f"excess over {SCOPE_TARGET_DAYS:.0f}d @ {HOURS_PER_SCOPE_DELAY_DAY}hr/day @ ${BLENDED_PARTNER_RATE_USD_PER_HR:.0f}/hr [LIKELY]"],
+        "per": per,
+        "source": source,
     }
 
 

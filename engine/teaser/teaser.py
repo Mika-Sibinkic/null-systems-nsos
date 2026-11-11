@@ -6,23 +6,22 @@ inside the <1h budget) and hooks the operator while the full 24-72h diagnostic r
 async. The number it surfaces is fully source-traced + confidence-banded (LeCun
 grounding) so it survives the same grounded_numbers gate the real findings do.
 
-Strategy: scan the accounting view for the single biggest, most-defensible dollar
-signal among a few cheap heuristics, return the strongest:
-  - vendor concentration vs a benchmark cut (cloud/infra overspend)
-  - proposal/scope cycle-time leak (first_contact -> scope_sent) priced at a blended rate
-Whichever yields the larger grounded impact_usd wins. Deterministic + offline.
+Strategy: compute two cheap signals and return the larger grounded impact_usd:
+  - proposal/scope cycle-time leak: the full engine's own
+    `findings.ANALYTICS["scope_cycle_time"]`, so teaser and report never disagree
+  - cloud spend vs a commodity re-platform benchmark (teaser-only heuristic)
+Deterministic + offline.
 """
 from __future__ import annotations
 
+import importlib
 import json
 from dataclasses import dataclass, asdict
-from datetime import date
 from pathlib import Path
 from typing import Any, Optional
 
-# Conservative assumptions, declared so the confidence band is honest.
-BLENDED_PARTNER_RATE_USD_PER_HR = 250.0  # mid-market professional-services blended rate [LIKELY]
-HOURS_PER_SCOPE_DELAY_DAY = 0.5          # partner hours leaked per excess day of scoping [LIKELY]
+_findings = importlib.import_module("engine.meta-levels.financial.findings")
+
 CLOUD_BENCHMARK_SAVINGS_PCT = 0.40       # observed commodity-cloud re-platform saving [LIKELY]
 
 
@@ -51,14 +50,15 @@ def _cloud_overspend(acct: dict[str, Any]) -> Optional[TeaserResult]:
     spend = float(top.get("amount_usd", 0))
     if spend <= 0:
         return None
-    saving = round(spend * CLOUD_BENCHMARK_SAVINGS_PCT)
+    scale, per = _findings.per_year(acct)
+    saving = round(spend * scale * CLOUD_BENCHMARK_SAVINGS_PCT)
     return TeaserResult(
         id="teaser-cloud-001",
-        headline=f"Cloud spend with {top['vendor']} looks ~${saving:,.0f}/yr re-platformable",
+        headline=f"Cloud spend with {top['vendor']} looks ~${saving:,.0f}{per} re-platformable",
         impact_usd=float(saving),
         impact_hours=0.0,
         evidence=[
-            f"QuickBooks: ${spend:,.0f}/yr to {top['vendor']} ({top.get('txn_count', 0)} txns), category {top.get('category','')}",
+            f"QuickBooks: ${spend:,.0f} to {top['vendor']} over the export period ({top.get('txn_count', 0)} txns), category {top.get('category','')}",
             f"Benchmark commodity-cloud re-platform saving ~{int(CLOUD_BENCHMARK_SAVINGS_PCT*100)}% [LIKELY]",
         ],
         confidence=0.6,
@@ -66,39 +66,17 @@ def _cloud_overspend(acct: dict[str, Any]) -> Optional[TeaserResult]:
     )
 
 
-def _scope_cycle_leak(acct: dict[str, Any]) -> Optional[TeaserResult]:
-    invoices = acct.get("invoices", []) or []
-    delays_days = []
-    for inv in invoices:
-        fc, ss = inv.get("first_contact_at"), inv.get("scope_sent_at")
-        if not fc or not ss:
-            continue
-        try:
-            d = (date.fromisoformat(ss) - date.fromisoformat(fc)).days
-        except ValueError:
-            continue
-        if d > 0:
-            delays_days.append(d)
-    if not delays_days:
-        return None
-    n = len(delays_days)
-    avg = sum(delays_days) / n
-    # Target a 5-day turnaround (PRODUCT objective); price the excess at partner time.
-    excess = max(0.0, avg - 5.0)
-    # Annualize: observed invoices are a sample; scale leaked hours by the count seen.
-    leaked_hours = excess * HOURS_PER_SCOPE_DELAY_DAY * n
-    impact = round(leaked_hours * BLENDED_PARTNER_RATE_USD_PER_HR)
-    if impact <= 0:
+def _scope_cycle_leak(baseline: dict[str, Any]) -> Optional[TeaserResult]:
+    a = _findings.ANALYTICS["scope_cycle_time"](baseline)
+    if not a or a["impact_usd"] <= 0:
         return None
     return TeaserResult(
         id="teaser-cycle-001",
-        headline=f"Proposal scoping runs ~{avg:.0f} days vs a 5-day target — ~${impact:,.0f}/yr of partner time",
-        impact_usd=float(impact),
-        impact_hours=round(leaked_hours, 1),
-        evidence=[
-            f"QuickBooks: {n} invoices show avg {avg:.1f} days from first contact to scope sent",
-            f"Excess over 5-day target priced at {HOURS_PER_SCOPE_DELAY_DAY} partner-hr/day @ ${BLENDED_PARTNER_RATE_USD_PER_HR:,.0f}/hr [LIKELY]",
-        ],
+        headline=(f"Proposal scoping runs ~{a['avg_days']:.0f} days vs a {a['target_days']:.0f}-day "
+                  f"target — ~${a['impact_usd']:,.0f}{a['per']} of partner time"),
+        impact_usd=a["impact_usd"],
+        impact_hours=a["leaked_hours"],
+        evidence=a["source"],
         confidence=0.7,
         method="scope_cycle_time_leak",
     )
@@ -112,7 +90,7 @@ def teaser_finding(baseline: dict[str, Any]) -> TeaserResult:
     acct = baseline.get("accounting")
     if not acct:
         raise ValueError("baseline has no accounting view — cannot produce a teaser")
-    candidates = [c for c in (_scope_cycle_leak(acct), _cloud_overspend(acct)) if c]
+    candidates = [c for c in (_scope_cycle_leak(baseline), _cloud_overspend(acct)) if c]
     if not candidates:
         # Always return SOMETHING grounded rather than failing silently.
         revenue = (baseline.get("firm", {}) or {}).get("annual_revenue_usd", 0)

@@ -66,3 +66,32 @@ def test_from_snapshot_reads_written_baseline(tmp_path):
     write_baseline(_baseline(), snapshots_root=tmp_path)
     res = from_snapshot("synth-acme-services", snapshots_root=tmp_path)
     assert res.impact_usd > 0
+
+
+# ── one implementation: the teaser reuses the full engine's analytic ──────────
+
+def _two_deals(period=True):
+    acct = {"invoices": [
+        {"invoice_id": "a", "first_contact_at": "2026-01-05", "scope_sent_at": "2026-01-05"},  # 0 days
+        {"invoice_id": "b", "first_contact_at": "2026-01-05", "scope_sent_at": "2026-01-17"},  # 12 days
+    ]}
+    if period:
+        acct.update(period_start="2025-05-01", period_end="2026-04-30")
+    return {"accounting": acct}
+
+
+def test_teaser_matches_full_findings_on_scope_cycle():
+    import importlib
+    findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+    full = findings_mod.ANALYTICS["scope_cycle_time"](_two_deals())
+    t = teaser_finding(_two_deals())
+    assert full["avg_days"] == 6.0  # the 0-day deal counts
+    assert t.impact_usd == full["impact_usd"] > 0
+    assert t.impact_hours == full["leaked_hours"]
+    assert "~6 days" in t.headline and "/yr" in t.headline
+
+
+def test_teaser_without_period_is_not_called_annual():
+    t = teaser_finding(_two_deals(period=False))
+    assert "over the export period" in t.headline
+    assert "/yr" not in t.headline
