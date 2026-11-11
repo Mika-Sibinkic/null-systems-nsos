@@ -1,4 +1,4 @@
-"""Human-in-the-loop review gate (Karpathy "keep a human in the loop").
+"""Human-in-the-loop review gate: a person checks a finding before it is priced.
 
 Before any finding reaches a client-facing surface (exec report, web SOW review),
 it passes this gate. Two checks, both fail-toward-human:

@@ -16,7 +16,7 @@ blend of two signals:
 
 Output per SOW: `wwod_score` in [0,1], `confidence` in [0,1], and `gaps[]` — the
 dimensions a consultant would flag as needing more evidence before pushing. Gaps
-are the honest "what we don't know yet" list (Karpathy human-in-loop hook: a SOW
+are the honest "what we don't know yet" list (human-in-the-loop hook: a SOW
 with material gaps routes to FDE review, it does not auto-surface).
 
 No new dollar numbers are minted here — WWOD scores the *push*, not the impact,

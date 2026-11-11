@@ -8,7 +8,7 @@ survives the same gates the rest of the pipeline enforces:
   - `exposure_usd` — dollars at risk (concentration, one-time overdue cash); never
                      summed into impact, EBITDA or payback
   - `bottleneck`   — the one-line "what is actually constraining the business"
-  - `evidence[]`   — every number traces to a baseline line (LeCun grounding;
+  - `evidence[]`   — every number traces to a baseline line (grounding;
                      `scripts/probes/grounded_numbers.py` enforces this)
   - `confidence`   — honest band reflecting how defensible the number is
   - `source[]`     — machine-checkable refs into the baseline (accounting.<path>)
@@ -344,7 +344,7 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
 
 class UngroundedFindingError(ValueError):
     """Raised when a finding asserts a dollar/hours impact with no source[] +
-    confidence band. This is the LeCun grounding gate wired *into* the producer
+    confidence band. This is the grounding gate wired *into* the producer
     so an ungrounded number can never leave findings.py — not merely caught
     downstream by scripts/probes/grounded_numbers.py."""
 
@@ -375,7 +375,7 @@ def assert_grounded(finding: dict) -> dict:
 def run_findings(baseline: dict, *, out_path: Path | str | None = None) -> list[dict]:
     """Produce the financial findings list from a baseline; optionally write JSONL.
 
-    Every emitted finding passes through `assert_grounded` (the LeCun gate wired
+    Every emitted finding passes through `assert_grounded` (the grounding gate wired
     into the producer) before it is returned or written — fail-closed.
     """
     findings: list[dict] = []

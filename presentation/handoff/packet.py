@@ -15,7 +15,7 @@ Design (deterministic, offline, source-traced):
     traces to a `source[]` line, so the grounded-numbers contract holds at the
     handoff boundary too.
   - `gaps` from WWOD + pillar `blockers` become the FDE's *validation checklist*
-    (the honest "confirm before deploying" list — Karpathy human-in-loop carried
+    (the honest "confirm before deploying" list, the human-in-the-loop check carried
     all the way to the engagement).
   - The packet exports as both machine-readable JSON (engine/flywheel consumption)
     and a markdown engagement brief (the FDE reads).

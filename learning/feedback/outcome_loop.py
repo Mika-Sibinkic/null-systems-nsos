@@ -1,6 +1,6 @@
 """Outcome flywheel — predicted vs realized per shipped SOW (P5.T1).
 
-The moat. When a SOW ships as an FDE engagement, NSOS records what it *predicted*
+When a SOW ships as an FDE engagement, NSOS records what it *predicted*
 (the quantified target from the handoff packet). When the outcome lands, it
 records what was *realized*. The delta between the two is the signal that
 compounds diagnostic accuracy over time — it feeds the eval set so the next

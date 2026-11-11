@@ -3,8 +3,8 @@
 Produces ONE cheap, high-signal finding from baseline.json with no LLM call and no
 full gauntlet — pure arithmetic over the snapshot — so it returns in seconds (well
 inside the <1h budget) and hooks the operator while the full 24-72h diagnostic runs
-async. The number it surfaces is fully source-traced + confidence-banded (LeCun
-grounding) so it survives the same grounded_numbers gate the real findings do.
+async. The number it surfaces is fully source-traced + confidence-banded so
+it survives the same grounded_numbers gate the real findings do.
 
 Strategy: compute two cheap signals and return the larger grounded impact_usd:
   - proposal/scope cycle-time leak: the full engine's own

@@ -21,7 +21,7 @@ Design (deterministic, offline, source-traced):
 
 The recommendation pointer ("our pick") is the highest WWOD-pushed candidate that
 clears the deployability block threshold — the consultant's honest lead, with the
-gaps shown alongside so it is never a blind push (Karpathy human-in-loop).
+gaps shown alongside so it is never a blind push.
 """
 from __future__ import annotations
 

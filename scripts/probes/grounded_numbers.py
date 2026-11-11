@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""grounded_numbers audit probe — the LeCun grounding gate.
+"""grounded_numbers audit probe: the grounding gate.
 
 Every finding that asserts a dollar/hours impact MUST trace to a source and carry a confidence.
 Scans findings JSONL (default: runs/**/findings.jsonl, plus any path args). An impact number with
