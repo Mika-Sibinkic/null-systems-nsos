@@ -127,6 +127,13 @@ def test_status_is_as_of_export_end_date_not_today():
     assert inv["B"]["balance_usd"] == 1000.0
 
 
+def test_status_without_report_period_falls_back_to_today():
+    export = _export()
+    del export["report_period"]
+    inv = {i["invoice_id"]: i for i in QuickBooksAdapter(export).accounting_view()["invoices"]}
+    assert inv["INV-1003"]["status"] == "overdue"  # due 2025-08-09, open balance
+
+
 def test_paid_invoice_has_no_invented_paid_date():
     inv = {i["invoice_id"]: i for i in QuickBooksAdapter(_export()).accounting_view()["invoices"]}
     assert inv["INV-1001"]["status"] == "paid"

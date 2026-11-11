@@ -69,17 +69,22 @@ class QuickBooksAdapter:
         return out
 
     @staticmethod
-    def _status(inv: dict[str, Any], as_of: Optional[str]) -> str:
+    def _status(inv: dict[str, Any], as_of: str) -> str:
         """Status as of the export's end date, so one export maps the same way every day."""
         if not inv.get("Balance"):
             return "paid"
         due = inv.get("DueDate")
-        if due and as_of and due < as_of:  # ISO dates compare as strings
+        if due and due < as_of:  # ISO dates compare as strings
             return "overdue"
         return "sent"
 
+    def as_of(self) -> str:
+        """The export's end date; today when the export does not name one."""
+        period = self.export.get("report_period", {}) or {}
+        return period.get("end_date") or datetime.now(timezone.utc).date().isoformat()
+
     def _map_invoices(self) -> list[dict[str, Any]]:
-        as_of = (self.export.get("report_period") or {}).get("end_date")
+        as_of = self.as_of()
         out = []
         for inv in self.export.get("Invoices", []) or []:
             out.append({
@@ -107,14 +112,12 @@ class QuickBooksAdapter:
         }
 
     def source_descriptor(self) -> dict[str, Any]:
-        period = self.export.get("report_period", {}) or {}
         n = (len(self.export.get("Invoices", []) or [])
              + len(self.export.get("Purchases", []) or []))
         return {
             "type": "accounting",
             "system": "QuickBooks",
-            "snapshot_at": (period.get("end_date") or
-                            datetime.now(timezone.utc).date().isoformat()) + "T00:00:00Z",
+            "snapshot_at": self.as_of() + "T00:00:00Z",
             "record_count": n,
         }
 
