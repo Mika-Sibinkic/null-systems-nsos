@@ -78,6 +78,18 @@ def test_ar_finding_puts_the_open_balance_at_risk():
     assert f["impact_usd"] == 0.0
 
 
+def test_customer_concentration_is_exposure_not_impact():
+    """The demo never trips this finding ($1.45M of invoices against $28M of
+    revenue), so force one customer over the 15% flag and check the flagged path."""
+    import copy
+    b = copy.deepcopy(BASELINE)
+    b["accounting"]["invoices"][0]["amount_usd"] = 6_000_000.0  # Northwind Co
+    f = next(f for f in findings_mod.run_findings(b) if f["method"] == "customer_concentration")
+    assert f["exposure_usd"] == 6_210_000.0  # 6,000,000 + INV-1005's 210,000
+    assert f["impact_usd"] == 0.0
+    assert "of revenue" in f["headline"]
+
+
 # ── grounding gate wired into the producer (fail-closed) ───────────────
 def test_grounding_gate_passes_real_findings():
     for f in findings_mod.run_findings(BASELINE):
