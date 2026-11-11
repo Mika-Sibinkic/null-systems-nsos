@@ -9,7 +9,6 @@ Models verified on NIM as of 2026-05:
 from __future__ import annotations
 import os, json
 from urllib import request, error
-from typing import Optional
 
 NIM_BASE = os.environ.get("NIM_BASE_URL", "https://integrate.api.nvidia.com/v1")
 PRIMARY_MODEL = os.environ.get("NIM_PRIMARY_MODEL", "meta/llama-3.3-70b-instruct")

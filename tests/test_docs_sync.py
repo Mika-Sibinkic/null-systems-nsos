@@ -1,6 +1,5 @@
 """Tests for scripts/check_docs_sync.py — the docs-sync drift gate."""
 import importlib.util
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]

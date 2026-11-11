@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable

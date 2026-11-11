@@ -26,7 +26,7 @@ from __future__ import annotations
 import json
 from datetime import date
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 # ── declared assumptions (so confidence bands are honest, not magic) ──────────
 BLENDED_PARTNER_RATE_USD_PER_HR = 250.0  # mid-market prof-services blended rate [LIKELY]

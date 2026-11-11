@@ -8,7 +8,7 @@ The Borda position comes from a pairwise LLM-judge tournament (see council.py).
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Iterable, Sequence
+from typing import Sequence
 import math
 import statistics
 

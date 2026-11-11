@@ -30,7 +30,7 @@ import importlib
 import json
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 _metrics = importlib.import_module("engine.sow.metrics")
 

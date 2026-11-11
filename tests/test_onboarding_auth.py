@@ -1,7 +1,6 @@
 """Tests for client/onboarding — scoped-token auth + secrets-server-side contract."""
 import json
 import sys
-import time
 from pathlib import Path
 
 import pytest
