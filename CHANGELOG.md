@@ -14,6 +14,10 @@ Keep-a-Changelog; the diagnostic engine's internal pattern/eval promotions are t
   review page is marked partial (page exists, routes not built); the staged web-CI row and the rows
   for lifted modules off the pipeline path are gone; the promotion gate says its gauntlet and perf
   inputs come from outside the repo.
+- **Added** `SECURITY.md`.
+- **Changed** `docs/site/index.html`: pinned Mermaid version, `securityLevel: "strict"`, labeled zoom
+  buttons, and a status word on every node.
+- **Changed** `README.md`, `docs/GTM.md`: the revenue band is stated as undecided in both.
 
 ### 2026-09-29 — Engine HTTP API
 - **Added** `engine/api/` (FastAPI, `python -m engine.api`): `GET /health`, `GET /teaser` behind the

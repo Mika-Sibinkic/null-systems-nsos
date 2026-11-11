@@ -8,7 +8,7 @@
 <a id="icp"></a>
 ## ICP (who exactly)
 - **Vertical:** `[TBD — pick ONE wedge vertical first; e.g. professional-services / agencies / specialty contractors]`
-- **Size band:** `[TBD — e.g. $2M–$20M revenue, 15–150 employees]` — big enough to feel the drag and have data; small enough to lack an internal ops/data team.
+- **Size band:** undecided. Big enough to feel the drag and have data; small enough to lack an internal ops/data team.
 - **Persona:** owner / CEO / COO who already senses inefficiency but can't name the dollar figure.
 - **Tools they already run** (our connector surface): QuickBooks/Xero, HubSpot/Salesforce, Slack/email.
 - **Disqualifiers:** no digital ops footprint (nothing to read); enterprise (different sales motion).

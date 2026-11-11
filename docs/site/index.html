@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Null Systems Diagnostic SaaS — Product Map</title>
+<title>NSOS product map</title>
 <style>
   :root {
     --bg: #0b1020; --fg: #e5e7eb; --muted: #94a3b8;
@@ -24,7 +24,7 @@
     background: #0f172a; color: var(--fg); border: 1px solid var(--border);
     padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;
   }
-  header button:hover { border-color: var(--accent); color: var(--accent); }
+  header button:hover, header button:focus-visible { border-color: var(--accent); color: var(--accent); }
   #legend {
     display: flex; gap: 14px; padding: 8px 16px; font-size: 11px; color: var(--muted);
     border-bottom: 1px solid var(--border); background: var(--panel); flex-wrap: wrap;
@@ -61,20 +61,20 @@
 
 <header>
   <div>
-    <h1>Null Systems Diagnostic SaaS — Product Map</h1>
-    <span class="sub">"Vinny" · click any node to jump to its description · generated 2026-05-28</span>
+    <h1>NSOS product map</h1>
+    <span class="sub">click any node to jump to its description · status matches docs/STATE.md</span>
   </div>
   <div class="controls">
-    <button onclick="zoomBy(1.2)">+</button>
-    <button onclick="zoomBy(1/1.2)">−</button>
-    <button onclick="resetZoom()">reset</button>
-    <button onclick="fitToScreen()">fit</button>
+    <button type="button" aria-label="Zoom in" onclick="zoomBy(1.2)">+</button>
+    <button type="button" aria-label="Zoom out" onclick="zoomBy(1/1.2)">−</button>
+    <button type="button" onclick="resetZoom()">reset</button>
+    <button type="button" onclick="fitToScreen()">fit</button>
   </div>
 </header>
 
 <div id="legend">
-  <span><span class="dot built"></span>built &amp; verified</span>
-  <span><span class="dot partial"></span>partial / not wired</span>
+  <span><span class="dot built"></span>built</span>
+  <span><span class="dot partial"></span>partial</span>
   <span><span class="dot planned"></span>planned</span>
   <span><span class="dot external"></span>external</span>
   <span class="hint">→ nodes are clickable</span>
@@ -90,62 +90,61 @@ flowchart TB
     classDef external fill:#1e3a8a,stroke:#3b82f6,color:#fff
 
     subgraph ONB_BOX["1 · Onboarding — client/ + web/"]
-        WEB[Next.js / Vercel<br/>web surface]:::built
-        ONB[onboarding flow]:::built
-        ADQB[QuickBooks adapter]:::built
-        ADX[HubSpot · Slack · Pocket<br/>adapters]:::planned
-        SNAP[(baseline.json<br/>tenant snapshot)]:::built
-        TEASER[&lt;1h teaser signal]:::built
+        WEB["Next.js / Vercel<br/>web surface<br/>status: built"]:::built
+        ONB["onboarding flow<br/>status: built"]:::built
+        ADQB["QuickBooks adapter<br/>status: built"]:::built
+        ADX["HubSpot · Slack · Pocket<br/>adapters<br/>status: planned"]:::planned
+        SNAP[("baseline.json<br/>tenant snapshot<br/>status: built")]:::built
+        TEASER["&lt;1h teaser signal<br/>status: built"]:::built
     end
 
     subgraph DIAG_BOX["2 · Diagnostic — engine/meta-levels"]
-        FIN[financial team]:::built
-        OPS[operational]:::planned
-        ORG[organizational]:::planned
-        CUST[customer]:::planned
-        TECH[technology]:::planned
-        STRAT[strategic]:::planned
-        GNT[gauntlet question battery]:::built
-        GATE[grounded-numbers gate<br/>source-trace + confidence]:::built
-        QJ[quality_judge<br/>FDE-review gate]:::built
-        FND[(findings.jsonl<br/>$ / hrs + evidence)]:::built
+        FIN["financial team<br/>status: built"]:::built
+        OPS["operational<br/>status: planned"]:::planned
+        ORG["organizational<br/>status: planned"]:::planned
+        CUST["customer<br/>status: planned"]:::planned
+        TECH["technology<br/>status: planned"]:::planned
+        STRAT["strategic<br/>status: planned"]:::planned
+        GNT["gauntlet question battery<br/>status: built"]:::built
+        GATE["grounded-numbers gate<br/>source-trace + confidence<br/>status: built"]:::built
+        QJ["quality_judge<br/>FDE-review gate<br/>status: built"]:::built
+        FND[("findings.jsonl<br/>$ / hrs + evidence<br/>status: built")]:::built
     end
 
-    subgraph CORE_BOX["Engine core — lifted, built"]
-        REAS[reasoning_engine.py]:::built
-        NIM[nim_client.py<br/>NIM-only]:::built
-        CASC[cascade_handler.py]:::built
+    subgraph CORE_BOX["Engine core — lifted"]
+        REAS["reasoning_engine.py<br/>status: built"]:::built
+        NIM["nim_client.py<br/>NIM-only<br/>status: built"]:::built
     end
 
     subgraph COUN_BOX["3 · Council — engine/council"]
-        COUN[council.py<br/>pairwise judge + debate]:::built
-        RW[recursive_weights.py<br/>prio·novelty·corrob·impact]:::built
+        COUN["council.py<br/>pairwise judge + debate<br/>status: built"]:::built
+        RW["recursive_weights.py<br/>prio·novelty·corrob·impact<br/>status: built"]:::built
     end
 
     subgraph SOW_BOX["4 · SOW scoring — the decision bridge"]
-        ASM[SOW assembly<br/>2–3 candidates]:::built
-        WWOD[WWOD predict<br/>consultant-would-push]:::built
-        PILLAR[5-pillar grade<br/>deployable?]:::built
-        SOW[(2–3 scored SOWs<br/>+ success metrics)]:::built
+        ASM["SOW assembly<br/>2–3 candidates<br/>status: built"]:::built
+        WWOD["WWOD predict<br/>consultant-would-push<br/>status: built"]:::built
+        PILLAR["5-pillar grade<br/>deployable?<br/>status: partial"]:::partial
+        SOW[("2–3 scored SOWs<br/>+ success metrics<br/>status: built")]:::built
     end
 
     subgraph PRES_BOX["Presentation + choice — presentation/"]
-        RPT[report_generator.py]:::built
-        SBS[side-by-side]:::built
-        CHOICE[operator chooses SOW]:::built
-        FDE[FDE handoff packet]:::built
+        RPT["report_generator.py<br/>status: built"]:::built
+        SBS["side-by-side<br/>status: built"]:::built
+        CHOICE["operator chooses SOW<br/>status: partial"]:::partial
+        FDE["FDE handoff packet<br/>status: built"]:::built
     end
 
-    subgraph FLY_BOX["5 · Outcome flywheel — learning/ (the moat)"]
-        FB[feedback<br/>predicted vs realized]:::built
-        MON[monitoring / recurring tier]:::built
-        EVAL[(eval set / signaling IP)]:::partial
+    subgraph FLY_BOX["5 · Outcome ledger — learning/"]
+        FB["feedback<br/>predicted vs realized<br/>status: built"]:::built
+        MON["monitoring / recurring tier<br/>status: partial"]:::partial
+        EVAL[("eval set / signaling IP<br/>status: partial")]:::partial
     end
 
     subgraph GOV_BOX["CI / governance — the spine"]
-        PG[promotion_gate.py<br/>5-gate]:::built
-        EVH[eval_harness.py<br/>A/B]:::built
-        CI[GitHub Actions]:::partial
+        PG["promotion_gate.py<br/>5-gate<br/>status: partial"]:::partial
+        EVH["eval_harness.py<br/>A/B<br/>status: built"]:::built
+        CI["GitHub Actions<br/>status: built"]:::built
     end
 
     %% client flow
@@ -160,7 +159,6 @@ flowchart TB
     %% teams use engine core
     FIN -.-> REAS
     REAS --> NIM
-    NIM -.-> CASC
 
     %% findings -> council -> scoring
     FND --> COUN --> RW --> ASM
@@ -219,7 +217,6 @@ flowchart TB
     click CI "#governance" "CI"
     click REAS "#governance" "Engine core"
     click NIM "#governance" "NIM-only router"
-    click CASC "#governance" "Cascade handler"
     </pre>
   </div>
 </div>
@@ -233,7 +230,7 @@ flowchart TB
     only</b>; the web holds a scoped short-lived token. Each source is read via a provider adapter and
     snapshotted to <span class="file">client/snapshots/{tenant_id}/baseline.json</span>. A &lt;1h
     <b>teaser</b> surfaces one high-signal finding to hook the operator while the full run proceeds async.</p>
-    <p class="file">client/onboarding · client/adapters · client/snapshots · web/ &nbsp;|&nbsp; status: 🟢 built (P1, QuickBooks path)</p>
+    <p class="file">client/onboarding · client/adapters · client/snapshots · web/ &nbsp;|&nbsp; status: built (P1, QuickBooks path)</p>
     <p><a href="../PRODUCT.md#onboarding">PRODUCT.md → onboarding</a> · <a href="../STATE.md#client">STATE.md → client</a> · <a href="../ROADMAP.md#phase1">ROADMAP → Phase 1</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
@@ -246,7 +243,7 @@ flowchart TB
     <b>Every number traces to source data</b> (invoice line, timesheet, CRM event, benchmark) + a
     confidence band — the LLM narrates, the math computes. Below-threshold findings route to FDE review
     before the client sees them (autonomy slider).</p>
-    <p class="file">engine/meta-levels/* · engine/gauntlets · status: 🟡 financial team built; the other five meta-teams are not started</p>
+    <p class="file">engine/meta-levels/* · engine/gauntlets · status: partial. Financial team built; the other five meta-teams are not started</p>
     <p><a href="../PRODUCT.md#diagnostic">PRODUCT.md → diagnostic</a> · <a href="../STATE.md#engine">STATE.md → engine</a> · <a href="../ROADMAP.md#phase2">ROADMAP → Phase 2</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
@@ -256,7 +253,7 @@ flowchart TB
     <p>Findings reconvene in a council weighted by recursive context — alignment with the CEO's stated
     priorities, novelty vs known baseline, cross-team corroboration, projected $/hours impact. Pairwise
     LLM-judge tournament + debate, not scalar scoring. <b>Works today.</b></p>
-    <p class="file">engine/council/council.py · recursive_weights.py · status: 🟢 built (tests pass)</p>
+    <p class="file">engine/council/council.py · recursive_weights.py · status: built</p>
     <p><a href="../PRODUCT.md#council">PRODUCT.md → council</a> · <a href="../COUNCIL-PROTOCOL.md">COUNCIL-PROTOCOL.md</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
@@ -268,7 +265,7 @@ flowchart TB
     <b>5-pillar engineering bar</b> grades deployability. Each SOW carries quantified success metrics
     (EBITDA +X%/yr, N hrs/yr, payback M months) so the operator chooses on evidence + their own sense
     of priority.</p>
-    <p class="file">engine/sow/assembly.py · wwod_score.py · pillar_grade.py · metrics.py — 🟢 built (P3): 3 scored SOWs, all grade A, EBITDA +21–273%/yr, payback 0.3–3.3mo · presentation/exec-report `render_sow_report` + presentation/side-by-side/sbs.py + web/app/diagnostic/[runId] — 🟢 built (P4): side-by-side decision report (quality_judge-gated) + web review/choose surface</p>
+    <p class="file">engine/sow/assembly.py · wwod_score.py · pillar_grade.py · metrics.py: built (P3); the deployability grade is a placeholder · presentation/exec-report `render_sow_report` + presentation/side-by-side/sbs.py: built (P4), side-by-side decision report (quality_judge-gated) · web/app/diagnostic/[runId]: partial, the page exists and its routes are not built</p>
     <p><a href="../PRODUCT.md#sow">PRODUCT.md → SOWs</a> · <a href="../STATE.md#sow">STATE.md → sow</a> · <a href="../ROADMAP.md#phase3">ROADMAP → Phase 3–4</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
@@ -277,19 +274,18 @@ flowchart TB
     <h2>5 · FDE handoff</h2>
     <p>The chosen SOW exports as an FDE handoff packet — confirmed scope to Null Systems' delivery side.
     NSOS keeps watching; outcomes feed the flywheel.</p>
-    <p class="file">presentation/handoff/packet.py · status: 🟢 built (P4) — selected SOW → JSON + markdown engagement brief; source-traced target; gaps/blockers → FDE validation checklist</p>
+    <p class="file">presentation/handoff/packet.py · status: built (P4). Selected SOW → JSON + markdown engagement brief; source-traced target; gaps/blockers → FDE validation checklist</p>
     <p><a href="../PRODUCT.md#handoff">PRODUCT.md → handoff</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
 
   <section id="flywheel">
-    <h2>Outcome flywheel — the moat</h2>
+    <h2>Outcome ledger</h2>
     <p><b>Predicted vs realized</b> impact per shipped SOW feeds back, compounding diagnostic accuracy
-    and powering a <b>monitoring/recurring tier</b> (land-and-expand). Anyone can call an LLM; nobody else
-    has the realized-outcome dataset. The eval set / consulting signaling is versioned as crown-jewel IP,
+    and powering a <b>monitoring/recurring tier</b> (land-and-expand). The eval set / consulting signaling is versioned as crown-jewel IP,
     cold-started from Null Systems' prior engagements.</p>
-    <p class="file">learning/feedback/outcome_loop.py + monitoring.py · engine/run/durable.py · status: 🟢 built (P5): append-only predicted-vs-realized ledger → eval-set deltas; idempotency-on-run_id + retry/backoff; recurring-diagnostic cadence · learning/rl: 🔴 post-MVP</p>
-    <p><a href="../PRODUCT.md#moat">PRODUCT.md → moat</a> · <a href="../STATE.md#flywheel">STATE.md → flywheel</a> · <a href="../GTM.md#eval">GTM → eval set</a> · <a href="../ROADMAP.md#phase5">ROADMAP → Phase 5</a></p>
+    <p class="file">learning/feedback/outcome_loop.py + monitoring.py · engine/run/durable.py · status: built (P5): append-only predicted-vs-realized ledger → eval-set deltas; idempotency-on-run_id + retry/backoff; recurring-diagnostic cadence (partial) · learning/rl: planned</p>
+    <p><a href="../STATE.md#flywheel">STATE.md → flywheel</a> · <a href="../GTM.md#eval">GTM → eval set</a> · <a href="../ROADMAP.md#phase5">ROADMAP → Phase 5</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
 
@@ -298,7 +294,7 @@ flowchart TB
     <p>Next.js/Vercel <span class="file">web/</span> ↔ Python <span class="file">engine/</span> over an
     HTTP/MCP boundary. Auth, tool-auth tiers, and connector-flow patterns lifted from the earlier desktop prototype
     (re-implemented, not ported). Multi-tenant isolation by <span class="file">tenant_id</span>.</p>
-    <p class="file">web/ · status: 🟢 built (onboarding + diagnostic view; synthetic tenant only)</p>
+    <p class="file">web/ · status: partial. Onboarding built; the diagnostic review page exists and its routes are not built; synthetic tenant only</p>
     <p><a href="../PRODUCT.md#surface">PRODUCT.md → surface</a> · <a href="../STATE.md#surface">STATE.md → surface</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
@@ -307,16 +303,17 @@ flowchart TB
     <h2>CI / governance + engine core</h2>
     <p>The spine: <span class="file">promotion_gate.py</span> (5-gate: regression + gauntlet ±5 + perf +
     council corroboration + operator sign-off) and <span class="file">eval_harness.py</span> (A/B,
-    net-positive-on-all-metrics) gate every merge; GitHub Actions adds lint/typecheck/test. Engine core
-    (reasoning_engine, NIM-only router, cascade_handler) is lifted and built.</p>
-    <p class="file">learning/promotion-gate · engine/gauntlets · engine/reasoning · engine/router · status: 🟢 built (CI: pytest + web build on every push)</p>
+    net-positive-on-all-metrics) judge engine changes; the gauntlet and perf inputs are produced outside the repo.
+    GitHub Actions runs pytest, an engine API smoke test, and the web typecheck and build. Engine core
+    (reasoning_engine, NIM-only router) is lifted.</p>
+    <p class="file">learning/promotion-gate · engine/gauntlets · engine/reasoning · engine/router · status: built; promotion gate partial</p>
     <p><a href="../STATE.md#harness">STATE.md → harness</a> · <a href="../STATE.md#engine">STATE.md → engine</a> · <a href="../decisions/2026-05-28-saas-conglomeration-architecture.md">decision record</a></p>
     <a class="backtop" href="#top">↑ back to map</a>
   </section>
 </div>
 
 <script type="module">
-  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.9.8/dist/mermaid.esm.min.mjs";
   mermaid.initialize({
     startOnLoad: true,
     theme: "dark",
@@ -326,7 +323,7 @@ flowchart TB
       fontFamily: "-apple-system, BlinkMacSystemFont, system-ui, sans-serif",
     },
     flowchart: { htmlLabels: true, curve: "basis" },
-    securityLevel: "loose",
+    securityLevel: "strict",
   });
 </script>
 
