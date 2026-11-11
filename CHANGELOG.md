@@ -15,9 +15,29 @@ through it yet.
   They stay out of annual impact, EBITDA lift and payback. Before this, an $8.4M supplier dependency
   was booked as $8.4M a year of savings and a +273% EBITDA lift.
 - Findings under 0.65 confidence are listed as pending review and left out of every total.
-- 174 tests run offline with no API key and make no network call.
+- 168 tests run offline with no API key and make no network call.
 
 The dated entries below are what went into 1.0.0.
+
+### 2026-11-11 — Launch review, round 2
+- **Fixed** held findings can no longer be priced. `python engine/sow/assembly.py --run-id X`
+  re-read every finding, including the held advisory finding, and added its $496,200/yr to "Expand
+  margin". `from_run` and the per-module CLIs are deleted; `scripts/run_synthetic.py` and
+  `python -m engine.api` are the two entry points.
+- **Fixed** `quality_judge.gate_decision` holds text the judge could not score. Before, it let it
+  through and each caller had to check the status itself.
+- **Fixed** the correction MCP server's `log_outcome` threw `ReferenceError: oldPhase is not
+  defined` on every call. `npm test` now covers it, and CI runs it.
+- **Changed** the report names the EBITDA base ("+45% of net income") and says real EBITDA is
+  higher. Owner-facing text drops the QuickBooks field name, pillar scores and "FDE packet", says
+  why a flagged option is flagged, and states the one-finding caveat once.
+- **Changed** `engine/meta-levels`, `presentation/side-by-side` and `presentation/exec-report` are
+  now `meta_levels`, `side_by_side` and `exec_report`, so plain imports replace the path loaders.
+- **Removed** `nim_client.judge_pair` and `require_live_model` (no caller), 19 unused schemas, the
+  web review page that could not load a run and its helpers, the HubSpot and Slack cards, and
+  `docs/STATE.md`, `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`.
+- **Changed** docs say what runs: the council always uses the impact rule, no API route uses a
+  model, and the decision records are amended where the code differs.
 
 ### 2026-11-11 — Launch review fixes
 - **Fixed** without `VINNY_TOKEN_SECRET` the API answers only loopback callers, however it is
