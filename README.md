@@ -24,6 +24,39 @@ What works today, all exercised by the test suite from a clean clone with no API
 
 What is not built: the other five domain teams (operational, organizational, customer, technology, strategic), connectors other than QuickBooks, the engine routes behind the review page, and PDF rendering. `docs/STATE.md` and `docs/ROADMAP.md` have the per-component view.
 
+## What the output looks like
+
+```
+python scripts/run_synthetic.py
+cat runs/synthetic-client-a/presentation/report.md
+```
+
+An excerpt of the committed copy, `examples/synthetic-client-a/report.md`:
+
+```text
+INTEGRATOR: replace this block with 10-15 lines of examples/synthetic-client-a/report.md from the final run.
+```
+
+### Limits
+
+- There is one tenant and it is fabricated. No real firm's books have been through this.
+- Vendor concentration, customer concentration and overdue receivables show as dollars at risk and never count toward annual impact. A dependency is a risk, and overdue AR is one-time cash. The reasoning is in `docs/decisions/2026-11-11-exposure-is-not-impact.md`.
+- The deployability grade is a placeholder. Its security pillar returns a fixed score, so the letter grade says little yet.
+- The live judge path, with `NIM_API_KEY` set, has never run in a test. Every test runs offline-deterministic.
+- The review page at `web/app/diagnostic/[runId]` exists, but the routes it calls are not built, so it cannot load a run.
+
+## Why it is built this way
+
+A firm's books are sensitive, so the default is local. The snapshot is a file on disk, and the tests and the demo run with no model key. Every dollar has to point at the export line it came from, because an owner who checks one number and finds it wrong stops trusting the rest. When a step needs a model and there is no key, the engine fails with an error, a 503 from the API. The offline modes the tests use are opt-in flags. The eval harness's offline mode scores every comparison as a tie, so it cannot approve a change.
+
+## Glossary
+
+- **FDE**: forward-deployed engineer, the person who does the chosen work at the client.
+- **WWOD**: "What Would the Operator Do", a score for how hard a consultant would push a SOW (`engine/sow/wwod_score.py`).
+- **Council / Borda**: a judge compares findings in pairs, and the wins become a Borda ranking weighted by priority, novelty, corroboration and impact (`engine/council/`).
+- **Promotion gate**: the five checks an engine change has to pass before it is adopted (`learning/promotion-gate/promotion_gate.py`).
+- **Vinny**: the name the report prints for the product. Same thing as NSOS.
+
 ## Architecture
 
 ```
@@ -39,7 +72,13 @@ web/           Next.js app: onboarding + diagnostic review
 
 Flow: `client/` snapshot → `engine/meta-levels/*` findings → `engine/council` ranking → `engine/sow` assembly and scoring → `presentation/` report, side-by-side and handoff → `learning/feedback` outcome ledger. `docs/ARCHITECTURE.md` has the layer diagram, `docs/COUNCIL-PROTOCOL.md` the ranking rules, and `docs/decisions/` the recorded architecture choices.
 
-Design rules the code enforces rather than documents: every LLM call goes through one client (`engine/router/nim_client.py`); every dollar figure carries a source and a confidence (`scripts/probes/grounded_numbers.py`); the web layer never holds a connector secret (`scripts/probes/pillar5_security.py`).
+## Design rules and what checks them
+
+- Every `impact_usd` or `impact_hours` carries a source and a confidence. `assert_grounded` in `engine/meta-levels/financial/findings.py` raises on an ungrounded finding. `tests/test_sow_metrics.py` and `tests/test_e2e_synthetic.py` run `scripts/probes/grounded_numbers.py` on the real artifacts, and CI runs both through pytest.
+- The engine API boots and serves the teaser. CI starts `python -m engine.api` and curls `/health` and `/teaser`.
+- The web layer never holds a connector secret. `scripts/probes/pillar5_security.py` scans for secret literals. Nothing runs it automatically yet; run it by hand.
+- Every LLM call goes through `engine/router/nim_client.py`. No test checks this yet. It is a review rule.
+- Docs follow code. `scripts/check_docs_sync.py origin/main...HEAD` fails when source changes without `docs/STATE.md`, `docs/ROADMAP.md` or `docs/site/index.html`. `tests/test_docs_sync.py` tests the script; CI does not run it on the diff.
 
 ## Run it locally
 
