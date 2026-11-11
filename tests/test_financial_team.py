@@ -1,4 +1,4 @@
-"""Tests for the financial meta-team + data->findings engine (P2.T1/T2)."""
+"""Tests for the financial data->findings engine."""
 import json
 import sys
 from pathlib import Path
@@ -8,7 +8,6 @@ sys.path.insert(0, str(ROOT))
 
 import importlib  # noqa: E402
 
-team = importlib.import_module("engine.meta-levels.financial.team")
 findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
 
 BASELINE = json.loads(
@@ -16,33 +15,7 @@ BASELINE = json.loads(
 )
 
 
-# ── P2.T1: question battery runs against baseline ──────────────────────────────
-def test_questions_load():
-    qs = team.load_questions()
-    assert len(qs) >= 5
-    assert all("method" in q and "id" in q for q in qs)
-
-
-def test_team_runs_battery_against_baseline():
-    out = team.run_team(BASELINE)
-    assert out["team"] == "financial"
-    assert out["tenant_id"] == "synth-acme-services"
-    assert out["questions_run"] == len(team.load_questions())
-    # the financial team must genuinely answer most questions from real data
-    assert out["answered"] >= 4
-    for r in out["results"]:
-        assert "question_id" in r and "answered" in r
-
-
-def test_team_answers_are_grounded():
-    out = team.run_team(BASELINE)
-    for r in out["results"]:
-        if r["answered"]:
-            assert r["analytic"] is not None
-            assert r["analytic"].get("source"), f"{r['question_id']} answered without source"
-
-
-# ── P2.T2: findings engine emits grounded impacts ─────────────────────────────
+# ── findings engine emits grounded impacts ─────────────────────────────
 def test_findings_emitted_with_impact():
     fs = findings_mod.run_findings(BASELINE)
     assert fs, "financial engine produced no findings from a real baseline"
@@ -108,7 +81,7 @@ def test_ar_finding_puts_the_open_balance_at_risk():
     assert f["impact_usd"] == 0.0
 
 
-# ── P2.T3: grounding gate wired into the producer (fail-closed) ───────────────
+# ── grounding gate wired into the producer (fail-closed) ───────────────
 def test_grounding_gate_passes_real_findings():
     for f in findings_mod.run_findings(BASELINE):
         # must not raise — every real finding is grounded

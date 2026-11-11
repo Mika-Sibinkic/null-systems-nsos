@@ -16,10 +16,10 @@ survives the same gates the rest of the pipeline enforces:
 Pure arithmetic over the snapshot. No LLM, deterministic, offline — so the
 financial findings are reproducible and the grounded-numbers gate is meaningful.
 
-The same analytic functions back `team.py`'s question battery (one implementation,
-two consumers): each `ANALYTICS[method]` returns a normalized analytic dict, and
+Each `ANALYTICS[method]` returns a normalized analytic dict, and
 `finding_from_analytic` lifts it into a finding record. `run_findings` is the
-end-to-end entry the integrator/E2E test call.
+end-to-end entry the demo and the E2E test call. The teaser reuses
+`ANALYTICS["scope_cycle_time"]`.
 """
 from __future__ import annotations
 
