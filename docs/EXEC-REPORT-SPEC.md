@@ -43,7 +43,6 @@ C. **What we'd recommend reviewing in 6 months** — list of secondary findings 
 ❌ Recommending Null Systems by name in the body (it's implicit — this is a Null Systems report).
 ❌ Hedging language without a bound ("could improve" → state the range).
 
-## Templates
+## Where it is rendered
 
-See `presentation/exec-report/template.md` for the markdown template.
-See `presentation/side-by-side/template.md` for the comparison table.
+`presentation/exec-report/report_generator.py` writes the report and `presentation/side-by-side/sbs.py` builds the comparison table. `examples/synthetic-client-a/report.md` is a real output.
