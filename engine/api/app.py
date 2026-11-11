@@ -16,6 +16,11 @@ Endpoints
                             Requires `Authorization: Bearer <scoped token>` whose
                             tenant matches and whose scopes include snapshot:read.
 
+Dev mode (VINNY_TOKEN_SECRET unset)
+  The dev signing secret is public, so anyone who reaches the app could forge a
+  token. In this mode every route answers only loopback callers (404 otherwise),
+  whether it runs via `python -m engine.api` or `uvicorn engine.api.app:app`.
+
 Model mode
   NIM_API_KEY set     -> "live"
   NIM_API_KEY unset   -> "offline-deterministic"
@@ -49,6 +54,8 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SNAPSHOTS_ROOT = ROOT / "client" / "snapshots"
 TEASER_SCOPE = "snapshot:read"
 DEV_TOKEN_SCOPES = ["onboarding:read", "snapshot:read"]  # what onboarding grants the web layer
+# shortcut: a reverse proxy on the same host looks local; set VINNY_TOKEN_SECRET before proxying.
+LOOPBACK_CLIENTS = {"127.0.0.1", "::1"}
 _TOKEN_SECRET_ENV = "VINNY_TOKEN_SECRET"
 _MODEL_KEY_ENV = "NIM_API_KEY"
 
@@ -129,6 +136,13 @@ def create_app(snapshots_root: Optional[Path] = None) -> FastAPI:
         first = exc.errors()[0] if exc.errors() else {}
         where = ".".join(str(part) for part in first.get("loc", ()))
         return JSONResponse(status_code=422, content={"error": f"{where}: {first.get('msg', 'invalid request')}"})
+
+    @app.middleware("http")
+    async def _dev_mode_is_loopback_only(request: Request, call_next):
+        caller = request.client.host if request.client else ""
+        if token_secret_mode() == "dev-only" and caller not in LOOPBACK_CLIENTS:
+            return JSONResponse(status_code=404, content={"error": "not found"})
+        return await call_next(request)
 
     @app.get("/health", response_model=Health)
     def health() -> Health:

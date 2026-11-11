@@ -21,11 +21,14 @@ TENANT = "synth-acme-services"
 TEASER_KEYS = {"id", "headline", "impact_usd", "impact_hours", "evidence", "confidence", "method", "team"}
 
 
+LOCAL = ("127.0.0.1", 50000)  # in dev mode the app only answers loopback callers
+
+
 @pytest.fixture
 def client(monkeypatch):
     monkeypatch.delenv("NIM_API_KEY", raising=False)
     monkeypatch.delenv("VINNY_TOKEN_SECRET", raising=False)
-    return TestClient(create_app())
+    return TestClient(create_app(), client=LOCAL)
 
 
 def _bearer(tenant: str, scopes=("snapshot:read",)) -> dict:
@@ -102,7 +105,7 @@ def test_teaser_snapshot_without_accounting_is_422_json(tmp_path, monkeypatch):
     monkeypatch.delenv("VINNY_TOKEN_SECRET", raising=False)
     (tmp_path / "t1").mkdir()
     (tmp_path / "t1" / "baseline.json").write_text(json.dumps({"firm": {}}))
-    c = TestClient(create_app(snapshots_root=tmp_path))
+    c = TestClient(create_app(snapshots_root=tmp_path), client=LOCAL)
     r = c.get("/teaser", params={"tenant": "t1"}, headers=_bearer("t1"))
     assert r.status_code == 422
     assert "accounting" in r.json()["error"]
@@ -140,7 +143,7 @@ def _app_with_live_route(app):
 
 def test_live_model_route_fails_closed_without_key(monkeypatch):
     monkeypatch.delenv("NIM_API_KEY", raising=False)
-    c = TestClient(_app_with_live_route(create_app()))
+    c = TestClient(_app_with_live_route(create_app()), client=LOCAL)
     r = c.get("/_test/needs-model")
     assert r.status_code == 503
     assert r.json() == {"error": "live model required but NIM_API_KEY is not configured"}
@@ -148,7 +151,7 @@ def test_live_model_route_fails_closed_without_key(monkeypatch):
 
 def test_live_model_route_passes_with_key(monkeypatch):
     monkeypatch.setenv("NIM_API_KEY", "set-for-test-only")
-    c = TestClient(_app_with_live_route(create_app()))
+    c = TestClient(_app_with_live_route(create_app()), client=LOCAL)
     assert c.get("/_test/needs-model").status_code == 200
 
 
@@ -193,7 +196,7 @@ def test_json_array_baseline_is_422_json(tmp_path, monkeypatch):
     monkeypatch.delenv("VINNY_TOKEN_SECRET", raising=False)
     (tmp_path / "t1").mkdir()
     (tmp_path / "t1" / "baseline.json").write_text("[]")
-    r = TestClient(create_app(snapshots_root=tmp_path)).get(
+    r = TestClient(create_app(snapshots_root=tmp_path), client=LOCAL).get(
         "/teaser", params={"tenant": "t1"}, headers=_bearer("t1"))
     assert r.status_code == 422
     assert set(r.json()) == {"error"}
@@ -202,7 +205,7 @@ def test_json_array_baseline_is_422_json(tmp_path, monkeypatch):
 def test_tenant_path_that_is_a_file_is_404_json(tmp_path, monkeypatch):
     monkeypatch.delenv("VINNY_TOKEN_SECRET", raising=False)
     (tmp_path / "t1").write_text("not a directory")
-    r = TestClient(create_app(snapshots_root=tmp_path)).get(
+    r = TestClient(create_app(snapshots_root=tmp_path), client=LOCAL).get(
         "/teaser", params={"tenant": "t1"}, headers=_bearer("t1"))
     assert r.status_code == 404
     assert set(r.json()) == {"error"}
@@ -211,10 +214,30 @@ def test_tenant_path_that_is_a_file_is_404_json(tmp_path, monkeypatch):
 def test_empty_token_secret_is_dev_only_and_signs_with_a_real_key(monkeypatch):
     from client.onboarding import auth
     monkeypatch.setenv("VINNY_TOKEN_SECRET", "")
-    c = TestClient(create_app())
+    c = TestClient(create_app(), client=LOCAL)
     assert c.get("/health").json()["token_secret"] == "dev-only"
     assert auth._secret() == auth._DEV_SECRET.encode()
     assert c.post("/dev/scoped-token", json={"tenant_id": TENANT}).status_code == 200
+
+
+@pytest.mark.parametrize("caller", [("10.0.0.237", 50000), ("testclient", 50000)])
+def test_dev_mode_answers_no_non_loopback_caller(monkeypatch, caller):
+    """`uvicorn engine.api.app:app --host 0.0.0.0` skips the launcher check; the app holds.
+
+    The dev secret is public, so a forged token must not reach /teaser either."""
+    monkeypatch.delenv("VINNY_TOKEN_SECRET", raising=False)
+    c = TestClient(create_app(), client=caller)
+    r = c.post("/dev/scoped-token", json={"tenant_id": TENANT})
+    assert r.status_code == 404
+    assert "token" not in r.json()
+    r = c.get("/teaser", params={"tenant": TENANT}, headers=_bearer(TENANT))
+    assert r.status_code == 404
+
+
+def test_configured_secret_serves_non_loopback_callers(monkeypatch):
+    monkeypatch.setenv("VINNY_TOKEN_SECRET", "set-for-test-only")
+    r = TestClient(create_app(), client=("10.0.0.237", 50000)).get("/health")
+    assert r.status_code == 200
 
 
 # ── python -m engine.api refuses to expose dev tokens on the network ──────────
