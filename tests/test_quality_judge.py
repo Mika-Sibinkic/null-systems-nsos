@@ -61,7 +61,19 @@ def test_judge_pair_raises_when_nim_fails_outside_offline_mode(monkeypatch):
         nim_client.judge_pair({"impact_usd": 2}, {"impact_usd": 1})
 
 
-def test_judge_pair_falls_back_only_in_offline_mode(monkeypatch):
-    monkeypatch.setattr(nim_client, "call_nim", _boom)
+def test_offline_mode_never_calls_the_model_even_with_a_key(monkeypatch):
+    """Offline means nothing leaves the machine, even with NIM_API_KEY in the shell."""
+    calls = []
+
+    def recording_boom(*a, **kw):
+        calls.append(a)
+        raise RuntimeError("must not be called")
+
+    monkeypatch.setenv("NIM_API_KEY", "set-for-test-only")
     monkeypatch.setenv("NSOS_JUDGE_OFFLINE_DETERMINISTIC", "1")
+    monkeypatch.setattr(nim_client, "call_nim", recording_boom)
+    monkeypatch.setattr(qj, "call_nim", recording_boom)
+    monkeypatch.setattr(qj, "OFFLINE_DETERMINISTIC", True)
     assert nim_client.judge_pair({"impact_usd": 2}, {"impact_usd": 1}) == "A"
+    assert qj.score("Vendor spend is $84k/yr, per QuickBooks; recommend consolidating.")["status"] == "ok"
+    assert calls == []

@@ -1,25 +1,18 @@
 #!/usr/bin/env python3
 """
-NSOS Quality Judge — 3-layer output quality system.
+NSOS quality judge: a rubric scorer for client-facing text.
 
-Layer 1 (rubric scoring): every NSOS output is scored via one fast-tier LLM
-call against four dimensions — relevance, actionability, calibration,
-confidence. Prometheus-style rubric-as-system-prompt, output-as-user-prompt.
-Rubric and thresholds are loaded from quality_rules.json (operator-agnostic).
+Live mode: one call through engine/router/nim_client.py scores the text on
+relevance, actionability, calibration (0-5) and confidence (0-1), against the
+rubric in quality_rules.json. gate_decision() then says whether to hold it.
 
-Layer 2 (preference memory): score + output + eventual operator response get
-logged to SQLite (nsos_quality_log). Training signal for later tuning.
+Offline mode (NSOS_JUDGE_OFFLINE_DETERMINISTIC=1, used by the tests and the
+demo): no model call at all. _deterministic_score() is a structural regex check
+for a dollar or hour figure, an evidence word, a confidence word and a next
+step. That is all "passes the quality gate" means offline.
 
-Layer 3 (confidence gate): if scores fall below threshold, the normal
-response is replaced by a confirmation prompt ("I found X but I'm not
-confident — worth looking at?"). The yes/no answer on the same channel
-resolves the gate, and the resolution is captured as a preference signal.
-
-Router integration: see router.py — `apply()` wraps every handler response
-except handlers that opt out via SKIP_JUDGE = True.
-
-Fails open: if the LLM call raises, the output still surfaces (the judge
-is advisory, not load-bearing). The failure is logged.
+Without the flag and without a working model, score() returns
+status='unavailable'; the review gate and `--gate` treat that as a fail.
 """
 
 from __future__ import annotations
@@ -27,12 +20,10 @@ from __future__ import annotations
 import json
 import os
 import re
-import sqlite3
 import sys
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 NSOS_DIR = Path(__file__).resolve().parent
 _REPO = str(NSOS_DIR.parents[1])
@@ -40,7 +31,6 @@ if _REPO not in sys.path:  # also importable when run as `python engine/gauntlet
     sys.path.insert(0, _REPO)
 from engine.router.nim_client import call_nim  # noqa: E402  the one LLM client (CLAUDE.md rule 3)
 
-DB_PATH = NSOS_DIR / "quality.db"
 LOGS_DIR = NSOS_DIR / "logs"
 RULES_PATH = NSOS_DIR / "quality_rules.json"
 
@@ -222,13 +212,13 @@ def score(output_text: str, context: Optional[Dict[str, Any]] = None) -> Dict[st
     ctx_block = ("CONTEXT:\n" + "\n".join(ctx_lines) + "\n\n") if ctx_lines else ""
     prompt = f"{ctx_block}NSOS OUTPUT:\n{output_text[:3000]}"
 
+    if OFFLINE_DETERMINISTIC:
+        # Checked before any model call: offline means nothing leaves the machine,
+        # even when NIM_API_KEY happens to be set in the shell.
+        return _deterministic_score(output_text)
     raw = _call_judge_llm(prompt)
     parsed = _parse_judge_json(raw)
     if parsed is None:
-        if OFFLINE_DETERMINISTIC:
-            # No live judge, but offline-deterministic mode is enabled: score
-            # structurally so the build gate can verify gating logic reproducibly.
-            return _deterministic_score(output_text)
         return {
             "status": "unavailable",
             "relevance": None,
@@ -259,226 +249,6 @@ def gate_decision(scores: Dict[str, Any]) -> bool:
     if conf < CONF_THRESHOLD:
         return True
     return False
-
-
-# ── SQLite storage ──────────────────────────────────────────────────────────
-
-
-def _db() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS nsos_quality_log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT NOT NULL,
-            envelope_id TEXT,
-            channel TEXT,
-            sender_id TEXT,
-            verb TEXT,
-            user_text TEXT,
-            output_text TEXT,
-            output_suppressed INTEGER DEFAULT 0,
-            judge_status TEXT,
-            judge_relevance INTEGER,
-            judge_actionability INTEGER,
-            judge_calibration INTEGER,
-            judge_confidence REAL,
-            judge_reasoning TEXT,
-            judge_raw_json TEXT,
-            operator_response TEXT,
-            response_timestamp TEXT
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS nsos_gate_pending (
-            id TEXT PRIMARY KEY,
-            created_at TEXT NOT NULL,
-            channel TEXT NOT NULL,
-            sender_id TEXT NOT NULL,
-            original_output TEXT NOT NULL,
-            quality_log_id INTEGER,
-            resolved_at TEXT,
-            resolution TEXT
-        )
-    """)
-    conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_gate_pending_open
-        ON nsos_gate_pending (channel, sender_id, resolved_at)
-    """)
-    conn.commit()
-    return conn
-
-
-def log_judgment(
-    *,
-    envelope: Dict[str, Any],
-    verb: str,
-    output_text: str,
-    suppressed: bool,
-    scores: Dict[str, Any],
-) -> int:
-    """Insert a row into nsos_quality_log. Returns the new rowid."""
-    with _db() as conn:
-        cur = conn.execute(
-            """
-            INSERT INTO nsos_quality_log
-            (timestamp, envelope_id, channel, sender_id, verb, user_text,
-             output_text, output_suppressed,
-             judge_status, judge_relevance, judge_actionability,
-             judge_calibration, judge_confidence, judge_reasoning, judge_raw_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                datetime.now(timezone.utc).isoformat(),
-                envelope.get("id"),
-                envelope.get("source"),
-                envelope.get("sender_id"),
-                verb,
-                envelope.get("text"),
-                output_text,
-                1 if suppressed else 0,
-                scores.get("status"),
-                scores.get("relevance"),
-                scores.get("actionability"),
-                scores.get("calibration"),
-                scores.get("confidence"),
-                scores.get("reasoning"),
-                json.dumps(scores, default=str),
-            ),
-        )
-        rowid = cur.lastrowid
-        conn.commit()
-    return int(rowid)
-
-
-def open_gate(
-    *,
-    envelope: Dict[str, Any],
-    original_output: str,
-    quality_log_id: int,
-) -> str:
-    """Register a pending gate. Returns the gate id."""
-    gid = f"gate_{uuid.uuid4().hex[:12]}"
-    with _db() as conn:
-        conn.execute(
-            """
-            INSERT INTO nsos_gate_pending
-            (id, created_at, channel, sender_id, original_output, quality_log_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (
-                gid,
-                datetime.now(timezone.utc).isoformat(),
-                envelope["source"],
-                envelope["sender_id"],
-                original_output,
-                quality_log_id,
-            ),
-        )
-        conn.commit()
-    return gid
-
-
-def find_open_gate(channel: str, sender_id: str) -> Optional[Tuple[str, str, int]]:
-    """Return (gate_id, original_output, quality_log_id) for most-recent open
-    gate on this channel/sender, or None if none pending."""
-    with _db() as conn:
-        cur = conn.execute(
-            """
-            SELECT id, original_output, quality_log_id
-            FROM nsos_gate_pending
-            WHERE channel = ? AND sender_id = ? AND resolved_at IS NULL
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (channel, sender_id),
-        )
-        row = cur.fetchone()
-    if not row:
-        return None
-    return (row[0], row[1], int(row[2]) if row[2] is not None else 0)
-
-
-def resolve_gate(gate_id: str, resolution: str, quality_log_id: Optional[int]) -> None:
-    """Record gate resolution and mirror it into the preference log."""
-    now = datetime.now(timezone.utc).isoformat()
-    with _db() as conn:
-        conn.execute(
-            "UPDATE nsos_gate_pending SET resolved_at = ?, resolution = ? WHERE id = ?",
-            (now, resolution, gate_id),
-        )
-        if quality_log_id:
-            operator_response = "acted_on" if resolution == "yes" else "dismissed"
-            conn.execute(
-                "UPDATE nsos_quality_log SET operator_response = ?, response_timestamp = ? WHERE id = ?",
-                (operator_response, now, quality_log_id),
-            )
-        conn.commit()
-
-
-# ── router integration ─────────────────────────────────────────────────────
-
-
-def apply(
-    *,
-    envelope: Dict[str, Any],
-    verb: str,
-    response: str,
-    skip: bool,
-) -> Tuple[str, Dict[str, Any]]:
-    """Run scoring and gating on a handler response.
-
-    Returns (final_response_for_user, decision_metadata).
-
-    If `skip` is True (handler opted out), the response is passed through
-    untouched and no DB row is written.
-    """
-    if skip:
-        return response, {"skipped": True}
-
-    scores = score(
-        response,
-        context={
-            "source": envelope.get("source"),
-            "verb": verb,
-            "user_text": envelope.get("text"),
-        },
-    )
-    gated = gate_decision(scores)
-    log_id = log_judgment(
-        envelope=envelope,
-        verb=verb,
-        output_text=response,
-        suppressed=gated,
-        scores=scores,
-    )
-    if not gated:
-        return response, {"gated": False, "scores": scores, "quality_log_id": log_id}
-
-    # Gated: register a pending gate and return the confirmation prompt instead.
-    summary = response.strip().split("\n")[0][:200]
-    open_gate(envelope=envelope, original_output=response, quality_log_id=log_id)
-    prompt = (
-        f"found: {summary}\n"
-        f"low confidence on relevance — show full? (yes / no)"
-    )
-    return prompt, {"gated": True, "scores": scores, "quality_log_id": log_id}
-
-
-def maybe_resolve_gate_reply(envelope: Dict[str, Any]) -> Optional[str]:
-    """If the envelope's text is a yes/no resolving an open gate for this
-    channel+sender, resolve it and return the reply to send back. Else None."""
-    text = (envelope.get("text") or "").strip().lower()
-    if text not in {"yes", "y", "no", "n"}:
-        return None
-    gate = find_open_gate(envelope["source"], envelope["sender_id"])
-    if not gate:
-        return None
-    gate_id, original_output, quality_log_id = gate
-    if text in {"yes", "y"}:
-        resolve_gate(gate_id, "yes", quality_log_id)
-        return original_output
-    resolve_gate(gate_id, "no", quality_log_id)
-    return "suppressed; logged as not-worth-surfacing"
 
 
 # ── internal error logging ──────────────────────────────────────────────────

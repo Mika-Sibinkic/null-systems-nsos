@@ -58,32 +58,27 @@ def judge_pair(a: dict, b: dict, *, criterion: str = "higher client impact") -> 
     """Pairwise judge for council protocol. Returns 'A', 'B', or 'TIE'.
 
     Uses NIM with a tight contract. A failed call raises, so a dead provider never
-    passes as a real ranking. Only NSOS_JUDGE_OFFLINE_DETERMINISTIC=1 falls back to
-    the higher-impact_usd rule.
+    passes as a real ranking. NSOS_JUDGE_OFFLINE_DETERMINISTIC=1 skips the model
+    call entirely and uses the higher-impact_usd rule.
     """
-    prompt = f"""Two consulting findings — pick the one with {criterion}. Respond with strict JSON: {{"winner":"A"|"B"|"TIE","reason":"<10 words>"}}.
-
-A: {json.dumps({k: v for k, v in a.items() if k not in ('embedding','cluster')})[:600]}
-
-B: {json.dumps({k: v for k, v in b.items() if k not in ('embedding','cluster')})[:600]}"""
-    try:
-        text = call_nim(prompt, max_tokens=80, temperature=0.0)
-        # Extract JSON
-        import re
-        m = re.search(r'\{[\s\S]*?\}', text)
-        if not m:
-            raise ValueError("no json")
-        obj = json.loads(m.group(0))
-        w = str(obj.get("winner", "TIE")).upper()
-        return w if w in ("A", "B", "TIE") else "TIE"
-    except Exception:
-        if os.environ.get("NSOS_JUDGE_OFFLINE_DETERMINISTIC", "") not in ("1", "true", "yes"):
-            raise
+    if os.environ.get("NSOS_JUDGE_OFFLINE_DETERMINISTIC", "") in ("1", "true", "yes"):
         if a.get("impact_usd", 0) > b.get("impact_usd", 0):
             return "A"
         if b.get("impact_usd", 0) > a.get("impact_usd", 0):
             return "B"
         return "TIE"
+    prompt = f"""Two consulting findings — pick the one with {criterion}. Respond with strict JSON: {{"winner":"A"|"B"|"TIE","reason":"<10 words>"}}.
+
+A: {json.dumps({k: v for k, v in a.items() if k not in ('embedding','cluster')})[:600]}
+
+B: {json.dumps({k: v for k, v in b.items() if k not in ('embedding','cluster')})[:600]}"""
+    text = call_nim(prompt, max_tokens=80, temperature=0.0)
+    import re
+    m = re.search(r'\{[\s\S]*?\}', text)
+    if not m:
+        raise ValueError(f"judge_pair: no JSON in model reply: {text[:80]!r}")
+    w = str(json.loads(m.group(0)).get("winner", "TIE")).upper()
+    return w if w in ("A", "B", "TIE") else "TIE"
 
 
 if __name__ == "__main__":
