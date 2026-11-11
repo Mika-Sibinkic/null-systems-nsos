@@ -63,18 +63,29 @@ def render_sow_report(
     lines.append("\n---\n")
     lines.append("## Executive summary\n")
     lines.append(
-        f"From your data we assembled **{len(sbs.columns)} coherent growth options**. "
+        f"From your data we assembled **{len(sbs.columns)} growth options**. "
         f"Each is a Statement of Work you can choose between by where you want the "
-        f"business to go — the numbers below all trace back to your own books.\n"
+        f"business to go. Every number below comes from your books or from an "
+        f"assumption we name next to it.\n"
     )
-    lines.append("---\n")
+    lines.append("How to read the scores:\n")
+    if any(sbs_mod._wwod.COLD_START_GAP in col.gaps for col in sbs.columns):
+        lines.append(f"- **Consultant conviction**: {sbs_mod._wwod.COLD_START_GAP}.")
+    lines.append("- **Deployability grade**: a placeholder. One of its five checks returns a fixed score.")
+    lines.append("- **Evidence confidence**: set per type of finding, not measured for each number.")
+    cost = engagement_cost_usd if engagement_cost_usd is not None else fmt.DEFAULT_ENGAGEMENT_COST_USD
+    lines.append(f"- **Payback**: assumes the work costs ${cost:,.0f} per option.")
+    lines.append("\n---\n")
 
     for i, col in enumerate(sbs.columns, start=1):
         rec_mark = " — **our recommendation**" if col.sow_id == sbs.recommended_sow_id else ""
+        assumed = [s.removesuffix(" [LIKELY]") for s in col.source if s.endswith("[LIKELY]")]
         lines.append(f"## Option {i} — {col.title}{rec_mark}")
         lines.append("")
         lines.append(f"{col.objective}\n")
-        lines.append(f"- **Annual impact**: based on your QuickBooks data, ${col.impact_usd:,.0f}/year")
+        lines.append(f"- **Annual impact**: ${col.impact_usd:,.0f}/year")
+        for a in assumed:
+            lines.append(f"- **Assumes**: {a}")
         if col.exposure_usd:
             lines.append(f"- **At risk**: ${col.exposure_usd:,.0f} (exposure, not counted in annual impact, EBITDA or payback)")
         lines.append(f"- **EBITDA lift**: {fmt.fmt_ebitda(col.ebitda_uplift_pct)}")
@@ -85,11 +96,12 @@ def render_sow_report(
         grade_note = f"{col.grade}" + (" — has a deployability flag, see below" if col.blockers else "")
         lines.append(f"- **Deployability grade**: {grade_note}")
         lines.append(
-            f"- **Evidence confidence**: {col.confidence:.0%}, based on "
-            f"{len(col.source)} source lines from your accounting"
+            f"- **Evidence confidence**: {col.confidence:.0%}, from "
+            f"{len(col.source) - len(assumed)} lines of your accounting"
         )
-        if col.gaps:
-            lines.append(f"- **Before committing, we recommend you confirm**: {col.gaps[0]}")
+        specific = sbs_mod.owner_gaps(col.gaps)
+        if specific:
+            lines.append(f"- **Before committing, we recommend you confirm**: {specific[0]}")
         lines.append("\n---\n")
 
     lines.append("## Side-by-side\n")

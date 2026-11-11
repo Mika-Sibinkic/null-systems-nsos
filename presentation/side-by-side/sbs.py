@@ -95,6 +95,11 @@ class SideBySide:
         }
 
 
+def owner_gaps(gaps: Sequence[str]) -> list[str]:
+    """Gaps specific to one option; the cold-start note is printed once by the report."""
+    return [g for g in gaps if g != _wwod.COLD_START_GAP]
+
+
 def _format_cell(key: str, col: SBSColumn) -> str:
     """CEO-language formatting per dimension."""
     if key == "title":
@@ -134,7 +139,8 @@ def build_columns(
         g = _grade.grade_sow(s)
         m = _metrics.metrics_for(s, baseline, **cost_kw)
         gaps = list(w.gaps)
-        key_gap = (g.blockers[0] if g.blockers else (gaps[0] if gaps else ""))
+        specific = owner_gaps(gaps)
+        key_gap = (g.blockers[0] if g.blockers else (specific[0] if specific else ""))
         cols.append(
             SBSColumn(
                 sow_id=_attr(s, "id", "unknown"),
@@ -199,12 +205,12 @@ def render_markdown(sbs: SideBySide) -> str:
         rec = next((c for c in sbs.columns if c.sow_id == sbs.recommended_sow_id), None)
         if rec:
             out += (
-                f"\n\n**Our recommendation: {rec.title}** — strongest consultant "
-                f"conviction ({rec.wwod_score:.0%}) at a deployability grade of "
-                f"{rec.grade}."
+                f"\n\n**Our recommendation: {rec.title}.** ${rec.impact_usd:,.0f}/yr "
+                f"with a payback of {_metrics.fmt_payback(rec.payback_months)}."
             )
-            if rec.gaps:
-                out += f" Before committing, confirm: {rec.gaps[0]}"
+            specific = owner_gaps(rec.gaps)
+            if specific:
+                out += f" Before committing, confirm: {specific[0]}."
     return out
 
 

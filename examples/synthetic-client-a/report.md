@@ -8,52 +8,61 @@
 
 ## Executive summary
 
-From your data we assembled **3 coherent growth options**. Each is a Statement of Work you can choose between by where you want the business to go — the numbers below all trace back to your own books.
+From your data we assembled **3 growth options**. Each is a Statement of Work you can choose between by where you want the business to go. Every number below comes from your books or from an assumption we name next to it.
+
+How to read the scores:
+
+- **Consultant conviction**: we have no past engagement like this on record, so the conviction score rests only on size, confidence and how many findings back it.
+- **Deployability grade**: a placeholder. One of its five checks returns a fixed score.
+- **Evidence confidence**: set per type of finding, not measured for each number.
+- **Payback**: assumes the work costs $180,000 per option.
 
 ---
 
 ## Option 1 — Expand margin and rationalize cost base — **our recommendation**
 
-Recover gross margin and reduce reducible advisory/vendor spend to lift EBITDA without touching topline.
+Recover gross margin.
 
-- **Annual impact**: based on your QuickBooks data, $1,400,000/year
+- **Annual impact**: $1,400,000/year
+- **Assumes**: 5 points of TotalIncome recoverable when gross margin is under 65%
 - **EBITDA lift**: +45%
 - **Payback**: 2 months
 - **Consultant conviction**: 54% (how hard we'd push this)
 - **Deployability grade**: A
-- **Evidence confidence**: 70%, based on 3 source lines from your accounting
-- **Before committing, we recommend you confirm**: we have no past engagement like this on record, so the conviction score rests only on size, confidence and how many findings back it
+- **Evidence confidence**: 70%, from 3 lines of your accounting
+- **Before committing, we recommend you confirm**: one finding backs this option; a second, independent finding would add corroboration
 
 ---
 
 ## Option 2 — De-risk and grow the revenue base
 
-Reduce single-customer dependency and accelerate cash conversion so revenue is both larger and more defensible.
+Collect overdue receivables and cut proposal scoping time.
 
-- **Annual impact**: based on your QuickBooks data, $11,875/year
+- **Annual impact**: $11,875/year
+- **Assumes**: 0.5 partner hours per day over the 5-day target, at $250/hr
+- **Assumes**: 80% of overdue AR collectable
 - **At risk**: $188,000 (exposure, not counted in annual impact, EBITDA or payback)
 - **EBITDA lift**: +0%
 - **Leadership hours freed**: 48 hours/year
 - **Payback**: 182 months
 - **Consultant conviction**: 24% (how hard we'd push this)
 - **Deployability grade**: B — has a deployability flag, see below
-- **Evidence confidence**: 70%, based on 5 source lines from your accounting
-- **Before committing, we recommend you confirm**: we have no past engagement like this on record, so the conviction score rests only on size, confidence and how many findings back it
+- **Evidence confidence**: 70%, from 3 lines of your accounting
 
 ---
 
 ## Option 3 — Reduce supplier concentration risk
 
-Diversify the vendor base so a single supplier failure or price shock cannot stall delivery.
+Diversify the vendor base so one supplier failure or price shock cannot stall delivery.
 
-- **Annual impact**: based on your QuickBooks data, $0/year
+- **Annual impact**: $0/year
 - **At risk**: $8,400,000 (exposure, not counted in annual impact, EBITDA or payback)
 - **EBITDA lift**: +0%
 - **Payback**: —
 - **Consultant conviction**: 26% (how hard we'd push this)
 - **Deployability grade**: B — has a deployability flag, see below
-- **Evidence confidence**: 80%, based on 2 source lines from your accounting
-- **Before committing, we recommend you confirm**: we have no past engagement like this on record, so the conviction score rests only on size, confidence and how many findings back it
+- **Evidence confidence**: 80%, from 2 lines of your accounting
+- **Before committing, we recommend you confirm**: one finding backs this option; a second, independent finding would add corroboration
 
 ---
 
@@ -69,9 +78,9 @@ Diversify the vendor base so a single supplier failure or price shock cannot sta
 | **Consultant conviction** | 54% | 24% | 26% |
 | **Deployability grade** | A | B ⚠ | B ⚠ |
 | **Evidence confidence** | 70% | 70% | 80% |
-| **Key thing to firm up** | we have no past engagement like this on record, so the conviction score rests only on size, confidence and how many findings back it | throughput: $11,875/yr is below the ~$250,000 engagement-viability floor (score 0.31 < 0.5) | throughput: $0/yr is below the ~$250,000 engagement-viability floor (score 0.30 < 0.5) |
+| **Key thing to firm up** | one finding backs this option; a second, independent finding would add corroboration | throughput: $11,875/yr is below the ~$250,000 engagement-viability floor (score 0.31 < 0.5) | throughput: $0/yr is below the ~$250,000 engagement-viability floor (score 0.30 < 0.5) |
 
-**Our recommendation: Expand margin and rationalize cost base** — strongest consultant conviction (54%) at a deployability grade of A. Before committing, confirm: we have no past engagement like this on record, so the conviction score rests only on size, confidence and how many findings back it
+**Our recommendation: Expand margin and rationalize cost base.** $1,400,000/yr with a payback of 2 months. Before committing, confirm: one finding backs this option; a second, independent finding would add corroboration.
 
 ---
 

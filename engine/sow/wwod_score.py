@@ -40,6 +40,13 @@ BREADTH_BONUS_PER_FINDING = 0.05      # each corroborating finding firms the pus
 LEARNED_WEIGHT = 0.45                 # blend weight on the learned-policy signal
 PRIOR_WEIGHT = 0.55                   # blend weight on the deterministic prior
 
+# True of every SOW until past engagements are on record, so owner-facing text
+# states it once instead of per option (presentation/side-by-side/sbs.py).
+COLD_START_GAP = (
+    "we have no past engagement like this on record, so the conviction score "
+    "rests only on size, confidence and how many findings back it"
+)
+
 
 @dataclass
 class WWODScore:
@@ -106,17 +113,14 @@ def _gaps_for(sow: Any, learned_conf: float, match_method: str) -> list[str]:
             f"with the client before pushing"
         )
     if match_method in ("none", "keyword-fallback") or learned_conf == 0.0:
-        gaps.append(
-            "we have no past engagement like this on record, so the conviction score "
-            "rests only on size, confidence and how many findings back it"
-        )
+        gaps.append(COLD_START_GAP)
     if not _attr(sow, "source", []):
         gaps.append("SOW carries impact with no source trace — grounding gap")
     n = len(_attr(sow, "finding_ids", []) or [])
     if n < 2:
         gaps.append(
-            "single-finding thrust — thin corroboration; one more independent "
-            "signal would firm the recommendation"
+            "one finding backs this option; a second, independent finding "
+            "would add corroboration"
         )
     return gaps
 

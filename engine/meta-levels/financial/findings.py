@@ -37,6 +37,15 @@ CUSTOMER_CONCENTRATION_FLAG = 0.15       # > 15% of revenue from one customer = 
 PRO_SERVICES_BENCHMARK_PCT = 0.10        # advisory spend > 10% of OPEX is reducible [LIKELY]
 PRO_SERVICES_REDUCIBLE_PCT = 0.30        # share of outsized advisory plausibly insourced [LIKELY]
 AR_RECOVERY_PCT = 0.80                   # share of overdue AR realistically collectable [LIKELY]
+GROSS_MARGIN_FLAG = 0.65                 # gross margin below this is flagged (services benchmark) [LIKELY]
+MARGIN_RECOVERY_PTS = 0.05               # flagged margin: 5 points of TotalIncome assumed recoverable [LIKELY]
+
+# Confidence per finding method: how directly the number is measured. A constant
+# per method, not computed from the data. The review gate holds anything under 0.65.
+CONFIDENCE_BY_METHOD = {
+    "ar_overdue": 0.85, "vendor_concentration": 0.8, "customer_concentration": 0.8,
+    "scope_cycle_time": 0.7, "margin_structure": 0.7, "opex_benchmark": 0.6,
+}
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -147,7 +156,7 @@ def a_ar_overdue(baseline: dict) -> Optional[dict]:
         "exposure_usd": float(exposure),
         "recoverable_usd": float(recoverable),
         "source": [f"accounting.invoices[status=overdue ids={ids}] balance_usd sum={exposure:.0f}",
-                   f"recovery assumption {AR_RECOVERY_PCT:.0%} [LIKELY]"],
+                   f"{AR_RECOVERY_PCT:.0%} of overdue AR collectable [LIKELY]"],
     }
 
 
@@ -212,7 +221,8 @@ def a_scope_cycle_time(baseline: dict) -> Optional[dict]:
     leaked_hours = excess * HOURS_PER_SCOPE_DELAY_DAY * n * scale
     impact = leaked_hours * BLENDED_PARTNER_RATE_USD_PER_HR
     source = [f"accounting.invoices[{n}] avg first_contact->scope_sent={avg:.1f}d",
-              f"excess over {SCOPE_TARGET_DAYS:.0f}d @ {HOURS_PER_SCOPE_DELAY_DAY}hr/day @ ${BLENDED_PARTNER_RATE_USD_PER_HR:.0f}/hr [LIKELY]"]
+              f"{HOURS_PER_SCOPE_DELAY_DAY} partner hours per day over the {SCOPE_TARGET_DAYS:.0f}-day target, "
+              f"at ${BLENDED_PARTNER_RATE_USD_PER_HR:.0f}/hr [LIKELY]"]
     if per == "/yr":
         source.append(f"annualized x{scale:.3f} from accounting.period_start..period_end")
     return {
@@ -241,7 +251,7 @@ def a_margin_structure(baseline: dict) -> Optional[dict]:
     cogs_share = cogs / revenue
     return {
         "summary": f"Gross margin {gm:.0%}, net margin {nm:.0%}; COGS {cogs_share:.0%} of revenue",
-        "flagged": gm < 0.65,
+        "flagged": gm < GROSS_MARGIN_FLAG,
         "gross_margin": round(gm, 4),
         "net_margin": round(nm, 4),
         "cogs_share": round(cogs_share, 4),
@@ -249,7 +259,9 @@ def a_margin_structure(baseline: dict) -> Optional[dict]:
         "net_income_usd": net,
         "source": [f"accounting.profit_and_loss.TotalIncome={revenue:.0f}",
                    f"accounting.profit_and_loss.GrossProfit={gross:.0f}",
-                   f"accounting.profit_and_loss.NetIncome={net:.0f}"],
+                   f"accounting.profit_and_loss.NetIncome={net:.0f}",
+                   f"{MARGIN_RECOVERY_PTS * 100:.0f} points of TotalIncome recoverable "
+                   f"when gross margin is under {GROSS_MARGIN_FLAG:.0%} [LIKELY]"],
     }
 
 
@@ -312,19 +324,14 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
         bottleneck = "Outsized advisory/professional-services spend"
         headline = f"Advisory spend {analytic['advisory_share']:.0%} of OPEX — ~${impact_usd:,.0f}/yr reducible"
     elif method == "margin_structure" and analytic.get("flagged"):
-        # Margin finding: 5pt gross-margin recovery target on revenue.
-        impact_usd = round(analytic.get("revenue_usd", 0) * 0.05)
+        impact_usd = round(analytic.get("revenue_usd", 0) * MARGIN_RECOVERY_PTS)
         bottleneck = "Gross margin below services benchmark"
-        headline = f"Gross margin {analytic['gross_margin']:.0%}; 5pt recovery ≈ ${impact_usd:,.0f}/yr"
+        headline = (f"Gross margin {analytic['gross_margin']:.0%}; an assumed "
+                    f"{MARGIN_RECOVERY_PTS * 100:.0f}pt recovery ≈ ${impact_usd:,.0f}/yr")
 
     if impact_usd <= 0 and impact_hours <= 0 and exposure_usd <= 0:
         return None
 
-    # confidence: derive an honest band from how directly the number is measured
-    conf_table = {
-        "ar_overdue": 0.85, "vendor_concentration": 0.8, "customer_concentration": 0.8,
-        "scope_cycle_time": 0.7, "margin_structure": 0.7, "opex_benchmark": 0.6,
-    }
     return {
         "id": f"fin-fin-{idx:03d}",
         "team": "financial",
@@ -336,7 +343,7 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
         "exposure_usd": float(round(exposure_usd)),
         "evidence": analytic.get("source", []),
         "source": analytic.get("source", []),
-        "confidence": conf_table.get(method, 0.6),
+        "confidence": CONFIDENCE_BY_METHOD.get(method, 0.6),
         "embedding": _emb_for(method),
         "cluster": [],
     }

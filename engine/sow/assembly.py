@@ -41,23 +41,41 @@ from typing import Sequence
 THRUSTS: dict[str, dict] = {
     "revenue_resilience": {
         "title": "De-risk and grow the revenue base",
-        "objective": "Reduce single-customer dependency and accelerate cash conversion "
-                     "so revenue is both larger and more defensible.",
         "methods": ["customer_concentration", "ar_overdue", "scope_cycle_time"],
     },
     "margin_expansion": {
         "title": "Expand margin and rationalize cost base",
-        "objective": "Recover gross margin and reduce reducible advisory/vendor spend "
-                     "to lift EBITDA without touching topline.",
         "methods": ["margin_structure", "opex_benchmark"],
     },
     "supply_resilience": {
         "title": "Reduce supplier concentration risk",
-        "objective": "Diversify the vendor base so a single supplier failure or price "
-                     "shock cannot stall delivery.",
         "methods": ["vendor_concentration"],
     },
 }
+
+# One clause per finding method. A SOW's objective is built only from the methods
+# it actually contains, so it never promises work its findings do not back.
+OBJECTIVE_CLAUSES: dict[str, str] = {
+    "customer_concentration": "reduce dependence on the largest customer",
+    "ar_overdue": "collect overdue receivables",
+    "scope_cycle_time": "cut proposal scoping time",
+    "margin_structure": "recover gross margin",
+    "opex_benchmark": "bring advisory spend back to benchmark",
+    "vendor_concentration": "diversify the vendor base so one supplier failure "
+                            "or price shock cannot stall delivery",
+}
+
+
+def objective_for(thrust_key: str, group: Sequence[dict]) -> str:
+    """'Collect overdue receivables and cut proposal scoping time.' from the group's methods."""
+    present = {f.get("method") for f in group}
+    order = THRUSTS[thrust_key]["methods"]
+    clauses = [OBJECTIVE_CLAUSES[m] for m in order if m in present]
+    if not clauses:
+        return ""
+    text = clauses[0] if len(clauses) == 1 else ", ".join(clauses[:-1]) + " and " + clauses[-1]
+    return text[0].upper() + text[1:] + "."
+
 
 # reverse index method -> thrust_key
 _METHOD_TO_THRUST: dict[str, str] = {
@@ -147,7 +165,7 @@ def assemble_sows(
                 id=f"sow-{thrust_key}",
                 thrust=thrust_key,
                 title=spec["title"],
-                objective=spec["objective"],
+                objective=objective_for(thrust_key, group),
                 finding_ids=[f["id"] for f in group],
                 impact_usd=round(impact_usd, 2),
                 impact_hours=round(impact_hours, 1),

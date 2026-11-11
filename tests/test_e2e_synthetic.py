@@ -118,3 +118,18 @@ def test_e2e_exposure_never_counts_as_annual_impact(run):
         assert s.impact_usd == sum(f["impact_usd"] for f in s.findings)
         m = metrics.metrics_for(s, run["baseline"])
         assert m.ebitda_uplift_pct is None or m.ebitda_uplift_pct < 100, (s.id, m.ebitda_uplift_pct)
+
+
+def test_e2e_objective_names_only_contained_work(run):
+    """A SOW objective must not promise work its findings do not contain."""
+    clauses = pipe.assembly.OBJECTIVE_CLAUSES
+    for s in run["sows"]:
+        named = {m for m, clause in clauses.items() if clause in s.objective.lower()}
+        assert named == {f["method"] for f in s.findings}, (s.id, s.objective)
+
+
+def test_e2e_every_assumed_rate_is_declared_in_source(run):
+    """The margin dollars are an assumed recovery rate, so the finding says so."""
+    margin = [f for f in run["findings"] if f["method"] == "margin_structure"]
+    assert margin, "synthetic-client-a should flag its 60% gross margin"
+    assert any(s.endswith("[LIKELY]") for s in margin[0]["source"]), margin[0]["source"]
