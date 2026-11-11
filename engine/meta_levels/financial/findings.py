@@ -272,20 +272,6 @@ ANALYTICS: dict[str, Callable[[dict], Optional[dict]]] = {
 
 
 # ── finding construction ──────────────────────────────────────────────────────
-def _emb_for(method: str) -> list[float]:
-    """Stable 4-d embedding stub per finding theme so council scoring is
-    deterministic offline (production swaps to real embeddings)."""
-    table = {
-        "scope_cycle_time": [0.6, 0.4, 0.1, 0.2],
-        "vendor_concentration": [0.1, 0.7, 0.2, 0.0],
-        "customer_concentration": [0.3, 0.6, 0.2, 0.1],
-        "ar_overdue": [0.2, 0.7, 0.3, 0.0],
-        "opex_benchmark": [0.2, 0.6, 0.1, 0.3],
-        "margin_structure": [0.4, 0.5, 0.1, 0.2],
-    }
-    return table.get(method, [0.3, 0.3, 0.3, 0.3])
-
-
 def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dict]:
     """Lift a normalized analytic into a client-facing finding record.
 
@@ -340,8 +326,6 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
         "evidence": analytic.get("source", []),
         "source": analytic.get("source", []),
         "confidence": CONFIDENCE_BY_METHOD.get(method, 0.6),
-        "embedding": _emb_for(method),
-        "cluster": [],
     }
 
 

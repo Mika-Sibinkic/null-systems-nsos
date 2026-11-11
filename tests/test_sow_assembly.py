@@ -1,4 +1,4 @@
-"""Tests for SOW assembly — ranked findings -> 2-3 coherent SOW candidates (P3.T1)."""
+"""Tests for SOW assembly — findings -> 2-3 coherent SOW candidates (P3.T1)."""
 from pathlib import Path
 
 import engine.sow.assembly as assembly
@@ -63,19 +63,8 @@ def test_confidence_is_impact_weighted_and_banded():
 
 def test_candidates_ranked_descending():
     sows = assembly.assemble_sows(_real_findings())
-    scores = [s.rank_score for s in sows]
-    assert scores == sorted(scores, reverse=True)
-
-
-def test_council_scores_drive_ranking_when_present():
-    findings = _real_findings()
-    # force a council ordering that inverts the impact ordering
-    council = {f["id"]: float(i) for i, f in enumerate(findings)}
-    sows = assembly.assemble_sows(findings, council_scores=council)
-    # rank_score now reflects council sums, not raw impact
-    for s in sows:
-        expected = round(sum(council[fid] for fid in s.finding_ids), 4)
-        assert abs(s.rank_score - expected) < 0.01
+    impacts = [s.impact_usd for s in sows]
+    assert impacts == sorted(impacts, reverse=True)
 
 
 def test_each_finding_lands_in_exactly_one_candidate_when_unclamped():

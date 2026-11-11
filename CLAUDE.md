@@ -16,7 +16,7 @@ is built.
 | Layer | Purpose |
 |---|---|
 | `client/` | Tenant-specific code: onboarding, connector adapters, snapshots (gitignored except the synthetic example) |
-| `engine/` | Reusable diagnostic logic: the financial team (`meta_levels/`), council, SOW scoring, quality judge, NIM client, HTTP API |
+| `engine/` | Reusable diagnostic logic: the financial team (`meta_levels/`), SOW assembly and scoring, quality judge, NIM client, HTTP API |
 | `learning/` | Cross-run improvement: outcome ledger |
 | `presentation/` | Engine output → executive report, side-by-side, FDE handoff packet |
 | `schemas/` | `baseline.json`, the tenant snapshot contract |
@@ -45,5 +45,5 @@ is built.
    never hardcode a person's name.
 8. **Keep the README honest.** When a change makes its Status, Limits or
    numbers wrong, fix them in the same change.
-9. **Architecture-level changes** (new provider, schema change, council weight
-   change) get a decision record under `docs/decisions/` before the code.
+9. **Architecture-level changes** (new provider, schema change, a new way to
+   rank options) get a decision record under `docs/decisions/` before the code.

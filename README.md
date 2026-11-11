@@ -17,12 +17,12 @@ What works today, all exercised by the test suite from a clean clone with no API
 
 - QuickBooks export → schema-valid tenant snapshot. Connector secrets stay server-side; the web layer gets a scoped token.
 - Financial team → grounded findings (vendor and customer concentration, overdue receivables, advisory spend, proposal cycle time, margin). The engine rejects any `impact_usd`, `impact_hours` or `exposure_usd` that lacks a source trace and a confidence.
-- Council ranking → two or three SOW candidates, each with a WWOD score, a deployability grade, and EBITDA and payback metrics checked by the same grounding probe.
+- Two or three SOW candidates, ranked by annual impact, each with a WWOD score, a deployability grade, and EBITDA and payback metrics checked by the same grounding probe.
 - Owner-facing report, side-by-side comparison, and an FDE handoff packet (JSON and markdown).
 - Outcome ledger (predicted vs realized, append-only).
 - HTTP API between the web app and the Python engine (`engine/api/`, FastAPI): `GET /health`, `GET /teaser` behind the scoped token with per-tenant authz, and a dev-only token mint that disappears once `VINNY_TOKEN_SECRET` is set. Without that secret the API answers only loopback callers.
 
-What is not built: the other five domain teams (operational, organizational, customer, technology, strategic), connectors other than QuickBooks, a model judge for the council, a web page for picking an option, and PDF rendering.
+What is not built: the other five domain teams (operational, organizational, customer, technology, strategic), connectors other than QuickBooks, a model that ranks findings, a web page for picking an option, and PDF rendering.
 
 ## What the output looks like
 
@@ -62,7 +62,7 @@ To change what counts as a finding, edit the thresholds and benchmarks at the to
 - The deployability grade is a placeholder. Its security pillar returns a fixed score, so the letter grade says little yet.
 - The live judge path, with `NIM_API_KEY` set, has never run in a test. Every test runs offline-deterministic, and offline the quality gate is a regex check for a figure, an evidence word, a confidence word and a next step.
 - Offline, every finding's text passes that regex check, so what the review gate holds is decided by its confidence floor (0.65) alone. Advisory spend has a fixed confidence of 0.60, so it is always held.
-- The council always uses the impact rule: the higher `impact_usd` wins. No model ranks findings yet, and the priority and novelty weights use fixed placeholder embeddings. I reran the demo twice, once with every finding given the same embedding and once with the council's scores replaced by each finding's `impact_usd`. Both reports were byte-identical to the committed one. Option order is impact order.
+- Options rank by annual impact (`impact_usd`), highest first. Nothing smarter ranks them yet.
 
 ## Why it is built this way
 
@@ -74,14 +74,13 @@ Every dollar has to point at the export line it came from, because an owner who 
 
 - **FDE**: forward-deployed engineer, the person who does the chosen work at the client.
 - **WWOD**: "What Would the Operator Do", where the operator is the consultant: a score for how hard we would push a SOW (`engine/sow/wwod_score.py`). With no past engagements on record it is a fixed formula of size, confidence and corroboration.
-- **Council / Borda**: a judge compares findings in pairs, and the wins become a Borda ranking weighted by priority, novelty, corroboration and impact (`engine/council/`). The judge is the impact rule; see Limits.
 - **Vinny**: the name the report prints for the product. Same thing as NSOS.
 
 ## Architecture
 
 ```
 client/        onboarding, the QuickBooks adapter, tenant snapshots
-engine/        findings, review gate, council, SOW scoring, quality judge, HTTP API
+engine/        findings, review gate, SOW scoring, quality judge, HTTP API
 learning/      outcome ledger
 presentation/  owner-facing report, side-by-side, handoff packet
 schemas/       baseline.json, the tenant snapshot contract
@@ -90,7 +89,7 @@ examples/      synthetic client for tests and the demo
 web/           Next.js app: the onboarding demo
 ```
 
-Flow: `client/` snapshot → `engine/meta_levels/financial` findings → `engine/meta_levels/financial/review_gate.py` → `engine/council` ranking → `engine/sow` assembly and scoring → `presentation/` report, side-by-side and handoff → `learning/feedback` outcome ledger. `docs/COUNCIL-PROTOCOL.md` has the ranking rules and `docs/decisions/` the recorded architecture choices.
+Flow: `client/` snapshot → `engine/meta_levels/financial` findings → `engine/meta_levels/financial/review_gate.py` → `engine/sow` assembly, ranking and scoring → `presentation/` report, side-by-side and handoff → `learning/feedback` outcome ledger. `docs/decisions/` has the recorded architecture choices.
 
 What `python scripts/run_synthetic.py` writes under `runs/synthetic-client-a/`:
 
@@ -187,7 +186,7 @@ node index.js
 
 `python -m pytest -q` runs offline with no API key against two synthetic fixtures: `examples/synthetic-client-a/` (a fabricated QuickBooks export plus firm profile) and `client/snapshots/synth-acme-services/baseline.json` (the snapshot the adapter produces from it). Real tenant snapshots under `client/snapshots/` are gitignored.
 
-Coverage is by layer: adapter and schema, onboarding auth, teaser, council weights, financial findings, review gate, quality judge, SOW assembly, scoring and metrics, side-by-side report, handoff packet, outcome ledger, the engine HTTP API, and one end-to-end run through the real pipeline.
+Coverage is by layer: adapter and schema, onboarding auth, teaser, financial findings, review gate, quality judge, SOW assembly, scoring and metrics, side-by-side report, handoff packet, outcome ledger, the engine HTTP API, and one end-to-end run through the real pipeline.
 
 On a clean clone (`git clone --local`, fresh venv, Python 3.14.7), `python -m pytest -q` reports 168 passed. I ran it 5 times in a row on an Apple M4 with a load average of about 2: pytest's own timer said 0.45 to 0.73 s, median 0.45 s, with the first run the slowest. On Python 3.11.15 it also reports 168 passed. The demo run, `python scripts/run_synthetic.py`, took 0.08 s wall clock (`/usr/bin/time`, one run). The web app has 4 `node --test` cases for the engine client (`cd web && npm test`), and the correction MCP server has 2 (`cd mcp-servers/correction-server && npm test`).
 

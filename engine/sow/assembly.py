@@ -1,9 +1,9 @@
-"""SOW assembly — ranked findings -> 2-3 coherent SOW candidates (P3.T1).
+"""SOW assembly — findings -> 2-3 coherent SOW candidates (P3.T1).
 
-A diagnostic run produces a ranked list of findings (council output). A CEO does
+A diagnostic run produces a list of findings. A CEO does
 not buy a list of findings; they buy 2-3 *coherent growth thrusts*, each a
 Statement of Work they can choose between by intuition about where the business
-should go. This module is the bundler that turns the ranked findings into those
+should go. This module is the bundler that turns the findings into those
 candidates.
 
 Design (deterministic, offline, source-traced):
@@ -22,8 +22,7 @@ Design (deterministic, offline, source-traced):
   4. Candidate `confidence` is the impact-weighted mean of its findings'
      confidence (a big-dollar low-confidence finding can't hide behind a tiny
      high-confidence one).
-  5. Candidates rank by aggregate `final` council score when present, else by
-     aggregate `impact_usd`.
+  5. Candidates rank by aggregate `impact_usd`, highest first.
 
 No LLM. Reproducible. The grounded-numbers probe runs over the emitted
 candidates exactly as it does over findings.
@@ -96,7 +95,6 @@ class SOWCandidate:
     confidence: float
     source: list[str] = field(default_factory=list)
     exposure_usd: float = 0.0  # at-risk dollars; not part of impact_usd
-    rank_score: float = 0.0  # aggregate council final (or impact fallback)
     findings: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -124,17 +122,11 @@ def _weighted_confidence(findings: Sequence[dict]) -> float:
 def assemble_sows(
     findings: Sequence[dict],
     *,
-    council_scores: dict[str, float] | None = None,
     min_candidates: int = 2,
     max_candidates: int = 3,
     artifacts_dir: Path | str | None = None,
 ) -> list[SOWCandidate]:
-    """Bundle ranked findings into 2-3 coherent SOW candidates.
-
-    `council_scores` maps finding_id -> council `final` score; when provided the
-    candidate `rank_score` is the sum of its findings' council scores, else it is
-    the candidate's aggregate impact_usd.
-    """
+    """Bundle findings into 2-3 coherent SOW candidates, highest annual impact first."""
     if not findings:
         return []
 
@@ -156,10 +148,6 @@ def assemble_sows(
                 if s not in seen:
                     seen.add(s)
                     source.append(s)
-        if council_scores:
-            rank_score = sum(float(council_scores.get(f["id"], 0.0)) for f in group)
-        else:
-            rank_score = impact_usd
         candidates.append(
             SOWCandidate(
                 id=f"sow-{thrust_key}",
@@ -172,12 +160,11 @@ def assemble_sows(
                 confidence=_weighted_confidence(group),
                 source=source,
                 exposure_usd=round(sum(float(f.get("exposure_usd", 0.0)) for f in group), 2),
-                rank_score=round(rank_score, 4),
                 findings=list(group),
             )
         )
 
-    candidates.sort(key=lambda c: -c.rank_score)
+    candidates.sort(key=lambda c: -c.impact_usd)
 
     # clamp to 2-3: never 1 (no real choice), never a wall
     n = len(candidates)

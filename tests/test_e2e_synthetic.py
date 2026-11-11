@@ -1,7 +1,7 @@
 """End-to-end real pipe on synthetic-client-a (P5.T3).
 
 Runs the WHOLE diagnostic, not fixtures, through `scripts/run_synthetic.py`:
-QuickBooks export -> baseline -> findings -> review gate -> council -> SOWs ->
+QuickBooks export -> baseline -> findings -> review gate -> SOWs ->
 side-by-side -> CEO report -> FDE packet -> flywheel prediction row. Then it
 checks the money flow with the real grounded_numbers and quality_judge probes.
 

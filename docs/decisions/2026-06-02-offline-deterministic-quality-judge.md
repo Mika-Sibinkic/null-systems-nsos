@@ -10,7 +10,7 @@ alternatives_considered:
   - name: Provision a live NIM key in CI
     reject_reason: Every CI run would cost money and depend on the network, in a build that is otherwise deterministic.
 corroborating_signals:
-  - "engine/council/council.py deterministic_judge — the codebase's own pattern: a reproducible offline judge so tests run without network."
+  - "engine/council/council.py deterministic_judge (removed 2026-11-11) — the same pattern: a reproducible offline judge so tests run without network."
   - "engine/teaser/teaser.py — same design: pure arithmetic, offline, source-traced and confidence-banded, so it survives the same gates."
 verification_probe: |
   Default is fail-closed (no key, flag unset):

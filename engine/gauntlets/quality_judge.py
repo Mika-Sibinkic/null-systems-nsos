@@ -106,8 +106,8 @@ RUBRIC_PROMPT = _build_rubric_prompt()
 # rubric call returns None and the gate fails CLOSED — correct for production,
 # but it would block a synthetic offline build from ever verifying client-facing
 # output. So, ONLY when explicitly enabled via NSOS_JUDGE_OFFLINE_DETERMINISTIC=1,
-# fall back to a deterministic structural rubric (mirrors council.deterministic_judge:
-# a reproducible offline scorer so the build can verify gating logic without a key).
+# fall back to a deterministic structural rubric (a reproducible offline scorer
+# so the build can verify gating logic without a key).
 # Default OFF — production keeps the fail-closed live-LLM behavior untouched.
 # Read on every call, so the mode never depends on which module imported this first.
 def offline_deterministic() -> bool:
