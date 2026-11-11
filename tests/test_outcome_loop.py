@@ -137,3 +137,20 @@ def test_accuracy_ratio_clamped(tmp_path):
         impact_usd=500_000, source=["actuals"], ledger=led, ts="2026-06-08T00:00:00Z",
     )
     assert ol.pair_outcomes(led)[0].accuracy_ratio == 2.0
+
+
+def test_loss_firm_ebitda_lift_stays_undefined(tmp_path):
+    """A firm with no positive EBITDA base has no lift %, not a 0% lift."""
+    import jsonschema
+    led = tmp_path / "ledger.jsonl"
+    packet = {"run_id": "r-loss", "selected_sow_id": "s", "tenant_id": "t", "impact_usd": 50_000,
+              "ebitda_uplift_pct": None, "payback_months": 43.2, "confidence": 0.7, "source": ["x"]}
+    row = ol.record_prediction(packet, ledger=led, ts="2026-06-07T00:00:00Z")
+    assert row["predicted"]["ebitda_uplift_pct"] is None
+    ol.record_realization(run_id="r-loss", sow_id="s", tenant_id="t", impact_usd=40_000,
+                          ebitda_uplift_pct=None, ledger=led, ts="2026-06-08T00:00:00Z")
+    schema = json.loads((ROOT / "learning" / "feedback" / "schema.json").read_text())
+    for r in ol.load_ledger(led):
+        jsonschema.validate(r, schema)
+    (d,) = ol.pair_outcomes(led)
+    assert d.predicted_ebitda_pct is None and d.realized_ebitda_pct is None

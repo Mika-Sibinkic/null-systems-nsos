@@ -52,6 +52,11 @@ def _append(path: Path, obj: dict) -> None:
         f.write(json.dumps(obj, default=str) + "\n")
 
 
+def _pct_or_none(x: Any) -> float | None:
+    """EBITDA lift is undefined (None) when the EBITDA base is not positive; keep it None."""
+    return None if x is None else float(x)
+
+
 def record_prediction(
     packet: Any,
     *,
@@ -67,7 +72,7 @@ def record_prediction(
     predicted = {
         "impact_usd": float(_attr(packet, "impact_usd", 0.0) or 0.0),
         "impact_hours": float(_attr(packet, "impact_hours", 0.0) or 0.0),
-        "ebitda_uplift_pct": float(_attr(packet, "ebitda_uplift_pct", 0.0) or 0.0),
+        "ebitda_uplift_pct": _pct_or_none(_attr(packet, "ebitda_uplift_pct", None)),
         "payback_months": _attr(packet, "payback_months", None),
         "confidence": float(_attr(packet, "confidence", 0.0) or 0.0),
     }
@@ -91,7 +96,7 @@ def record_realization(
     tenant_id: str,
     impact_usd: float,
     impact_hours: float = 0.0,
-    ebitda_uplift_pct: float = 0.0,
+    ebitda_uplift_pct: float | None = 0.0,
     source: Iterable[str] | None = None,
     observed_at: str | None = None,
     ledger: Path | None = None,
@@ -107,7 +112,7 @@ def record_realization(
         "realized": {
             "impact_usd": float(impact_usd),
             "impact_hours": float(impact_hours),
-            "ebitda_uplift_pct": float(ebitda_uplift_pct),
+            "ebitda_uplift_pct": _pct_or_none(ebitda_uplift_pct),
             "observed_at": observed_at or (ts or _utc_now()),
         },
         "source": list(source or []),
@@ -132,8 +137,8 @@ class OutcomeDelta:
     realized_usd: float
     delta_usd: float                 # realized - predicted
     accuracy_ratio: float            # realized / predicted, clamped to [0, 2]
-    predicted_ebitda_pct: float = 0.0
-    realized_ebitda_pct: float = 0.0
+    predicted_ebitda_pct: float | None = None  # None: EBITDA base was not positive
+    realized_ebitda_pct: float | None = None
     source: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -176,8 +181,8 @@ def pair_outcomes(ledger: Path | None = None) -> list[OutcomeDelta]:
                 realized_usd=round(r_usd, 2),
                 delta_usd=round(r_usd - p_usd, 2),
                 accuracy_ratio=round(ratio, 4),
-                predicted_ebitda_pct=float(pred.get("predicted", {}).get("ebitda_uplift_pct", 0.0) or 0.0),
-                realized_ebitda_pct=float(real.get("realized", {}).get("ebitda_uplift_pct", 0.0) or 0.0),
+                predicted_ebitda_pct=_pct_or_none(pred.get("predicted", {}).get("ebitda_uplift_pct")),
+                realized_ebitda_pct=_pct_or_none(real.get("realized", {}).get("ebitda_uplift_pct")),
                 source=list(pred.get("source", []) or []) + list(real.get("source", []) or []),
             )
         )

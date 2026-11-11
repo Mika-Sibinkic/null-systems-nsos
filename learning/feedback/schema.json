@@ -20,7 +20,7 @@
       "properties": {
         "impact_usd": {"type": "number"},
         "impact_hours": {"type": "number"},
-        "ebitda_uplift_pct": {"type": "number"},
+        "ebitda_uplift_pct": {"type": ["number", "null"]},
         "payback_months": {"type": ["number", "null"]},
         "confidence": {"type": "number"}
       }
@@ -31,7 +31,7 @@
       "properties": {
         "impact_usd": {"type": "number"},
         "impact_hours": {"type": "number"},
-        "ebitda_uplift_pct": {"type": "number"},
+        "ebitda_uplift_pct": {"type": ["number", "null"]},
         "observed_at": {"type": "string"}
       }
     },
