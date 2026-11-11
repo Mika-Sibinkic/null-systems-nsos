@@ -35,22 +35,34 @@ def _bearer(tenant: str, scopes=("snapshot:read",)) -> dict:
 
 # ── /health ───────────────────────────────────────────────────────────────────
 
-def test_health_reports_offline_mode_with_no_keys(client):
+def test_health_reports_status_and_dev_secret(client):
     r = client.get("/health")
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
     assert body["service"] == "nsos-engine"
-    assert body["model_mode"] == "offline-deterministic"
     assert body["token_secret"] == "dev-only"
 
 
-def test_health_reports_live_mode_when_model_key_set(monkeypatch):
-    monkeypatch.setenv("NIM_API_KEY", "set-for-test-only")
+@pytest.mark.parametrize("key, flag, mode", [
+    (None, None, "fail-closed"),               # no key, no flag: the judge holds every finding
+    ("set-for-test-only", None, "live"),
+    ("set-for-test-only", "1", "offline-deterministic"),  # the flag wins: no model call
+    (None, "1", "offline-deterministic"),
+])
+def test_health_model_mode_matches_what_the_judge_does(monkeypatch, key, flag, mode):
+    for name, value in (("NIM_API_KEY", key), ("NSOS_JUDGE_OFFLINE_DETERMINISTIC", flag)):
+        if value is None:
+            monkeypatch.delenv(name, raising=False)
+        else:
+            monkeypatch.setenv(name, value)
+    monkeypatch.delenv("VINNY_TOKEN_SECRET", raising=False)
+    assert TestClient(create_app(), client=LOCAL).get("/health").json()["model_mode"] == mode
+
+
+def test_health_reports_configured_token_secret(monkeypatch):
     monkeypatch.setenv("VINNY_TOKEN_SECRET", "set-for-test-only")
-    r = TestClient(create_app()).get("/health")
-    assert r.json()["model_mode"] == "live"
-    assert r.json()["token_secret"] == "configured"
+    assert TestClient(create_app()).get("/health").json()["token_secret"] == "configured"
 
 
 # ── /teaser against the synthetic client ──────────────────────────────────────

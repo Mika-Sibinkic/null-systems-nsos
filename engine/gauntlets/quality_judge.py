@@ -113,6 +113,13 @@ RUBRIC_PROMPT = _build_rubric_prompt()
 def offline_deterministic() -> bool:
     return os.environ.get("NSOS_JUDGE_OFFLINE_DETERMINISTIC", "") in ("1", "true", "yes")
 
+
+def judge_mode() -> str:
+    """What score() will do: 'offline-deterministic', 'live' or 'fail-closed'."""
+    if offline_deterministic():
+        return "offline-deterministic"
+    return "live" if os.environ.get("NIM_API_KEY") else "fail-closed"
+
 _DOLLAR_RE = re.compile(r"\$\s?\d")
 _HOURS_RE = re.compile(r"\b\d[\d,\.]*\s*(hours?|hrs?|hr/?yr|hours?/year)\b", re.I)
 _EVIDENCE_RE = re.compile(r"\b(source|evidence|QuickBooks|accounting|baseline|invoice|vendor|because|per |based on)\b", re.I)

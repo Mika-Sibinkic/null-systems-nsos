@@ -21,10 +21,11 @@ Dev mode (VINNY_TOKEN_SECRET unset)
   token. In this mode every route answers only loopback callers (404 otherwise),
   whether it runs via `python -m engine.api` or `uvicorn engine.api.app:app`.
 
-Model mode
-  NIM_API_KEY set     -> "live"
-  NIM_API_KEY unset   -> "offline-deterministic"
-  The teaser is pure arithmetic over the snapshot and works in both modes.
+Model mode (quality_judge.judge_mode, the one source of truth)
+  NSOS_JUDGE_OFFLINE_DETERMINISTIC=1  -> "offline-deterministic" (no model call, even with a key)
+  else NIM_API_KEY set                -> "live"
+  else                                -> "fail-closed" (the judge holds every finding)
+  The teaser is pure arithmetic over the snapshot and works in every mode.
   No route uses a model today; /health only reports the mode.
 
 Run:  python -m engine.api      (host/port from NSOS_API_HOST / NSOS_API_PORT)
@@ -47,6 +48,7 @@ from client.onboarding.auth import (
     authorize,
     issue_token,
 )
+from engine.gauntlets.quality_judge import judge_mode
 from engine.teaser.teaser import teaser_finding
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -56,15 +58,9 @@ DEV_TOKEN_SCOPES = ["onboarding:read", "snapshot:read"]  # what onboarding grant
 # shortcut: a reverse proxy on the same host looks local; set VINNY_TOKEN_SECRET before proxying.
 LOOPBACK_CLIENTS = {"127.0.0.1", "::1"}
 _TOKEN_SECRET_ENV = "VINNY_TOKEN_SECRET"
-_MODEL_KEY_ENV = "NIM_API_KEY"
 
 
 # ── mode helpers ──────────────────────────────────────────────────────────────
-
-def model_mode() -> str:
-    """'live' when a model key is configured, else 'offline-deterministic'."""
-    return "live" if os.environ.get(_MODEL_KEY_ENV) else "offline-deterministic"
-
 
 def token_secret_mode() -> str:
     """'configured' when VINNY_TOKEN_SECRET is set, else 'dev-only'."""
@@ -136,7 +132,7 @@ def create_app(snapshots_root: Optional[Path] = None) -> FastAPI:
 
     @app.get("/health", response_model=Health)
     def health() -> Health:
-        return Health(model_mode=model_mode(), token_secret=token_secret_mode())
+        return Health(model_mode=judge_mode(), token_secret=token_secret_mode())
 
     @app.post("/dev/scoped-token", response_model=DevToken)
     def dev_scoped_token(body: DevTokenRequest) -> DevToken:
