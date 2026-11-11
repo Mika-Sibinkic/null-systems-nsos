@@ -23,6 +23,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Optional
@@ -32,6 +33,9 @@ _SECRET_ENV = "VINNY_TOKEN_SECRET"
 # Dev-only fallback secret. In production VINNY_TOKEN_SECRET MUST be set server-side;
 # this constant is NOT a credential to any real system and is flagged by pillar5 as dev-only.
 _DEV_SECRET = "dev-only-unsigned-not-for-production"
+# Same rule as schemas/baseline.json. The tenant id becomes a path segment under
+# client/snapshots/, so anything else ("/tmp/x", "../..") is refused at the boundary.
+TENANT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 
 
 class AuthError(Exception):
@@ -39,7 +43,14 @@ class AuthError(Exception):
 
 
 def _secret() -> bytes:
-    return os.environ.get(_SECRET_ENV, _DEV_SECRET).encode()
+    # An empty VINNY_TOKEN_SECRET counts as unset, matching engine.api token_secret_mode().
+    return (os.environ.get(_SECRET_ENV) or _DEV_SECRET).encode()
+
+
+def _check_tenant(tenant_id: object) -> str:
+    if not isinstance(tenant_id, str) or not TENANT_ID_RE.fullmatch(tenant_id):
+        raise AuthError("invalid tenant_id")
+    return tenant_id
 
 
 def _b64u(data: bytes) -> str:
@@ -91,8 +102,7 @@ def issue_token(
     Rejects any scope that isn't in READ_SCOPES — the web surface cannot be granted a
     scope that would expose a connector secret or mutate another tenant's data.
     """
-    if not tenant_id:
-        raise AuthError("tenant_id required")
+    _check_tenant(tenant_id)
     bad = set(scopes) - READ_SCOPES
     if bad:
         raise AuthError(f"refusing to issue non-read scope(s): {sorted(bad)}")
@@ -118,21 +128,23 @@ def verify_token(token: str, *, now: Optional[int] = None) -> ScopedToken:
         raise AuthError("malformed token")
     payload, sig = token.rsplit(".", 1)
     expected = _b64u(hmac.new(_secret(), payload.encode(), hashlib.sha256).digest())
-    if not hmac.compare_digest(sig, expected):
+    # Bytes, not str: compare_digest raises TypeError on non-ASCII str input.
+    if not hmac.compare_digest(sig.encode(), expected.encode()):
         raise AuthError("bad signature")
     try:
         claims = json.loads(_b64u_dec(payload))
+        tok = ScopedToken(
+            tenant_id=_check_tenant(claims["tenant_id"]),
+            scopes=tuple(claims.get("scopes", [])),
+            issued_at=int(claims.get("iat", 0)),
+            expires_at=int(claims.get("exp", 0)),
+        )
     except Exception:
-        raise AuthError("unparseable claims")
+        raise AuthError("unparseable claims") from None
     now = int(now if now is not None else time.time())
-    if int(claims.get("exp", 0)) < now:
+    if tok.expires_at < now:
         raise AuthError("token expired")
-    return ScopedToken(
-        tenant_id=claims["tenant_id"],
-        scopes=tuple(claims.get("scopes", [])),
-        issued_at=int(claims.get("iat", 0)),
-        expires_at=int(claims.get("exp", 0)),
-    )
+    return tok
 
 
 def authorize(token: str, *, tenant_id: str, scope: str, now: Optional[int] = None) -> ScopedToken:
