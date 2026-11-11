@@ -86,6 +86,19 @@ def test_metrics_artifact_passes_grounded_numbers_probe(tmp_path):
     assert r.returncode == 0, f"grounded_numbers probe failed on metrics: {r.stdout}\n{r.stderr}"
 
 
+def test_grounded_numbers_probe_rejects_ungrounded_exposure(tmp_path):
+    """Exposure is a dollar the owner reads, so the probe holds it to the same rule
+    as impact (assert_grounded in findings.py already does)."""
+    import subprocess
+    artifact = tmp_path / "findings.jsonl"
+    artifact.write_text(json.dumps({"id": "x", "exposure_usd": 8400000}) + "\n")
+    r = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "probes" / "grounded_numbers.py"), str(artifact)],
+        capture_output=True, text=True,
+    )
+    assert r.returncode == 1, r.stdout
+
+
 def test_attach_metrics_embeds_block():
     b = _baseline()
     sows = _real_sows(b)

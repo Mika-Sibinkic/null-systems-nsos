@@ -16,7 +16,7 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-IMPACT_KEYS = ("impact_usd", "impact_hours")
+IMPACT_KEYS = ("impact_usd", "impact_hours", "exposure_usd")  # same keys as assert_grounded
 SOURCE_KEYS = ("evidence", "source", "sources", "citations")
 
 paths = sys.argv[1:] or glob.glob(os.path.join(ROOT, "runs", "**", "findings.jsonl"), recursive=True)
