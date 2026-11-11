@@ -148,3 +148,10 @@ def test_web_read_path_enforces_per_tenant_authz(tmp_path):
     good_token = issue_token("tenant-a", ["snapshot:read"])
     snap = session.read_snapshot_with_token(good_token, snapshots_root=tmp_path)
     assert snap["tenant_id"] == "tenant-a"
+
+
+def test_tenant_rule_matches_baseline_schema():
+    # The adapter enforces the schema pattern, the token boundary enforces TENANT_ID_RE.
+    from client.onboarding.auth import TENANT_ID_RE
+    schema = json.loads((ROOT / "schemas" / "baseline.json").read_text())
+    assert schema["properties"]["tenant_id"]["pattern"] == TENANT_ID_RE.pattern

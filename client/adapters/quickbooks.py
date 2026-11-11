@@ -21,16 +21,16 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
+
+import jsonschema
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "schemas" / "baseline.json"
 ADAPTER_VERSION = "1.0.0"
 SCHEMA_VERSION = 1
-TENANT_ID_RE = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")  # mirrors schemas/baseline.json
 
 
 class QuickBooksAdapter:
@@ -173,28 +173,12 @@ def write_baseline(baseline: dict[str, Any], *, snapshots_root: Optional[Path] =
 
 
 def validate_baseline(baseline: dict[str, Any]) -> list[str]:
-    """Validate a baseline against schemas/baseline.json. Returns [] if valid, else errors.
-
-    Uses jsonschema if available; otherwise a minimal required-keys check so the
-    adapter never hard-depends on an un-lifted package (import_sweep stays green).
-    """
-    try:
-        import jsonschema  # type: ignore
-        with open(SCHEMA_PATH) as f:
-            schema = json.load(f)
-        validator = jsonschema.Draft7Validator(schema)
-        return [f"{'/'.join(map(str, e.path))}: {e.message}"
-                for e in validator.iter_errors(baseline)]
-    except ImportError:
-        errs = []
-        for k in ("tenant_id", "generated_at", "schema_version", "sources"):
-            if k not in baseline:
-                errs.append(f"missing required key: {k}")
-        if not TENANT_ID_RE.fullmatch(str(baseline.get("tenant_id", ""))):
-            errs.append("tenant_id: must match ^[a-z0-9][a-z0-9-]{0,63}$")
-        if not isinstance(baseline.get("sources"), list) or not baseline["sources"]:
-            errs.append("sources must be a non-empty array")
-        return errs
+    """Validate a baseline against schemas/baseline.json. Returns [] if valid, else errors."""
+    with open(SCHEMA_PATH) as f:
+        schema = json.load(f)
+    validator = jsonschema.Draft7Validator(schema)
+    return [f"{'/'.join(map(str, e.path))}: {e.message}"
+            for e in validator.iter_errors(baseline)]
 
 
 def _main() -> int:
