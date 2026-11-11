@@ -121,8 +121,8 @@ def a_customer_concentration(baseline: dict) -> Optional[dict]:
 def a_ar_overdue(baseline: dict) -> Optional[dict]:
     acct = _acct(baseline)
     invoices = acct.get("invoices", []) or []
-    overdue = [i for i in invoices if i.get("status") == "overdue" or (i.get("paid_at") is None and i.get("status") != "paid")]
-    exposure = sum(float(i.get("amount_usd", 0)) for i in overdue)
+    overdue = [i for i in invoices if i.get("status") == "overdue"]
+    exposure = sum(float(i.get("balance_usd", 0)) for i in overdue)
     if exposure <= 0:
         return None
     recoverable = exposure * AR_RECOVERY_PCT
@@ -133,7 +133,7 @@ def a_ar_overdue(baseline: dict) -> Optional[dict]:
         "overdue_count": len(overdue),
         "exposure_usd": float(exposure),
         "recoverable_usd": float(recoverable),
-        "source": [f"accounting.invoices[status=overdue ids={ids}] sum={exposure:.0f}",
+        "source": [f"accounting.invoices[status=overdue ids={ids}] balance_usd sum={exposure:.0f}",
                    f"recovery assumption {AR_RECOVERY_PCT:.0%} [LIKELY]"],
     }
 

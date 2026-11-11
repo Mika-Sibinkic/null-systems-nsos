@@ -1,6 +1,6 @@
 {
   "tenant_id": "synth-acme-services",
-  "generated_at": "2026-06-02T18:01:18.471415+00:00",
+  "generated_at": "2026-11-11T07:09:44.940751+00:00",
   "schema_version": 1,
   "sources": [
     {
@@ -68,8 +68,9 @@
         "invoice_id": "INV-1001",
         "customer": "Northwind Co",
         "amount_usd": 240000.0,
+        "balance_usd": 0.0,
         "issued_at": "2025-06-02",
-        "paid_at": "2025-06-02",
+        "paid_at": null,
         "first_contact_at": "2025-05-12",
         "scope_sent_at": "2025-05-30",
         "status": "paid"
@@ -78,8 +79,9 @@
         "invoice_id": "INV-1002",
         "customer": "Globex Inc",
         "amount_usd": 180000.0,
+        "balance_usd": 0.0,
         "issued_at": "2025-06-18",
-        "paid_at": "2025-06-18",
+        "paid_at": null,
         "first_contact_at": "2025-05-20",
         "scope_sent_at": "2025-06-10",
         "status": "paid"
@@ -88,6 +90,7 @@
         "invoice_id": "INV-1003",
         "customer": "Initech",
         "amount_usd": 95000.0,
+        "balance_usd": 95000.0,
         "issued_at": "2025-07-09",
         "paid_at": null,
         "first_contact_at": "2025-06-15",
@@ -98,8 +101,9 @@
         "invoice_id": "INV-1004",
         "customer": "Umbrella Corp",
         "amount_usd": 320000.0,
+        "balance_usd": 0.0,
         "issued_at": "2025-08-01",
-        "paid_at": "2025-08-01",
+        "paid_at": null,
         "first_contact_at": "2025-07-01",
         "scope_sent_at": "2025-07-24",
         "status": "paid"
@@ -108,8 +112,9 @@
         "invoice_id": "INV-1005",
         "customer": "Northwind Co",
         "amount_usd": 210000.0,
+        "balance_usd": 0.0,
         "issued_at": "2025-09-12",
-        "paid_at": "2025-09-12",
+        "paid_at": null,
         "first_contact_at": "2025-08-20",
         "scope_sent_at": "2025-09-05",
         "status": "paid"
@@ -118,6 +123,7 @@
         "invoice_id": "INV-1006",
         "customer": "Soylent LLC",
         "amount_usd": 140000.0,
+        "balance_usd": 140000.0,
         "issued_at": "2025-10-03",
         "paid_at": null,
         "first_contact_at": "2025-09-08",
@@ -128,8 +134,9 @@
         "invoice_id": "INV-1007",
         "customer": "Globex Inc",
         "amount_usd": 265000.0,
+        "balance_usd": 0.0,
         "issued_at": "2025-11-15",
-        "paid_at": "2025-11-15",
+        "paid_at": null,
         "first_contact_at": "2025-10-22",
         "scope_sent_at": "2025-11-08",
         "status": "paid"
