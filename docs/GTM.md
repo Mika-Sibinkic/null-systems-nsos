@@ -1,7 +1,7 @@
 <a id="top"></a>
 # GTM + Unit Economics
 
-> The founder/market lens the build plan otherwise misses (Tan). Draft scaffold — fill the bracketed
+> The founder/market lens the build plan otherwise misses. Draft scaffold — fill the bracketed
 > `[TBD]` with real numbers as design-partner conversations produce them. Not code, but a gate on
 > whether this is a fundable product vs a clever pipeline.
 
@@ -45,18 +45,18 @@ leadership hours sunk in coordination. **Validate which one is the wedge before 
   Estimate: `[TBD — measure on first real run]`. Per-tenant spend cap enforced (Throughput pillar).
 - **Price per diagnostic / SOW:** `[TBD]`.
 - **Gross margin target:** `[TBD ≥ 80% software-style]`. NIM-primary + gauntlet-call caching keeps COGS low.
-- **The 10x test (Tan):** is the diagnostic 10x cheaper/faster than a human consulting engagement for
+- **The 10x test:** is the diagnostic 10x cheaper/faster than a human consulting engagement for
   comparable insight? If not, sharpen scope until it is.
 
 <a id="eval"></a>
-## Eval set = crown-jewel IP (Karpathy)
+## Eval set = crown-jewel IP
 The labeled diagnostic "signaling" — which findings were real, which SOWs the operator picked, which
 delivered — is the asset competitors can't copy. **Cold-start:** bootstrap labels from Null Systems'
 **prior consulting engagements** before live clients exist; expand with every design-partner outcome.
 Version it; treat it as IP, not a byproduct.
 
 <a id="trust"></a>
-## Trust as sales collateral (LeCun + compliance pillar)
+## Trust as sales collateral (compliance pillar)
 SMB handing over financials is the biggest activation barrier. Make trust a feature:
 - "**We don't train shared models on your data**" — guaranteed by NIM-primary (no client data to a
   frontier vendor) + per-tenant isolation.

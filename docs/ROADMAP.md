@@ -11,7 +11,7 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 [2026-05-28 conglomeration architecture](./decisions/2026-05-28-saas-conglomeration-architecture.md).
 
 <a id="phase0"></a>
-## Phase 0 — Repo + governance  ·  ✅ done (2026-05-28)
+## Phase 0 — Repo + governance  ·  done (2026-05-28)
 - [x] `dev` branch off baseline `c6b1f83`
 - [x] Tier-2 decision record written
 - [x] Living docs (PRODUCT/STATE/ROADMAP/GTM/UPDATE-PROTOCOL)
@@ -20,49 +20,50 @@ real findings → scored SOWs → operator choice) before going wide. Governs de
 > State: [STATE#docs](./STATE.md#docs), [STATE#harness](./STATE.md#harness)
 
 <a id="phase1"></a>
-## Phase 1 — Onboarding + ONE connector (QuickBooks)  ·  ✅ done (2026-06-02)
+## Phase 1 — Onboarding + ONE connector (QuickBooks)  ·  done (2026-06-02)
 - [x] Web onboarding flow (secrets server-side; scoped token)
 - [x] `client/adapters/quickbooks.py` → `client/snapshots/{tenant_id}/baseline.json` (schema-valid)
 - [x] Tenant isolation by `tenant_id` (per-tenant authz in `client/onboarding/auth.py`)
 - [x] <1h **teaser** path (one cheap high-signal finding, grounded)
 - [x] Next.js web surface (`tsc --noEmit` clean) + engine HTTP boundary
 - [x] `scripts/check_docs_sync.py` docs-sync gate
-- **Success:** ✅ synthetic tenant's QuickBooks data lands as a valid `baseline.json`; teaser renders.
+- **Success:** met. Synthetic tenant's QuickBooks data lands as a valid `baseline.json`; teaser renders.
 > State: [STATE#client](./STATE.md#client), [STATE#surface](./STATE.md#surface)
 
 <a id="phase2"></a>
-## Phase 2 — Financial meta-team executes  *(the missing core)*  ·  ✅ done (2026-06-02)
+## Phase 2 — Financial meta-team executes  ·  done (2026-06-02)
 - [x] Expand `sample-financial.jsonl` → financial question battery (`engine/meta-levels/financial/questions.jsonl` + `team.py`, 6 questions, 6/6 answered from baseline)
-- [x] `engine/meta-levels/financial/` runs gauntlet vs `baseline.json` → **real** `findings.jsonl` (6 grounded findings)
+- [x] `engine/meta-levels/financial/` runs gauntlet vs `baseline.json` → grounded `findings.jsonl`
 - [x] Bottleneck / time-leak / dollars-missed logic (`findings.py`: vendor/customer concentration, overdue-AR, advisory-spend, scope cycle-time, margin)
-- [x] **Grounded-numbers gate**: every `impact_usd`/`impact_hours` source-traced + confidence-banded; unsourced number → rejected in-engine (`assert_grounded`, fail-closed) + `build/probes/grounded_numbers.py` (LeCun grounding)
-- [x] `quality_judge` gate: low-confidence findings → FDE review queue before client sees (`review_gate.py`, Karpathy autonomy slider)
-- **Success:** real (not fixture) findings with sourced numbers flow from QB snapshot.
+- [x] **Grounded-numbers gate**: every `impact_usd`/`impact_hours` source-traced + confidence-banded; unsourced number → rejected in-engine (`assert_grounded`, fail-closed) + `scripts/probes/grounded_numbers.py`
+- [x] `quality_judge` gate: low-confidence findings → FDE review queue before client sees (`review_gate.py`)
+- **Success:** findings with sourced numbers flow from the snapshot of a fabricated QuickBooks fixture.
 > State: [STATE#engine](./STATE.md#engine), [STATE#sow](./STATE.md#sow)
 
 <a id="phase3"></a>
-## Phase 3 — Council + SOW assembly + scoring  ·  ✅ done (2026-06-02)
+## Phase 3 — Council + SOW assembly + scoring  ·  done (2026-06-02)
 - [x] Council ranks real findings (works today)
 - [x] Bundle ranked findings → 2–3 **SOW candidates** (`engine/sow/assembly.py` — thrust taxonomy, source-traced union)
-- [x] Score each: **WWOD** (consultant-would-push + confidence + gaps, `engine/sow/wwod_score.py`) × **5-pillar** deployability grade (`engine/sow/pillar_grade.py` — 3 SOWs grade A)
+- [x] Score each: **WWOD** (consultant-would-push + confidence + gaps, `engine/sow/wwod_score.py`) × **5-pillar** deployability grade (`engine/sow/pillar_grade.py`; security pillar is a constant, so the grade is a placeholder)
 - [x] Attach quantified success metrics (EBITDA %/yr, hrs/yr, payback months — `engine/sow/metrics.py`, grounded-numbers-validated)
-- **Success:** synthetic client yields **3 scored, metric-bearing SOWs** (EBITDA +21–273%/yr, payback 0.3–3.3mo).
+- **Success:** synthetic client yields 2–3 scored, metric-bearing SOWs.
 > State: [STATE#sow](./STATE.md#sow)
 
 <a id="phase4"></a>
-## Phase 4 — SOW presentation + operator choice ✅
+## Phase 4 — SOW presentation + operator choice  ·  partial
 - [x] `report_generator.py` → 2–3 SOWs, CEO-language, side-by-side (`render_sow_report` + `presentation/side-by-side/sbs.py`; passes quality_judge gate)
-- [x] Web: operator reviews + picks → FDE handoff packet (`web/app/diagnostic/[runId]/page.tsx` + server-side routes; `presentation/handoff/packet.py` exports JSON + markdown brief)
-- **Success:** operator can compare and select a SOW in the web UI; packet exports. **Met** (109 tests pass; pillar5_security + quality_judge green).
+- [x] FDE handoff packet: `presentation/handoff/packet.py` exports JSON + markdown brief
+- [ ] Web: operator reviews + picks. `web/app/diagnostic/[runId]/page.tsx` exists; the `/api/runs/[runId]/*` routes it calls and the engine routes behind them are not built
+- **Success:** operator can compare and select a SOW in the web UI; packet exports. Packet exports; selection in the web UI is not met.
 > State: [STATE#sow](./STATE.md#sow), [STATE#surface](./STATE.md#surface)
 
 <a id="phase5"></a>
-## Phase 5 — Outcome flywheel + E2E gate ✅
+## Phase 5 — Outcome flywheel + E2E gate  ·  done
 - [x] Wire `learning/feedback/` — capture predicted vs realized per shipped SOW (`outcome_loop.py` + `schema.json`; append-only ledger → eval-set deltas)
 - [x] Monitoring/recurring tier hook (land-and-expand) — `learning/feedback/monitoring.py` (cadence + realized-impact stub) + `engine/run/durable.py` (idempotency + retry/backoff)
-- [x] E2E on synthetic-client-a through the **real** pipe — `tests/test_e2e_synthetic.py` (real data, not fixtures)
-- [x] `promotion_gate.evaluate_proposal()` green (5/5); `eval_harness` no regression (offline-deterministic mode, [decision](./decisions/2026-06-07-offline-deterministic-eval-harness.md))
-- **Success:** full pipe runs end-to-end; flywheel captures its first (synthetic) outcome. **Met** (132 tests pass; all P5 exit-gate audits green).
+- [x] E2E on synthetic-client-a through the **real** pipe — `tests/test_e2e_synthetic.py` (fabricated QuickBooks fixture)
+- [x] `promotion_gate.evaluate_proposal()` wired; the gauntlet and perf inputs it reads are produced outside the repo; `eval_harness` no regression (offline-deterministic mode, [decision](./decisions/2026-06-07-offline-deterministic-eval-harness.md))
+- **Success:** full pipe runs end-to-end; flywheel captures its first (synthetic) outcome. Met.
 > State: [STATE#flywheel](./STATE.md#flywheel)
 
 <a id="cross"></a>
