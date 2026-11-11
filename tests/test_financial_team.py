@@ -100,6 +100,14 @@ def test_ar_overdue_detects_two_overdue():
     assert a["exposure_usd"] == 235000.0  # 95000 + 140000
 
 
+def test_ar_finding_puts_the_open_balance_at_risk():
+    """The finding's at-risk dollars are the overdue balances, not an assumed collectable share."""
+    overdue = sum(i["balance_usd"] for i in BASELINE["accounting"]["invoices"] if i["status"] == "overdue")
+    f = next(f for f in findings_mod.run_findings(BASELINE) if f["method"] == "ar_overdue")
+    assert f["exposure_usd"] == overdue == 235000.0
+    assert f["impact_usd"] == 0.0
+
+
 # ── P2.T3: grounding gate wired into the producer (fail-closed) ───────────────
 def test_grounding_gate_passes_real_findings():
     for f in findings_mod.run_findings(BASELINE):

@@ -44,7 +44,7 @@ THRUSTS: dict[str, dict] = {
         "methods": ["customer_concentration", "ar_overdue", "scope_cycle_time"],
     },
     "margin_expansion": {
-        "title": "Expand margin and rationalize cost base",
+        "title": "Expand margin",
         "methods": ["margin_structure", "opex_benchmark"],
     },
     "supply_resilience": {

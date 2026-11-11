@@ -36,10 +36,10 @@ An excerpt of the committed copy, `examples/synthetic-client-a/report.md`:
 ```text
 ## Side-by-side
 
-| Dimension | Expand margin and rationalize cost base | De-risk and grow the revenue base | Reduce supplier concentration risk |
+| Dimension | Expand margin | De-risk and grow the revenue base | Reduce supplier concentration risk |
 |---|---|---|---|
 | **Annual impact** | $1,400,000/yr | $11,875/yr | $0/yr |
-| **At risk (not in totals)** | — | $188,000 at risk | $8,400,000 at risk |
+| **At risk (not in totals)** | — | $235,000 at risk | $8,400,000 at risk |
 | **EBITDA lift** | +45% | +0% | +0% |
 | **Payback** | 2 months | 182 months | — |
 | **Leadership hours freed / yr** | — | 48 hrs/yr | — |

@@ -5,6 +5,7 @@
 - **Customer share:** the denominator is `profit_and_loss.TotalIncome` when present. Before, it was 7 invoices, so Northwind read as 31% of revenue. Against $28M it is 1.6%, so the finding no longer fires. With no P&L the share reads "of invoiced sample (n invoices)".
 - **Render:** report, side-by-side and handoff packet show exposure as "at risk". It never enters annual impact, EBITDA lift or payback.
 - **Effect on the synthetic run:** the supply-resilience SOW goes from $8.4M/yr to $0/yr with $8.4M at risk, and its WWOD conviction drops with it.
-- **Not changed:** the 80% AR recovery assumption, the concentration thresholds, and the council weights.
+- **Overdue AR at risk** is the open overdue balance ($235,000 on synthetic-client-a). The 80% recovery assumption is gone; nothing used it once AR stopped counting as impact.
+- **Not changed:** the concentration thresholds and the council weights.
 - **Check:** `python -m pytest -q tests/test_e2e_synthetic.py`.
 - **Rollback:** revert the commit. No schema migration. `exposure_usd` is a new field that older readers ignore.

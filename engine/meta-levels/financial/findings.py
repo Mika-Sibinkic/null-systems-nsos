@@ -36,7 +36,6 @@ VENDOR_CONCENTRATION_FLAG = 0.25         # > 25% of cost base on one vendor = ri
 CUSTOMER_CONCENTRATION_FLAG = 0.15       # > 15% of revenue from one customer = risk
 PRO_SERVICES_BENCHMARK_PCT = 0.10        # advisory spend > 10% of OPEX is reducible [LIKELY]
 PRO_SERVICES_REDUCIBLE_PCT = 0.30        # share of outsized advisory plausibly insourced [LIKELY]
-AR_RECOVERY_PCT = 0.80                   # share of overdue AR realistically collectable [LIKELY]
 GROSS_MARGIN_FLAG = 0.65                 # gross margin below this is flagged (services benchmark) [LIKELY]
 MARGIN_RECOVERY_PTS = 0.05               # flagged margin: 5 points of TotalIncome assumed recoverable [LIKELY]
 
@@ -147,16 +146,13 @@ def a_ar_overdue(baseline: dict) -> Optional[dict]:
     exposure = sum(float(i.get("balance_usd", 0)) for i in overdue)
     if exposure <= 0:
         return None
-    recoverable = exposure * AR_RECOVERY_PCT
     ids = [i.get("invoice_id") for i in overdue]
     return {
-        "summary": f"{len(overdue)} overdue invoices = ${exposure:,.0f} AR exposure; ~${recoverable:,.0f} recoverable",
+        "summary": f"{len(overdue)} overdue invoices = ${exposure:,.0f} open balance",
         "flagged": True,
         "overdue_count": len(overdue),
         "exposure_usd": float(exposure),
-        "recoverable_usd": float(recoverable),
-        "source": [f"accounting.invoices[status=overdue ids={ids}] balance_usd sum={exposure:.0f}",
-                   f"{AR_RECOVERY_PCT:.0%} of overdue AR collectable [LIKELY]"],
+        "source": [f"accounting.invoices[status=overdue ids={ids}] balance_usd sum={exposure:.0f}"],
     }
 
 
@@ -316,9 +312,9 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
         bottleneck = "Revenue concentration in one customer"
         headline = f"{analytic['top_customer']} is {analytic['top_customer_share']:.0%} {analytic['share_of']} — concentration risk"
     elif method == "ar_overdue":
-        exposure_usd = float(analytic.get("recoverable_usd", 0))  # one-time cash, not /yr
+        exposure_usd = float(analytic.get("exposure_usd", 0))  # the open balance; one-time cash, not /yr
         bottleneck = "Working capital trapped in overdue AR"
-        headline = f"${analytic['exposure_usd']:,.0f} in overdue AR; ~${analytic['recoverable_usd']:,.0f} recoverable"
+        headline = f"${exposure_usd:,.0f} in overdue AR across {analytic['overdue_count']} invoices"
     elif method == "opex_benchmark" and analytic.get("flagged"):
         impact_usd = float(analytic.get("reducible_usd", 0))
         bottleneck = "Outsized advisory/professional-services spend"

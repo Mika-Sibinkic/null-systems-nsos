@@ -19,7 +19,7 @@ How to read the scores:
 
 ---
 
-## Option 1 — Expand margin and rationalize cost base — **our recommendation**
+## Option 1 — Expand margin — **our recommendation**
 
 Recover gross margin.
 
@@ -40,8 +40,7 @@ Collect overdue receivables and cut proposal scoping time.
 
 - **Annual impact**: $11,875/year
 - **Assumes**: 0.5 partner hours per day over the 5-day target, at $250/hr
-- **Assumes**: 80% of overdue AR collectable
-- **At risk**: $188,000 (exposure, not counted in annual impact, EBITDA or payback)
+- **At risk**: $235,000 (exposure, not counted in annual impact, EBITDA or payback)
 - **EBITDA lift**: +0%
 - **Leadership hours freed**: 48 hours/year
 - **Payback**: 182 months
@@ -68,10 +67,10 @@ Diversify the vendor base so one supplier failure or price shock cannot stall de
 
 ## Side-by-side
 
-| Dimension | Expand margin and rationalize cost base | De-risk and grow the revenue base | Reduce supplier concentration risk |
+| Dimension | Expand margin | De-risk and grow the revenue base | Reduce supplier concentration risk |
 |---|---|---|---|
 | **Annual impact** | $1,400,000/yr | $11,875/yr | $0/yr |
-| **At risk (not in totals)** | — | $188,000 at risk | $8,400,000 at risk |
+| **At risk (not in totals)** | — | $235,000 at risk | $8,400,000 at risk |
 | **EBITDA lift** | +45% | +0% | +0% |
 | **Payback** | 2 months | 182 months | — |
 | **Leadership hours freed / yr** | — | 48 hrs/yr | — |
@@ -80,7 +79,7 @@ Diversify the vendor base so one supplier failure or price shock cannot stall de
 | **Evidence confidence** | 70% | 70% | 80% |
 | **Key thing to firm up** | one finding backs this option; a second, independent finding would add corroboration | throughput: $11,875/yr is below the ~$250,000 engagement-viability floor (score 0.31 < 0.5) | throughput: $0/yr is below the ~$250,000 engagement-viability floor (score 0.30 < 0.5) |
 
-**Our recommendation: Expand margin and rationalize cost base.** $1,400,000/yr with a payback of 2 months. Before committing, confirm: one finding backs this option; a second, independent finding would add corroboration.
+**Our recommendation: Expand margin.** $1,400,000/yr with a payback of 2 months. Before committing, confirm: one finding backs this option; a second, independent finding would add corroboration.
 
 ---
 
