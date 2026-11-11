@@ -14,12 +14,6 @@ interface TeaserState {
   error?: string;
 }
 
-const SOURCES = [
-  { id: "quickbooks", label: "QuickBooks", kind: "Accounting", note: "synthetic export" },
-  { id: "hubspot", label: "HubSpot", kind: "CRM", note: "not connected in this demo" },
-  { id: "slack", label: "Slack", kind: "Comms", note: "not connected in this demo" },
-];
-
 const MUTED = "#9aa3ab";
 
 export default function OnboardingPage() {
@@ -53,26 +47,22 @@ export default function OnboardingPage() {
         reads it server-side; this browser only holds a short-lived access token.
       </p>
 
-      <div style={{ display: "grid", gap: 12, marginBottom: 32 }}>
-        {SOURCES.map((s) => (
-          <div
-            key={s.id}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              border: "1px solid #1f2630",
-              borderRadius: 10,
-              padding: "16px 20px",
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 600 }}>{s.label}</div>
-              <div style={{ fontSize: 13, color: MUTED }}>{s.kind}</div>
-            </div>
-            <span style={{ fontSize: 13, color: MUTED }}>{s.note}</span>
-          </div>
-        ))}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          border: "1px solid #1f2630",
+          borderRadius: 10,
+          padding: "16px 20px",
+          marginBottom: 32,
+        }}
+      >
+        <div>
+          <div style={{ fontWeight: 600 }}>QuickBooks</div>
+          <div style={{ fontSize: 13, color: MUTED }}>Accounting</div>
+        </div>
+        <span style={{ fontSize: 13, color: MUTED }}>synthetic export</span>
       </div>
 
       <button

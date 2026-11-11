@@ -2,7 +2,7 @@
   "name": "null-systems-web",
   "version": "0.1.0",
   "private": true,
-  "description": "NSOS web app: onboarding and SOW review. Calls the Python engine over HTTP and holds only a scoped, short-lived token, never a connector secret.",
+  "description": "NSOS web app: the onboarding demo. Calls the Python engine over HTTP and holds only a scoped, short-lived token, never a connector secret.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
