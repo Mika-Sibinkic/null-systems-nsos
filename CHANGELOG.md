@@ -4,7 +4,22 @@ All notable changes to NSOS. Format loosely follows
 Keep-a-Changelog; the diagnostic engine's internal pattern/eval promotions are tracked separately by
 `learning/promotion-gate/ledger.jsonl`.
 
-## [Unreleased] — dev branch
+## [1.0.0] - 2026-11-11
+
+First public release. It runs end to end on one fabricated client. No real firm's books have been
+through it yet.
+
+- `python scripts/run_synthetic.py` turns a QuickBooks export into an owner-facing report with three
+  scored options. CI reruns it and fails if the output differs from `examples/synthetic-client-a/report.md`.
+- Every dollar in the output carries a source trace and a confidence. The engine raises on one that
+  does not.
+- Supplier concentration, customer concentration and overdue receivables show as dollars at risk.
+  They stay out of annual impact, EBITDA lift and payback. Before this, an $8.4M supplier dependency
+  was booked as $8.4M a year of savings and a +273% EBITDA lift.
+- Findings under 0.65 confidence are listed as pending review and left out of every total.
+- 196 tests run offline with no API key.
+
+The dated entries below are what went into 1.0.0.
 
 ### 2026-11-11 — Launch pass
 - **Fixed** vendor and customer concentration and overdue AR are exposure (`exposure_usd`), never annual
