@@ -1,7 +1,7 @@
 """Tests for the side-by-side SOW comparison + decision report (P4.T1).
 
-Covers `presentation/side-by-side/sbs.py` and `render_sow_report` in
-`presentation/exec-report/report_generator.py`. Uses REAL SOW candidates
+Covers `presentation/side_by_side/sbs.py` and `render_sow_report` in
+`presentation/exec_report/report_generator.py`. Uses REAL SOW candidates
 assembled from the synthetic tenant baseline (not fixtures), then runs the
 actual quality_judge gate over the rendered client-facing report —
 verification, not assertion.
