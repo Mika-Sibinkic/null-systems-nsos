@@ -38,13 +38,16 @@ export default function OnboardingPage() {
 
   const f = state.status === "ready" ? state.finding : undefined;
   const unreachable = f?.method === "engine_unreachable";
+  // Plain words for the owner, as in the report: assumptions by name, export lines by count.
+  const assumed = (f?.evidence ?? []).filter((e) => e.endsWith(" [LIKELY]")).map((e) => e.slice(0, -9));
+  const traced = (f?.evidence.length ?? 0) - assumed.length;
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto", padding: "64px 24px" }}>
       <h1 style={{ fontSize: 32, marginBottom: 8 }}>Sample diagnostic</h1>
       <p style={{ color: MUTED, marginBottom: 32 }}>
-        This demo reads a synthetic QuickBooks export, not your books. The engine
-        reads it server-side; this browser only holds a short-lived access token.
+        This demo reads a synthetic, QuickBooks-like export, not your books. The
+        engine reads it on the server. Your browser never sees a token or a secret.
       </p>
 
       <div
@@ -116,9 +119,12 @@ export default function OnboardingPage() {
               ${f.impact_usd.toLocaleString("en-US")}/yr
             </div>
             <ul style={{ color: MUTED, fontSize: 14, marginTop: 16 }}>
-              {f.evidence.map((e, i) => (
-                <li key={i}>{e.endsWith(" [LIKELY]") ? `Assumes: ${e.slice(0, -9)}` : e}</li>
+              {assumed.map((a, i) => (
+                <li key={i}>Assumes: {a}</li>
               ))}
+              {traced > 0 ? (
+                <li>From {traced} {traced === 1 ? "line" : "lines"} of the export</li>
+              ) : null}
             </ul>
             <div style={{ fontSize: 12, color: MUTED, marginTop: 12 }}>
               confidence {Math.round(f.confidence * 100)}%
