@@ -137,7 +137,9 @@ def test_paid_invoice_has_no_invented_paid_date():
 
 def test_write_baseline_rejects_path_traversal_tenant(tmp_path):
     import pytest
-    baseline = build_baseline(_export(), "../escaped")
-    with pytest.raises(ValueError):
-        write_baseline(baseline, snapshots_root=tmp_path / "snapshots")
+    for bad in ("../escaped", "synth\n"):
+        baseline = build_baseline(_export(), bad)
+        with pytest.raises(ValueError):
+            write_baseline(baseline, snapshots_root=tmp_path / "snapshots")
     assert not (tmp_path / "escaped").exists()
+    assert not (tmp_path / "snapshots").exists()

@@ -34,8 +34,10 @@ _SECRET_ENV = "VINNY_TOKEN_SECRET"
 # this constant is NOT a credential to any real system and is flagged by pillar5 as dev-only.
 _DEV_SECRET = "dev-only-unsigned-not-for-production"
 # Same rule as schemas/baseline.json. The tenant id becomes a path segment under
-# client/snapshots/, so anything else ("/tmp/x", "../..") is refused at the boundary.
-TENANT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
+# client/snapshots/, so anything else ("/tmp/x", "../..", "a\n") is refused at the boundary.
+# (?!\n): jsonschema applies the pattern with re.search, where a bare $ also matches
+# before a trailing newline.
+TENANT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}(?!\n)$")
 
 
 class AuthError(Exception):

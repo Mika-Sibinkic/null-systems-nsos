@@ -151,6 +151,12 @@ def test_web_read_path_enforces_per_tenant_authz(tmp_path):
 
 def test_tenant_rule_matches_baseline_schema():
     # The adapter enforces the schema pattern, the token boundary enforces TENANT_ID_RE.
+    # Compare behaviour, not pattern strings: jsonschema uses re.search, auth uses fullmatch.
+    import jsonschema
     from client.onboarding.auth import TENANT_ID_RE
     schema = json.loads((ROOT / "schemas" / "baseline.json").read_text())
-    assert schema["properties"]["tenant_id"]["pattern"] == TENANT_ID_RE.pattern
+    tenant_schema = schema["properties"]["tenant_id"]
+    assert tenant_schema["pattern"] == TENANT_ID_RE.pattern
+    for tid in ["synth-acme-services", "a", "synth\n", "a\nb", "../x", "-a", "A", "a" * 65]:
+        schema_ok = jsonschema.Draft7Validator(tenant_schema).is_valid(tid)
+        assert schema_ok == bool(TENANT_ID_RE.fullmatch(tid)), repr(tid)
