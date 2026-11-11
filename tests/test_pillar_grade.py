@@ -55,7 +55,7 @@ def test_ungrounded_sow_flags_compliance_blocker():
     g = pg.grade_sow(ungrounded)
     assert g.scores["compliance"] < 1.0
     assert g.scores["audit_replayable"] < pg.BLOCK_THRESHOLD
-    assert any("audit_replayable" in b or "compliance" in b for b in g.blockers)
+    assert g.rationale["audit_replayable"] in g.blockers
 
 
 def test_tiny_impact_flags_throughput():
@@ -92,5 +92,4 @@ def test_attach_grades_embeds_block():
 def test_blockers_below_threshold_only():
     for g in pg.grade_sows(_real_sows()):
         for pillar, score in g.scores.items():
-            flagged = any(b.startswith(pillar + ":") for b in g.blockers)
-            assert flagged == (score < pg.BLOCK_THRESHOLD)
+            assert (g.rationale[pillar] in g.blockers) == (score < pg.BLOCK_THRESHOLD)

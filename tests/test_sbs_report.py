@@ -112,6 +112,7 @@ def test_report_renders_each_sow():
         assert s.title in md
     assert "Side-by-side" in md
     assert "EBITDA lift" in md
+    assert "of net income" in md  # the base is named next to the percent
     assert "Payback" in md
 
 

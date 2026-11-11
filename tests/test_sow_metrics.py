@@ -33,15 +33,16 @@ def test_every_sow_gets_the_three_metrics():
 
 def test_ebitda_base_traces_to_net_income():
     b = _baseline()
-    base, src = metrics.ebitda_base(b)
+    base, src, label = metrics.ebitda_base(b)
     expected = b["accounting"]["profit_and_loss"]["NetIncome"]
     assert abs(base - expected) < 0.01
     assert "NetIncome" in src
+    assert label == "net income"
 
 
 def test_ebitda_uplift_is_impact_over_base():
     b = _baseline()
-    base, _ = metrics.ebitda_base(b)
+    base, _, _ = metrics.ebitda_base(b)
     for m in metrics.metrics_for_all(_real_sows(b), b):
         expected = round(100.0 * m.impact_usd / base, 2)
         assert abs(m.ebitda_uplift_pct - expected) < 0.01
@@ -137,5 +138,5 @@ def test_payback_and_ebitda_formatting():
     assert metrics.fmt_payback(1.14) == "1 month"
     assert metrics.fmt_payback(3.32) == "3 months"
     assert metrics.fmt_payback(None) == "—"
-    assert metrics.fmt_ebitda(61.56) == "+62%"
-    assert metrics.fmt_ebitda(None) == "— (EBITDA base not positive)"
+    assert metrics.fmt_ebitda(61.56, "net income") == "+62% of net income"
+    assert metrics.fmt_ebitda(None, "net income") == "— (EBITDA base not positive)"

@@ -30,6 +30,11 @@ COLD_START_GAP = (
     "we have no past engagement like this on record, so the conviction score "
     "rests only on size, confidence and how many findings back it"
 )
+# Owner-facing text states this once, naming the options it applies to.
+SINGLE_FINDING_GAP = (
+    "one finding backs this option; a second, independent finding "
+    "would add corroboration"
+)
 
 
 @dataclass
@@ -83,10 +88,7 @@ def _gaps_for(sow: Any) -> list[str]:
         gaps.append("SOW carries impact with no source trace — grounding gap")
     n = len(_attr(sow, "finding_ids", []) or [])
     if n < 2:
-        gaps.append(
-            "one finding backs this option; a second, independent finding "
-            "would add corroboration"
-        )
+        gaps.append(SINGLE_FINDING_GAP)
     return gaps
 
 

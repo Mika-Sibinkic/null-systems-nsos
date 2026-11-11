@@ -37,7 +37,7 @@ CUSTOMER_CONCENTRATION_FLAG = 0.15       # > 15% of revenue from one customer = 
 PRO_SERVICES_BENCHMARK_PCT = 0.10        # advisory spend > 10% of OPEX is reducible [LIKELY]
 PRO_SERVICES_REDUCIBLE_PCT = 0.30        # share of outsized advisory plausibly insourced [LIKELY]
 GROSS_MARGIN_FLAG = 0.65                 # gross margin below this is flagged (services benchmark) [LIKELY]
-MARGIN_RECOVERY_PTS = 0.05               # flagged margin: 5 points of TotalIncome assumed recoverable [LIKELY]
+MARGIN_RECOVERY_PTS = 0.05               # flagged margin: 5 points of revenue assumed recoverable [LIKELY]
 
 # Confidence per finding method: how directly the number is measured. A constant
 # per method, not computed from the data. The review gate holds anything under 0.65.
@@ -256,7 +256,7 @@ def a_margin_structure(baseline: dict) -> Optional[dict]:
         "source": [f"accounting.profit_and_loss.TotalIncome={revenue:.0f}",
                    f"accounting.profit_and_loss.GrossProfit={gross:.0f}",
                    f"accounting.profit_and_loss.NetIncome={net:.0f}",
-                   f"{MARGIN_RECOVERY_PTS * 100:.0f} points of TotalIncome recoverable "
+                   f"{MARGIN_RECOVERY_PTS * 100:.0f} points of revenue recoverable "
                    f"when gross margin is under {GROSS_MARGIN_FLAG:.0%} [LIKELY]"],
     }
 

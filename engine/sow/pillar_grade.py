@@ -28,7 +28,8 @@ from typing import Any, Sequence
 
 PILLARS = ["security", "compliance", "build_quality", "throughput", "audit_replayable"]
 
-# A pillar score < this is a deployability blocker the operator must see.
+# A pillar score < this is a deployability blocker the owner must see. The blocker
+# text is the pillar's plain-words rationale; the score stays in `scores`.
 BLOCK_THRESHOLD = 0.5
 # Aggregate grade bands.
 GRADE_BANDS = [(0.85, "A"), (0.70, "B"), (0.55, "C"), (0.40, "D")]
@@ -109,7 +110,7 @@ def _score_throughput(sow: Any) -> tuple[float, str]:
         score = min(1.0, 0.6 + 0.4 * min(1.0, impact / (4 * floor)))
         return round(score, 4), f"${impact:,.0f}/yr impact justifies a durable FDE engagement"
     return round(0.3 + 0.3 * (impact / floor), 4), (
-        f"${impact:,.0f}/yr is below the ~${floor:,.0f} engagement-viability floor"
+        f"${impact:,.0f}/yr is below the ${floor:,.0f}/yr where an engagement roughly pays for itself"
     )
 
 
@@ -152,7 +153,7 @@ def grade_sow(sow: Any) -> PillarGrade:
         scores[pillar] = s
         rationale[pillar] = why
         if s < BLOCK_THRESHOLD:
-            blockers.append(f"{pillar}: {why} (score {s:.2f} < {BLOCK_THRESHOLD})")
+            blockers.append(why)
     aggregate = round(sum(scores.values()) / len(scores), 4)
     return PillarGrade(
         sow_id=_attr(sow, "id", "unknown"),

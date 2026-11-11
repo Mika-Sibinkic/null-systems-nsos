@@ -8,14 +8,16 @@
 
 ## Executive summary
 
-From your data we assembled **3 growth options**. Each is a Statement of Work you can choose between by where you want the business to go. Every number below comes from your books or from an assumption we name next to it.
+From your data we assembled **3 growth options**, each a statement of work (SOW) you can pick. Every number below comes from your books or from an assumption we name next to it.
 
 How to read the scores:
 
-- **Consultant conviction**: we have no past engagement like this on record, so the conviction score rests only on size, confidence and how many findings back it.
-- **Deployability grade**: a placeholder. One of its five checks returns a fixed score.
-- **Evidence confidence**: set per type of finding, not measured for each number.
+- **EBITDA lift**: annual impact divided by your net income ($3,080,000), which stands in for EBITDA. Real EBITDA is higher, so the real lift is lower.
 - **Payback**: assumes the work costs $180,000 per option.
+- **Deployability grade**: a placeholder. One of its five checks returns a fixed score. ⚠ marks an option too small to pay for an engagement.
+- **Consultant conviction**: we have no past engagement like this on record, so the conviction score rests only on size, confidence and how many findings back it.
+- **Evidence confidence**: set per type of finding, not measured for each number.
+- **One finding**: Options 1 and 3 each rest on one finding. A second, independent finding would make them firmer.
 
 ---
 
@@ -24,13 +26,12 @@ How to read the scores:
 Recover gross margin.
 
 - **Annual impact**: $1,400,000/year
-- **Assumes**: 5 points of TotalIncome recoverable when gross margin is under 65%
-- **EBITDA lift**: +45%
+- **Assumes**: 5 points of revenue recoverable when gross margin is under 65%
+- **EBITDA lift**: +45% of net income
 - **Payback**: 2 months
 - **Consultant conviction**: 54% (how hard we'd push this)
 - **Deployability grade**: A
 - **Evidence confidence**: 70%, from 3 lines of your accounting
-- **Before committing, we recommend you confirm**: one finding backs this option; a second, independent finding would add corroboration
 
 ---
 
@@ -41,11 +42,11 @@ Collect overdue receivables and cut proposal scoping time.
 - **Annual impact**: $11,875/year
 - **Assumes**: 0.5 partner hours per day over the 5-day target, at $250/hr
 - **At risk**: $235,000 (exposure, not counted in annual impact, EBITDA or payback)
-- **EBITDA lift**: +0%
+- **EBITDA lift**: +0% of net income
 - **Leadership hours freed**: 48 hours/year
 - **Payback**: 182 months
 - **Consultant conviction**: 24% (how hard we'd push this)
-- **Deployability grade**: B — has a deployability flag, see below
+- **Deployability grade**: B ⚠ $11,875/yr is below the $250,000/yr where an engagement roughly pays for itself
 - **Evidence confidence**: 70%, from 3 lines of your accounting
 
 ---
@@ -56,12 +57,11 @@ Diversify the vendor base so one supplier failure or price shock cannot stall de
 
 - **Annual impact**: $0/year
 - **At risk**: $8,400,000 (exposure, not counted in annual impact, EBITDA or payback)
-- **EBITDA lift**: +0%
+- **EBITDA lift**: +0% of net income
 - **Payback**: —
 - **Consultant conviction**: 26% (how hard we'd push this)
-- **Deployability grade**: B — has a deployability flag, see below
+- **Deployability grade**: B ⚠ $0/yr is below the $250,000/yr where an engagement roughly pays for itself
 - **Evidence confidence**: 80%, from 2 lines of your accounting
-- **Before committing, we recommend you confirm**: one finding backs this option; a second, independent finding would add corroboration
 
 ---
 
@@ -71,15 +71,15 @@ Diversify the vendor base so one supplier failure or price shock cannot stall de
 |---|---|---|---|
 | **Annual impact** | $1,400,000/yr | $11,875/yr | $0/yr |
 | **At risk (not in totals)** | — | $235,000 at risk | $8,400,000 at risk |
-| **EBITDA lift** | +45% | +0% | +0% |
+| **EBITDA lift** | +45% of net income | +0% of net income | +0% of net income |
 | **Payback** | 2 months | 182 months | — |
 | **Leadership hours freed / yr** | — | 48 hrs/yr | — |
 | **Consultant conviction** | 54% | 24% | 26% |
 | **Deployability grade** | A | B ⚠ | B ⚠ |
 | **Evidence confidence** | 70% | 70% | 80% |
-| **Key thing to firm up** | one finding backs this option; a second, independent finding would add corroboration | throughput: $11,875/yr is below the ~$250,000 engagement-viability floor (score 0.31 < 0.5) | throughput: $0/yr is below the ~$250,000 engagement-viability floor (score 0.30 < 0.5) |
+| **Key thing to firm up** | — | $11,875/yr is below the $250,000/yr where an engagement roughly pays for itself | $0/yr is below the $250,000/yr where an engagement roughly pays for itself |
 
-**Our recommendation: Expand margin.** $1,400,000/yr with a payback of 2 months. Before committing, confirm: one finding backs this option; a second, independent finding would add corroboration.
+**Our recommendation: Expand margin.** $1,400,000/yr with a payback of 2 months.
 
 ---
 
@@ -93,4 +93,4 @@ A person checks these before they count. They are not in any option or total abo
 
 ## How to choose
 
-Pick the option that matches where you want the business to go. Reply to confirm scope or schedule a 30-min scope call; the chosen option exports directly as an FDE engagement packet.
+Reply with the option you want, or book a 30-minute scope call. The option you pick becomes the brief for the engineer who does the work.

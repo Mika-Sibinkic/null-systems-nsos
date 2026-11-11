@@ -20,10 +20,9 @@ def render_sow_report(
     engagement_cost_usd: float | None = None,
     pending: Sequence[dict] = (),
 ) -> str:
-    """CEO-language report rendering the 2-3 scored SOW candidates side-by-side (P4.T1).
+    """Owner-facing report rendering the 2-3 scored SOW candidates side by side.
 
-    Unlike `render_executive_report` (a list of findings), this is the *decision*
-    report: each SOW carries its quantified metrics (EBITDA lift, payback, hours),
+    This is the *decision* report: each SOW carries its quantified metrics (EBITDA lift, payback, hours),
     its WWOD consultant-conviction score, and its 5-pillar deployability grade —
     then a side-by-side comparison matrix and a single honest recommendation.
 
@@ -48,18 +47,33 @@ def render_sow_report(
     lines.append("\n---\n")
     lines.append("## Executive summary\n")
     lines.append(
-        f"From your data we assembled **{len(sbs.columns)} growth options**. "
-        f"Each is a Statement of Work you can choose between by where you want the "
-        f"business to go. Every number below comes from your books or from an "
-        f"assumption we name next to it.\n"
+        f"From your data we assembled **{len(sbs.columns)} growth options**, each a "
+        f"statement of work (SOW) you can pick. Every number below comes from your "
+        f"books or from an assumption we name next to it.\n"
     )
     lines.append("How to read the scores:\n")
-    if any(wwod.COLD_START_GAP in col.gaps for col in sbs.columns):
-        lines.append(f"- **Consultant conviction**: {wwod.COLD_START_GAP}.")
-    lines.append("- **Deployability grade**: a placeholder. One of its five checks returns a fixed score.")
-    lines.append("- **Evidence confidence**: set per type of finding, not measured for each number.")
+    base, _, base_label = fmt.ebitda_base(baseline)
+    if base > 0:
+        lines.append(
+            f"- **EBITDA lift**: annual impact divided by your {base_label} (${base:,.0f}), "
+            f"which stands in for EBITDA. Real EBITDA is higher, so the real lift is lower."
+        )
     cost = engagement_cost_usd if engagement_cost_usd is not None else fmt.DEFAULT_ENGAGEMENT_COST_USD
     lines.append(f"- **Payback**: assumes the work costs ${cost:,.0f} per option.")
+    lines.append(
+        "- **Deployability grade**: a placeholder. One of its five checks returns a fixed score. "
+        "⚠ marks an option too small to pay for an engagement."
+    )
+    if any(wwod.COLD_START_GAP in col.gaps for col in sbs.columns):
+        lines.append(f"- **Consultant conviction**: {wwod.COLD_START_GAP}.")
+    lines.append("- **Evidence confidence**: set per type of finding, not measured for each number.")
+    solo = [str(i) for i, col in enumerate(sbs.columns, start=1) if wwod.SINGLE_FINDING_GAP in col.gaps]
+    if solo:
+        if len(solo) == 1:
+            which, them = f"Option {solo[0]} rests", "it"
+        else:
+            which, them = f"Options {', '.join(solo[:-1])} and {solo[-1]} each rest", "them"
+        lines.append(f"- **One finding**: {which} on one finding. A second, independent finding would make {them} firmer.")
     lines.append("\n---\n")
 
     for i, col in enumerate(sbs.columns, start=1):
@@ -73,12 +87,12 @@ def render_sow_report(
             lines.append(f"- **Assumes**: {a}")
         if col.exposure_usd:
             lines.append(f"- **At risk**: ${col.exposure_usd:,.0f} (exposure, not counted in annual impact, EBITDA or payback)")
-        lines.append(f"- **EBITDA lift**: {fmt.fmt_ebitda(col.ebitda_uplift_pct)}")
+        lines.append(f"- **EBITDA lift**: {fmt.fmt_ebitda(col.ebitda_uplift_pct, col.ebitda_base_label)}")
         if col.impact_hours:
             lines.append(f"- **Leadership hours freed**: {col.impact_hours:.0f} hours/year")
         lines.append(f"- **Payback**: {fmt.fmt_payback(col.payback_months)}")
         lines.append(f"- **Consultant conviction**: {col.wwod_score:.0%} (how hard we'd push this)")
-        grade_note = f"{col.grade}" + (" — has a deployability flag, see below" if col.blockers else "")
+        grade_note = col.grade + (f" ⚠ {col.blockers[0]}" if col.blockers else "")
         lines.append(f"- **Deployability grade**: {grade_note}")
         lines.append(
             f"- **Evidence confidence**: {col.confidence:.0%}, from "
@@ -102,9 +116,8 @@ def render_sow_report(
 
     lines.append("## How to choose\n")
     lines.append(
-        "Pick the option that matches where you want the business to go. "
-        "Reply to confirm scope or schedule a 30-min scope call; the chosen "
-        "option exports directly as an FDE engagement packet.\n"
+        "Reply with the option you want, or book a 30-minute scope call. The option "
+        "you pick becomes the brief for the engineer who does the work.\n"
     )
 
     md = "\n".join(lines)

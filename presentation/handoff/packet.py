@@ -53,6 +53,7 @@ class HandoffPacket:
     # success metrics the flywheel measures realized-vs-predicted on
     success_metrics: dict = field(default_factory=dict)
     exposure_usd: float = 0.0  # at-risk dollars; not part of the quantified target
+    ebitda_base_label: str = ""  # what the EBITDA lift divides by, e.g. "net income"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -123,6 +124,7 @@ def build_packet(
         source=list(col.get("source", []) or []),
         success_metrics=success_metrics,
         exposure_usd=float(col.get("exposure_usd", 0.0) or 0.0),
+        ebitda_base_label=col.get("ebitda_base_label", ""),
     )
 
 
@@ -139,7 +141,7 @@ def render_markdown(p: HandoffPacket) -> str:
     lines.append(f"- **Annual impact**: ${p.impact_usd:,.0f}/year")
     if p.exposure_usd:
         lines.append(f"- **At risk**: ${p.exposure_usd:,.0f} (exposure, not counted in the target)")
-    lines.append(f"- **EBITDA lift**: {_metrics.fmt_ebitda(p.ebitda_uplift_pct)}")
+    lines.append(f"- **EBITDA lift**: {_metrics.fmt_ebitda(p.ebitda_uplift_pct, p.ebitda_base_label)}")
     if p.impact_hours:
         lines.append(f"- **Leadership hours freed**: {p.impact_hours:.0f} hours/year")
     lines.append(f"- **Payback**: {_metrics.fmt_payback(p.payback_months)}")
@@ -156,7 +158,7 @@ def render_markdown(p: HandoffPacket) -> str:
     lines.append("")
     lines.append("## Evidence trace\n")
     for s in p.source:
-        lines.append(f"- {s}")
+        lines.append(f"- Assumes: {s.removesuffix(' [LIKELY]')}" if s.endswith(" [LIKELY]") else f"- {s}")
     lines.append("\n---\n")
     lines.append(
         "The outcome flywheel will track realized-vs-predicted against the "

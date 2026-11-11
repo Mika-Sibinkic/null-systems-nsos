@@ -6,8 +6,7 @@ baseline line + carrying a confidence band so the grounded-numbers gate
 does over findings:
 
   - **EBITDA uplift %/yr** — the SOW's annual impact as a percent of the tenant's
-    current EBITDA base (so a $1.9M thrust on a $3.08M EBITDA base reads as a
-    +62% EBITDA lift — the multiple a CEO actually cares about).
+    EBITDA base. The demo: $1.4M on $3.08M of net income reads as +45%.
   - **hrs/yr reclaimed** — partner/staff hours the SOW frees, summed from its
     findings' `impact_hours`.
   - **payback months** — months for the SOW's annualized impact to recover the
@@ -17,10 +16,10 @@ A metric that is undefined is None, never Infinity: no EBITDA lift when the base
 is not positive, no payback when the SOW carries no dollar impact. The
 `fmt_*` helpers are the one place that turns those into report text.
 
-EBITDA base is read from the baseline P&L (NetIncome as the conservative EBITDA
-proxy when no explicit D&A/interest lines are present — source-traced). The
-engagement cost is a declared, source-tagged assumption ([LIKELY]) so payback is
-honest rather than magic.
+The EBITDA base is NetIncome from the baseline P&L, because the export has no
+D&A or interest lines. Net income is below EBITDA, so this base makes the lift
+look larger than it is; every surface prints the base's name next to the
+percent. The engagement cost is a declared, source-tagged assumption ([LIKELY]).
 
 Output records carry `impact_usd`/`impact_hours` + `source[]` + `confidence`, so
 they are valid grounded-numbers records when written to a findings.jsonl-shaped
@@ -55,6 +54,7 @@ class SOWMetrics:
     payback_months: Optional[float]     # None when there is no dollar impact
     confidence: float
     source: list[str] = field(default_factory=list)
+    ebitda_base_label: str = ""         # plain name of the base, e.g. "net income"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -74,17 +74,18 @@ class SOWMetrics:
         }
 
 
-def ebitda_base(baseline: dict) -> tuple[float, str]:
-    """Conservative EBITDA proxy from the P&L + its source line."""
+def ebitda_base(baseline: dict) -> tuple[float, str, str]:
+    """The stand-in for EBITDA: (value, source line, plain name for the owner)."""
     pnl = (baseline.get("accounting", {}) or {}).get("profit_and_loss", {}) or {}
     net = float(pnl.get("NetIncome", 0.0) or 0.0)
     if net > 0:
-        return net, f"accounting.profit_and_loss.NetIncome={net:.0f} (EBITDA proxy)"
+        return net, f"accounting.profit_and_loss.NetIncome={net:.0f} (EBITDA proxy)", "net income"
     # fallback: GrossProfit - operating expenses
     gross = float(pnl.get("GrossProfit", 0.0) or 0.0)
     opex = float(pnl.get("TotalExpenses", 0.0) or 0.0)
     return (gross - opex,
-            f"accounting.profit_and_loss.GrossProfit={gross:.0f} - TotalExpenses={opex:.0f}")
+            f"accounting.profit_and_loss.GrossProfit={gross:.0f} - TotalExpenses={opex:.0f}",
+            "gross profit minus expenses")
 
 
 def metrics_for(
@@ -96,7 +97,7 @@ def metrics_for(
     impact = float(_attr(sow, "impact_usd", 0.0) or 0.0)
     hours = float(_attr(sow, "impact_hours", 0.0) or 0.0)
     conf = float(_attr(sow, "confidence", 0.0) or 0.0)
-    base, base_src = ebitda_base(baseline)
+    base, base_src, base_label = ebitda_base(baseline)
 
     ebitda_uplift_pct = round(100.0 * impact / base, 2) if base > 0 else None
     payback_months = round(12.0 * engagement_cost_usd / impact, 2) if impact > 0 else None
@@ -118,6 +119,7 @@ def metrics_for(
         payback_months=payback_months,
         confidence=conf,
         source=source,
+        ebitda_base_label=base_label,
     )
 
 
@@ -165,5 +167,6 @@ def fmt_payback(months: Optional[float]) -> str:
     return "1 month" if n == 1 else f"{n} months"
 
 
-def fmt_ebitda(pct: Optional[float]) -> str:
-    return "— (EBITDA base not positive)" if pct is None else f"+{pct:.0f}%"
+def fmt_ebitda(pct: Optional[float], base_label: str) -> str:
+    """'+45% of net income': the base is named wherever the percent is printed."""
+    return "— (EBITDA base not positive)" if pct is None else f"+{pct:.0f}% of {base_label}"

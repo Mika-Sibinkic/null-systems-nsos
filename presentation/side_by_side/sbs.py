@@ -74,6 +74,7 @@ class SBSColumn:
     key_gap: str = ""
     source: list[str] = field(default_factory=list)
     exposure_usd: float = 0.0  # at-risk dollars, shown apart from annual impact
+    ebitda_base_label: str = ""  # what the EBITDA lift divides by, e.g. "net income"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -94,8 +95,8 @@ class SideBySide:
 
 
 def owner_gaps(gaps: Sequence[str]) -> list[str]:
-    """Gaps specific to one option; the cold-start note is printed once by the report."""
-    return [g for g in gaps if g != _wwod.COLD_START_GAP]
+    """Gaps specific to one option; the report states the shared ones once."""
+    return [g for g in gaps if g not in (_wwod.COLD_START_GAP, _wwod.SINGLE_FINDING_GAP)]
 
 
 def _format_cell(key: str, col: SBSColumn) -> str:
@@ -107,7 +108,7 @@ def _format_cell(key: str, col: SBSColumn) -> str:
     if key == "exposure_usd":
         return f"${col.exposure_usd:,.0f} at risk" if col.exposure_usd else "—"
     if key == "ebitda_uplift_pct":
-        return _metrics.fmt_ebitda(col.ebitda_uplift_pct)
+        return _metrics.fmt_ebitda(col.ebitda_uplift_pct, col.ebitda_base_label)
     if key == "payback_months":
         return _metrics.fmt_payback(col.payback_months)
     if key == "impact_hours":
@@ -158,6 +159,7 @@ def build_columns(
                 key_gap=key_gap,
                 source=list(_attr(s, "source", []) or []),
                 exposure_usd=float(_attr(s, "exposure_usd", 0.0) or 0.0),
+                ebitda_base_label=m.ebitda_base_label,
             )
         )
     return cols
