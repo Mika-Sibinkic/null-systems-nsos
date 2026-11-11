@@ -9,7 +9,8 @@ rubric in quality_rules.json. gate_decision() then says whether to hold it.
 Offline mode (NSOS_JUDGE_OFFLINE_DETERMINISTIC=1, used by the tests and the
 demo): no model call at all. _deterministic_score() is a structural regex check
 for a dollar or hour figure, an evidence word, a confidence word and a next
-step. That is all "passes the quality gate" means offline.
+step. A dollar figure and one evidence word are enough to pass ("$1 invoice"
+passes). That is all "passes the quality gate" means offline.
 
 Without the flag and without a working model, score() returns
 status='unavailable' and gate_decision() holds the text (fails closed).
@@ -115,7 +116,8 @@ def offline_deterministic() -> bool:
 _DOLLAR_RE = re.compile(r"\$\s?\d")
 _HOURS_RE = re.compile(r"\b\d[\d,\.]*\s*(hours?|hrs?|hr/?yr|hours?/year)\b", re.I)
 _EVIDENCE_RE = re.compile(r"\b(source|evidence|QuickBooks|accounting|baseline|invoice|vendor|because|per |based on)\b", re.I)
-_CONF_RE = re.compile(r"\b(confiden\w*|HIGH|MEDIUM|LOW|LIKELY|VERIFIED|UNVERIFIED|\d{1,3}\s?%)\b")
+# (?i:...) on the word only: "Confidence: 0.7" counts, but plain "low" or "likely" does not.
+_CONF_RE = re.compile(r"\b((?i:confiden\w*)|HIGH|MEDIUM|LOW|LIKELY|VERIFIED|UNVERIFIED|\d{1,3}\s?%)\b")
 _NEXT_STEP_RE = re.compile(r"\b(recommend|next step|should|propose|scope|switch|collect|reduce|consolidate|insource|re-?platform)\b", re.I)
 
 

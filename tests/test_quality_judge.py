@@ -52,3 +52,13 @@ def test_offline_mode_never_calls_the_model_even_with_a_key(monkeypatch):
     monkeypatch.setattr(qj, "call_nim", recording_boom)
     assert qj.score("Vendor spend is $84k/yr, per QuickBooks; recommend consolidating.")["status"] == "ok"
     assert calls == []
+
+
+def test_offline_rubric_counts_the_gates_own_confidence_label():
+    """review_gate writes 'Confidence: 0.7'; that label is a confidence word."""
+    assert "conf=True" in qj._deterministic_score("Confidence: 0.7")["reasoning"]
+
+
+def test_offline_gate_passes_a_dollar_figure_plus_one_evidence_word():
+    """The README limit, pinned: offline, '$1 invoice' is enough to pass."""
+    assert qj.gate_decision(qj._deterministic_score("$1 invoice")) is False
