@@ -4,7 +4,7 @@ date: 2026-05-28
 status: accepted; amended 2026-11-11
 alternatives_considered:
   - name: Two repos (engine repo + separate web repo)
-    reject_reason: Splits CI, source of truth and typed contracts across a boundary for a small product. One repo gives one-command bring-up and one CI workflow.
+    reject_reason: Splits CI, source of truth and typed contracts across a boundary for a small product. One repo gives one CI workflow.
   - name: Headless first (engine + API only, web later)
     reject_reason: Onboarding is how an owner gets to a first result. Deferring the web surface defers the part people try first.
 verification_probe: |
@@ -16,7 +16,7 @@ superseded_by: null
 
 ## Context
 
-Null Systems is turning its consulting diagnostic into a product for small and mid-sized firms. An owner connects their accounting and other systems, NSOS reads them, and it outputs 2-3 SOWs with quantified success metrics for the owner to pick between. An engineer then does the chosen work. This record set the founding layout. The design was adapted from an earlier private prototype; no code from it is in this repo.
+Null Systems is turning its consulting diagnostic into a product for small and mid-sized firms. An owner connects their accounting and other systems, NSOS reads them, and it outputs 2-3 SOWs with quantified success metrics for the owner to pick between. An engineer then does the chosen work. This record set the founding layout. Parts started from an earlier private prototype's code (the quality judge, the correction MCP server); the 2026-05 commits hold the original lift.
 
 ## Decision
 
@@ -24,7 +24,7 @@ One monorepo: the Python `engine/` and a Next.js `web/` surface for onboarding. 
 
 ## Consequences
 
-- **Easier:** one source of truth, one CI workflow, one-command bring-up, and a plain HTTP boundary between web and engine.
+- **Easier:** one source of truth, one CI workflow, and a plain HTTP boundary between web and engine. Bring-up is two commands, the engine and the web app; the Python demo alone is one.
 - **Harder:** a two-language repo (Python and TypeScript). Durable execution for long runs is not built; a run is one synchronous process.
 - **Committed to:** tenant isolation by `tenant_id`, and every client-facing number source-traced and confidence-banded (the model may narrate, arithmetic computes).
 

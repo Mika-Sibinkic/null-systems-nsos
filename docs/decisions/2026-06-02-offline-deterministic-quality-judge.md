@@ -43,8 +43,10 @@ production never sets it.
 ## Consequences
 - Easier: keyless/offline builds verify gating logic reproducibly; CI needs no LLM secret.
 - Harder: the deterministic rubric is structural, not semantic — a fluent-but-wrong finding could pass
-  the offline gate. The live judge is the intended production path, and it has never run in a test.
-  Offline, what the review gate holds is decided by its confidence floor alone.
+  the offline gate. The live judge is the intended production path. No test has called the real NIM
+  API: the live path is tested only with `call_nim` mocked (`tests/test_quality_judge.py`), and
+  `nim_client.call_nim` itself has no test. Offline, any text with a dollar figure and one evidence
+  word passes ("$1 invoice" does), so what the review gate holds is decided by its confidence floor alone.
 - Committed to: keeping the offline scorer's signals aligned with the LLM rubric dimensions so the two
   paths don't diverge in what they reward.
 
