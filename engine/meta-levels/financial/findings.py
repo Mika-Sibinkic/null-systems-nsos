@@ -4,7 +4,9 @@ Turns a tenant `baseline.json` (QuickBooks-derived) into client-facing findings,
 each carrying a quantified, **source-traced, confidence-banded** impact so it
 survives the same gates the rest of the pipeline enforces:
 
-  - `impact_usd` / `impact_hours` — the dollars/time the finding moves
+  - `impact_usd` / `impact_hours` — the dollars/time the finding moves each year
+  - `exposure_usd` — dollars at risk (concentration, one-time overdue cash); never
+                     summed into impact, EBITDA or payback
   - `bottleneck`   — the one-line "what is actually constraining the business"
   - `evidence[]`   — every number traces to a baseline line (LeCun grounding;
                      `scripts/probes/grounded_numbers.py` enforces this)
@@ -43,6 +45,19 @@ def _acct(baseline: dict) -> dict:
     if not acct:
         raise ValueError("baseline has no accounting view")
     return acct
+
+
+def per_year(acct: dict) -> tuple[float, str]:
+    """Scale for a sum taken over the export period, and the label it earns.
+
+    A 2025-05-01..2026-04-30 export is 365 days, so its sums are already annual.
+    Without both dates we cannot annualize, so the number is labeled as-is.
+    """
+    try:
+        days = (date.fromisoformat(acct["period_end"]) - date.fromisoformat(acct["period_start"])).days + 1
+    except (KeyError, TypeError, ValueError):
+        days = 0
+    return (365.0 / days, "/yr") if days > 0 else (1.0, " over the export period")
 
 
 def _total_opex(acct: dict) -> float:
@@ -93,29 +108,34 @@ def a_customer_concentration(baseline: dict) -> Optional[dict]:
     by_cust: dict[str, float] = {}
     for inv in invoices:
         by_cust[inv["customer"]] = by_cust.get(inv["customer"], 0.0) + float(inv.get("amount_usd", 0))
-    total = sum(by_cust.values())
+    top_cust, top_amt = max(by_cust.items(), key=lambda kv: kv[1])
+    # The invoice list is a sample; the P&L is the whole year. Use the P&L when we have it.
+    revenue = float((acct.get("profit_and_loss") or {}).get("TotalIncome", 0) or 0)
+    if revenue > 0:
+        total, of_what = revenue, "of revenue"
+        denom_src = f"accounting.profit_and_loss.TotalIncome={revenue:.0f}"
+    else:
+        total, of_what = sum(by_cust.values()), f"of invoiced sample ({len(invoices)} invoices)"
+        denom_src = f"accounting.invoices invoiced_total={total:.0f} (n={len(invoices)})"
     if total <= 0:
         return None
-    top_cust, top_amt = max(by_cust.items(), key=lambda kv: kv[1])
     share = top_amt / total
-    flagged = share > CUSTOMER_CONCENTRATION_FLAG
     return {
-        "summary": f"Top customer {top_cust} is {share:.0%} of booked revenue across {len(invoices)} invoices",
-        "flagged": flagged,
+        "summary": f"Top customer {top_cust} is {share:.0%} {of_what}",
+        "flagged": share > CUSTOMER_CONCENTRATION_FLAG,
         "top_customer": top_cust,
         "top_customer_share": round(share, 4),
         "top_customer_usd": float(top_amt),
-        "booked_revenue": float(total),
-        "source": [f"accounting.invoices[customer={top_cust}]={top_amt:.0f}",
-                   f"accounting.invoices booked_total={total:.0f}"],
+        "share_of": of_what,
+        "source": [f"accounting.invoices[customer={top_cust}]={top_amt:.0f}", denom_src],
     }
 
 
 def a_ar_overdue(baseline: dict) -> Optional[dict]:
     acct = _acct(baseline)
     invoices = acct.get("invoices", []) or []
-    overdue = [i for i in invoices if i.get("status") == "overdue" or (i.get("paid_at") is None and i.get("status") != "paid")]
-    exposure = sum(float(i.get("amount_usd", 0)) for i in overdue)
+    overdue = [i for i in invoices if i.get("status") == "overdue"]
+    exposure = sum(float(i.get("balance_usd", 0)) for i in overdue)
     if exposure <= 0:
         return None
     recoverable = exposure * AR_RECOVERY_PCT
@@ -126,7 +146,7 @@ def a_ar_overdue(baseline: dict) -> Optional[dict]:
         "overdue_count": len(overdue),
         "exposure_usd": float(exposure),
         "recoverable_usd": float(recoverable),
-        "source": [f"accounting.invoices[status=overdue ids={ids}] sum={exposure:.0f}",
+        "source": [f"accounting.invoices[status=overdue ids={ids}] balance_usd sum={exposure:.0f}",
                    f"recovery assumption {AR_RECOVERY_PCT:.0%} [LIKELY]"],
     }
 
@@ -188,17 +208,22 @@ def a_scope_cycle_time(baseline: dict) -> Optional[dict]:
     n = len(delays)
     avg = sum(delays) / n
     excess = max(0.0, avg - SCOPE_TARGET_DAYS)
-    leaked_hours = excess * HOURS_PER_SCOPE_DELAY_DAY * n
+    scale, per = per_year(acct)
+    leaked_hours = excess * HOURS_PER_SCOPE_DELAY_DAY * n * scale
     impact = leaked_hours * BLENDED_PARTNER_RATE_USD_PER_HR
+    source = [f"accounting.invoices[{n}] avg first_contact->scope_sent={avg:.1f}d",
+              f"excess over {SCOPE_TARGET_DAYS:.0f}d @ {HOURS_PER_SCOPE_DELAY_DAY}hr/day @ ${BLENDED_PARTNER_RATE_USD_PER_HR:.0f}/hr [LIKELY]"]
+    if per == "/yr":
+        source.append(f"annualized x{scale:.3f} from accounting.period_start..period_end")
     return {
-        "summary": f"Avg scoping {avg:.1f} days vs {SCOPE_TARGET_DAYS:.0f}-day target across {n} deals; ~${impact:,.0f}/yr partner time",
+        "summary": f"Avg scoping {avg:.1f} days vs {SCOPE_TARGET_DAYS:.0f}-day target across {n} deals; ~${impact:,.0f}{per} partner time",
         "flagged": excess > 0,
         "avg_days": round(avg, 1),
         "target_days": SCOPE_TARGET_DAYS,
         "leaked_hours": round(leaked_hours, 1),
         "impact_usd": float(round(impact)),
-        "source": [f"accounting.invoices[{n}] avg first_contact->scope_sent={avg:.1f}d",
-                   f"excess over {SCOPE_TARGET_DAYS:.0f}d @ {HOURS_PER_SCOPE_DELAY_DAY}hr/day @ ${BLENDED_PARTNER_RATE_USD_PER_HR:.0f}/hr [LIKELY]"],
+        "per": per,
+        "source": source,
     }
 
 
@@ -261,6 +286,7 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
     """
     impact_usd = 0.0
     impact_hours = 0.0
+    exposure_usd = 0.0  # at-risk dollars: shown, never summed into annual impact
     headline = analytic.get("summary", "")
     bottleneck = ""
 
@@ -270,16 +296,15 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
         bottleneck = "Proposal scoping cycle time"
         headline = f"Proposal scoping runs {analytic['avg_days']:.0f} days vs a {int(analytic['target_days'])}-day target"
     elif method == "vendor_concentration" and analytic.get("flagged"):
-        # Concentration risk: impact is the at-risk dependency dollar exposure.
-        impact_usd = float(analytic.get("top_vendor_usd", 0))
+        exposure_usd = float(analytic.get("top_vendor_usd", 0))
         bottleneck = "Single-vendor dependency / cost concentration"
         headline = f"{analytic['top_vendor']} is {analytic['top_vendor_share']:.0%} of vendor spend — concentration risk"
     elif method == "customer_concentration" and analytic.get("flagged"):
-        impact_usd = float(analytic.get("top_customer_usd", 0))
+        exposure_usd = float(analytic.get("top_customer_usd", 0))
         bottleneck = "Revenue concentration in one customer"
-        headline = f"{analytic['top_customer']} is {analytic['top_customer_share']:.0%} of revenue — concentration risk"
+        headline = f"{analytic['top_customer']} is {analytic['top_customer_share']:.0%} {analytic['share_of']} — concentration risk"
     elif method == "ar_overdue":
-        impact_usd = float(analytic.get("recoverable_usd", 0))
+        exposure_usd = float(analytic.get("recoverable_usd", 0))  # one-time cash, not /yr
         bottleneck = "Working capital trapped in overdue AR"
         headline = f"${analytic['exposure_usd']:,.0f} in overdue AR; ~${analytic['recoverable_usd']:,.0f} recoverable"
     elif method == "opex_benchmark" and analytic.get("flagged"):
@@ -292,7 +317,7 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
         bottleneck = "Gross margin below services benchmark"
         headline = f"Gross margin {analytic['gross_margin']:.0%}; 5pt recovery ≈ ${impact_usd:,.0f}/yr"
 
-    if impact_usd <= 0 and impact_hours <= 0:
+    if impact_usd <= 0 and impact_hours <= 0 and exposure_usd <= 0:
         return None
 
     # confidence: derive an honest band from how directly the number is measured
@@ -308,6 +333,7 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
         "bottleneck": bottleneck,
         "impact_usd": float(round(impact_usd)),
         "impact_hours": float(round(impact_hours, 1)),
+        "exposure_usd": float(round(exposure_usd)),
         "evidence": analytic.get("source", []),
         "source": analytic.get("source", []),
         "confidence": conf_table.get(method, 0.6),
@@ -331,7 +357,7 @@ def assert_grounded(finding: dict) -> dict:
     the wired-in enforcement point: `run_findings` calls it on every emitted
     finding, so the producer itself fails closed on an ungrounded number.
     """
-    has_impact = (finding.get("impact_usd") or 0) > 0 or (finding.get("impact_hours") or 0) > 0
+    has_impact = any((finding.get(k) or 0) > 0 for k in ("impact_usd", "impact_hours", "exposure_usd"))
     if not has_impact:
         return finding
     src = finding.get("evidence") or finding.get("source")
@@ -353,20 +379,19 @@ def run_findings(baseline: dict, *, out_path: Path | str | None = None) -> list[
     into the producer) before it is returned or written — fail-closed.
     """
     findings: list[dict] = []
-    idx = 1
-    for method, fn in ANALYTICS.items():
+    # id = the analytic's slot, so fin-fin-004 means opex_benchmark on every baseline
+    for idx, (method, fn) in enumerate(ANALYTICS.items(), start=1):
         analytic = fn(baseline)
         if not analytic:
             continue
         f = finding_from_analytic(method, analytic, idx)
         if f:
             findings.append(assert_grounded(f))
-            idx += 1
     findings.sort(key=lambda f: -(f.get("impact_usd", 0)))
     if out_path:
         p = Path(out_path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text("\n".join(json.dumps(f) for f in findings) + ("\n" if findings else ""))
+        p.write_text("\n".join(json.dumps(f, allow_nan=False) for f in findings) + ("\n" if findings else ""))
     return findings
 
 

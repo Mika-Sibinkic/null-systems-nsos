@@ -95,3 +95,49 @@ def test_adapter_rejects_non_dict_export():
     import pytest
     with pytest.raises(TypeError):
         QuickBooksAdapter([1, 2, 3])
+
+
+# ── overdue AR is computed as of the export, from open balances ───────────────
+
+def _lens_export():
+    """One invoice not yet due (2099) and one past due with a $1,000 open balance."""
+    return {
+        "report_period": {"start_date": "2025-05-01", "end_date": "2026-04-30"},
+        "Invoices": [
+            {"Id": "A", "CustomerRef": "Future Co", "TotalAmt": 50000, "Balance": 50000,
+             "TxnDate": "2026-04-01", "DueDate": "2099-01-01"},
+            {"Id": "B", "CustomerRef": "Past Co", "TotalAmt": 100000, "Balance": 1000,
+             "TxnDate": "2025-12-01", "DueDate": "2026-01-01"},
+        ],
+    }
+
+
+def test_ar_overdue_counts_only_overdue_open_balance():
+    import importlib
+    findings_mod = importlib.import_module("engine.meta-levels.financial.findings")
+    a = findings_mod.a_ar_overdue(build_baseline(_lens_export(), "lens"))
+    assert a["overdue_count"] == 1
+    assert a["exposure_usd"] == 1000.0
+
+
+def test_status_is_as_of_export_end_date_not_today():
+    export = _lens_export()
+    export["Invoices"][0]["DueDate"] = "2026-06-01"  # after the export, before today
+    inv = {i["invoice_id"]: i for i in QuickBooksAdapter(export).accounting_view()["invoices"]}
+    assert inv["A"]["status"] == "sent"
+    assert inv["B"]["status"] == "overdue"
+    assert inv["B"]["balance_usd"] == 1000.0
+
+
+def test_paid_invoice_has_no_invented_paid_date():
+    inv = {i["invoice_id"]: i for i in QuickBooksAdapter(_export()).accounting_view()["invoices"]}
+    assert inv["INV-1001"]["status"] == "paid"
+    assert inv["INV-1001"]["paid_at"] is None  # the export carries no payment date
+
+
+def test_write_baseline_rejects_path_traversal_tenant(tmp_path):
+    import pytest
+    baseline = build_baseline(_export(), "../escaped")
+    with pytest.raises(ValueError):
+        write_baseline(baseline, snapshots_root=tmp_path / "snapshots")
+    assert not (tmp_path / "escaped").exists()

@@ -2,23 +2,23 @@
   "name": "null-systems-web",
   "version": "0.1.0",
   "private": true,
-  "description": "Null Systems Diagnostic SaaS — Next.js/Vercel web surface. Talks to the Python engine over an HTTP/MCP boundary; holds only a scoped, short-lived token (never a connector secret).",
+  "description": "NSOS web app: onboarding and SOW review. Calls the Python engine over HTTP and holds only a scoped, short-lived token, never a connector secret.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "lint": "next lint"
+    "test": "node --experimental-strip-types --test lib/engine.test.ts"
   },
   "dependencies": {
-    "next": "14.2.35",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "next": "16.4.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
   },
   "devDependencies": {
     "@types/node": "20.14.10",
-    "@types/react": "18.3.3",
-    "@types/react-dom": "18.3.0",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
     "typescript": "5.5.3"
   }
 }

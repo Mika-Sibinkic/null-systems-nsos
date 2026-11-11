@@ -26,10 +26,13 @@ finished build's delivery completeness; this one kicks the engagement off).
 """
 from __future__ import annotations
 
+import importlib
 import json
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Sequence
+
+_metrics = importlib.import_module("engine.sow.metrics")
 
 
 def _attr(obj: Any, name: str, default=None):
@@ -49,8 +52,8 @@ class HandoffPacket:
     # quantified target (all source-traced)
     impact_usd: float
     impact_hours: float
-    ebitda_uplift_pct: float
-    payback_months: float
+    ebitda_uplift_pct: float | None  # None when the EBITDA base is not positive
+    payback_months: float | None     # None when there is no dollar impact
     confidence: float
     # scoring carried into the engagement
     wwod_score: float
@@ -62,6 +65,7 @@ class HandoffPacket:
     source: list[str] = field(default_factory=list)
     # success metrics the flywheel measures realized-vs-predicted on
     success_metrics: dict = field(default_factory=dict)
+    exposure_usd: float = 0.0  # at-risk dollars; not part of the quantified target
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -108,7 +112,7 @@ def build_packet(
     success_metrics = {
         "impact_usd": float(col.get("impact_usd", 0.0) or 0.0),
         "impact_hours": float(col.get("impact_hours", 0.0) or 0.0),
-        "ebitda_uplift_pct": float(col.get("ebitda_uplift_pct", 0.0) or 0.0),
+        "ebitda_uplift_pct": col.get("ebitda_uplift_pct"),
         "payback_months": col.get("payback_months"),
         "confidence": float(col.get("confidence", 0.0) or 0.0),
     }
@@ -122,7 +126,7 @@ def build_packet(
         objective=col.get("objective", ""),
         impact_usd=float(col.get("impact_usd", 0.0) or 0.0),
         impact_hours=float(col.get("impact_hours", 0.0) or 0.0),
-        ebitda_uplift_pct=float(col.get("ebitda_uplift_pct", 0.0) or 0.0),
+        ebitda_uplift_pct=col.get("ebitda_uplift_pct"),
         payback_months=col.get("payback_months"),
         confidence=float(col.get("confidence", 0.0) or 0.0),
         wwod_score=float(col.get("wwod_score", 0.0) or 0.0),
@@ -131,16 +135,12 @@ def build_packet(
         deployability_blockers=blockers,
         source=list(col.get("source", []) or []),
         success_metrics=success_metrics,
+        exposure_usd=float(col.get("exposure_usd", 0.0) or 0.0),
     )
 
 
 def render_markdown(p: HandoffPacket) -> str:
     """The engagement brief the FDE reads."""
-    payback = (
-        "—"
-        if p.payback_months in (None, float("inf"))
-        else f"{float(p.payback_months):.0f} months"
-    )
     lines: list[str] = []
     lines.append(f"# FDE Engagement Packet — {p.firm_name}")
     lines.append("")
@@ -150,10 +150,12 @@ def render_markdown(p: HandoffPacket) -> str:
     lines.append(f"{p.objective}\n")
     lines.append("## Quantified target (source-traced)\n")
     lines.append(f"- **Annual impact**: ${p.impact_usd:,.0f}/year")
-    lines.append(f"- **EBITDA lift**: +{p.ebitda_uplift_pct:.0f}%")
+    if p.exposure_usd:
+        lines.append(f"- **At risk**: ${p.exposure_usd:,.0f} (exposure, not counted in the target)")
+    lines.append(f"- **EBITDA lift**: {_metrics.fmt_ebitda(p.ebitda_uplift_pct)}")
     if p.impact_hours:
         lines.append(f"- **Leadership hours freed**: {p.impact_hours:.0f} hours/year")
-    lines.append(f"- **Payback**: {payback}")
+    lines.append(f"- **Payback**: {_metrics.fmt_payback(p.payback_months)}")
     lines.append(f"- **Evidence confidence**: {p.confidence:.0%}")
     lines.append(f"- **Consultant conviction (WWOD)**: {p.wwod_score:.0%}")
     lines.append(f"- **Deployability grade**: {p.deployability_grade}")
@@ -184,7 +186,7 @@ def export_packet(
     d.mkdir(parents=True, exist_ok=True)
     json_path = d / "fde-handoff-packet.json"
     md_path = d / "fde-handoff-packet.md"
-    json_path.write_text(json.dumps(p.to_dict(), indent=2, default=str))
+    json_path.write_text(json.dumps(p.to_dict(), indent=2, default=str, allow_nan=False))
     md_path.write_text(render_markdown(p))
     return json_path, md_path
 
@@ -192,10 +194,10 @@ def export_packet(
 def from_run(
     run_id: str,
     *,
+    firm_path: Path,
+    tenant_id: str,
     selected_sow_id: str | None = None,
     runs_root: Path | None = None,
-    firm_path: Path | None = None,
-    tenant_id: str | None = None,
 ) -> HandoffPacket:
     """End-to-end: read a run's side-by-side + firm -> packet, exported under
     runs/{run_id}/handoff/."""
@@ -203,12 +205,10 @@ def from_run(
     runs = runs_root or (repo / "runs")
     sbs_path = runs / run_id / "presentation" / "side-by-side.json"
     side_by_side = json.loads(sbs_path.read_text())
-    if firm_path is None:
-        firm_path = repo / "examples" / "synthetic-client-a" / "firm.json"
     firm = json.loads(Path(firm_path).read_text())
     packet = build_packet(
         run_id=run_id,
-        tenant_id=tenant_id or firm.get("tenant_id", "synth-acme-services"),
+        tenant_id=tenant_id,
         firm=firm,
         side_by_side=side_by_side,
         selected_sow_id=selected_sow_id,
@@ -222,9 +222,12 @@ def _main() -> int:
 
     ap = argparse.ArgumentParser(description="Export an FDE handoff packet for a selected SOW")
     ap.add_argument("--run-id", required=True)
+    ap.add_argument("--firm", required=True, type=Path, help="firm.json")
+    ap.add_argument("--tenant", required=True, help="tenant_id")
     ap.add_argument("--sow-id", default=None, help="selected SOW id (default: recommendation)")
     args = ap.parse_args()
-    p = from_run(args.run_id, selected_sow_id=args.sow_id)
+    p = from_run(args.run_id, firm_path=args.firm, tenant_id=args.tenant,
+                 selected_sow_id=args.sow_id)
     print(render_markdown(p))
     return 0
 

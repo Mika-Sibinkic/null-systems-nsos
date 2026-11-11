@@ -107,8 +107,8 @@ def _gaps_for(sow: Any, learned_conf: float, match_method: str) -> list[str]:
         )
     if match_method in ("none", "keyword-fallback") or learned_conf == 0.0:
         gaps.append(
-            "no comparable prior engagement in the WWOD policy — first-of-kind push, "
-            "score leans on the deterministic prior"
+            "we have no past engagement like this on record, so the conviction score "
+            "rests only on size, confidence and how many findings back it"
         )
     if not _attr(sow, "source", []):
         gaps.append("SOW carries impact with no source trace — grounding gap")

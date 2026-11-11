@@ -7,8 +7,19 @@
 // The engine base URL comes from a server-side env var. It is NOT NEXT_PUBLIC_*, so it
 // is never bundled into client JS. All engine calls go through API routes (server-side).
 
-export const ENGINE_URL: string = process.env.ENGINE_URL ?? "http://localhost:8000";
-export const ENGINE_TIMEOUT_MS: number = Number(process.env.ENGINE_TIMEOUT_MS ?? 5000);
+// 127.0.0.1, not localhost: Node 17+ resolves localhost to ::1 first, and the engine
+// (uvicorn) listens on IPv4 only, so "localhost" read as engine_unreachable on Node 18.
+export const ENGINE_URL: string = process.env.ENGINE_URL ?? "http://127.0.0.1:8000";
+export const ENGINE_TIMEOUT_MS: number = parseTimeoutMs(process.env.ENGINE_TIMEOUT_MS);
+
+/** Fail at startup on a bad timeout; Number("5s") is NaN and would abort every call. */
+export function parseTimeoutMs(raw: string | undefined): number {
+  if (raw === undefined) return 5000;
+  if (!/^[1-9]\d*$/.test(raw)) {
+    throw new Error("ENGINE_TIMEOUT_MS must be a positive integer (ms)");
+  }
+  return Number(raw);
+}
 
 /** The engine could not be reached at all (connection refused, DNS, timeout). */
 export class EngineUnreachableError extends Error {
@@ -20,13 +31,13 @@ export class EngineUnreachableError extends Error {
 
 /** The engine answered, but with a non-2xx status and a JSON {error} body. */
 export class EngineResponseError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly path: string,
-    message: string
-  ) {
+  readonly status: number;
+  readonly path: string;
+  constructor(status: number, path: string, message: string) {
     super(message);
     this.name = "EngineResponseError";
+    this.status = status;
+    this.path = path;
   }
 }
 
@@ -122,9 +133,10 @@ export interface SOWColumn {
   objective: string;
   impact_usd: number;
   impact_hours: number;
+  exposure_usd: number; // at-risk dollars, never part of impact_usd
   confidence: number;
-  ebitda_uplift_pct: number;
-  payback_months: number;
+  ebitda_uplift_pct: number | null; // null when the EBITDA base is not positive
+  payback_months: number | null; // null when the SOW has no dollar impact
   wwod_score: number;
   wwod_confidence: number;
   grade: string;

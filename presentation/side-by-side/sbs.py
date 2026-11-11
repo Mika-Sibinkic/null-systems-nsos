@@ -39,6 +39,7 @@ _metrics = importlib.import_module("engine.sow.metrics")
 ROWS: list[tuple[str, str]] = [
     ("title", "Growth thrust"),
     ("impact_usd", "Annual impact"),
+    ("exposure_usd", "At risk (not in totals)"),
     ("ebitda_uplift_pct", "EBITDA lift"),
     ("payback_months", "Payback"),
     ("impact_hours", "Leadership hours freed / yr"),
@@ -64,8 +65,8 @@ class SBSColumn:
     impact_usd: float
     impact_hours: float
     confidence: float
-    ebitda_uplift_pct: float
-    payback_months: float
+    ebitda_uplift_pct: float | None  # None when the EBITDA base is not positive
+    payback_months: float | None     # None when the SOW has no dollar impact
     wwod_score: float
     wwod_confidence: float
     grade: str
@@ -74,6 +75,7 @@ class SBSColumn:
     gaps: list[str] = field(default_factory=list)
     key_gap: str = ""
     source: list[str] = field(default_factory=list)
+    exposure_usd: float = 0.0  # at-risk dollars, shown apart from annual impact
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -99,10 +101,12 @@ def _format_cell(key: str, col: SBSColumn) -> str:
         return col.title
     if key == "impact_usd":
         return f"${col.impact_usd:,.0f}/yr"
+    if key == "exposure_usd":
+        return f"${col.exposure_usd:,.0f} at risk" if col.exposure_usd else "—"
     if key == "ebitda_uplift_pct":
-        return f"+{col.ebitda_uplift_pct:.0f}% EBITDA"
+        return _metrics.fmt_ebitda(col.ebitda_uplift_pct)
     if key == "payback_months":
-        return "—" if col.payback_months in (None, float("inf")) else f"{col.payback_months:.0f} mo"
+        return _metrics.fmt_payback(col.payback_months)
     if key == "impact_hours":
         return f"{col.impact_hours:.0f} hrs/yr" if col.impact_hours else "—"
     if key == "wwod_score":
@@ -149,6 +153,7 @@ def build_columns(
                 gaps=gaps,
                 key_gap=key_gap,
                 source=list(_attr(s, "source", []) or []),
+                exposure_usd=float(_attr(s, "exposure_usd", 0.0) or 0.0),
             )
         )
     return cols
@@ -206,15 +211,15 @@ def render_markdown(sbs: SideBySide) -> str:
 def write_artifact(sbs: SideBySide, path: Path | str) -> Path:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps(sbs.to_dict(), indent=2, default=str))
+    p.write_text(json.dumps(sbs.to_dict(), indent=2, default=str, allow_nan=False))
     return p
 
 
 def from_run(
     run_id: str,
     *,
+    baseline_path: Path,
     runs_root: Path | None = None,
-    baseline_path: Path | None = None,
 ) -> SideBySide:
     """End-to-end: load a run's SOW candidates + the tenant baseline -> side-by-side,
     written to runs/{run_id}/presentation/side-by-side.json."""
@@ -222,9 +227,6 @@ def from_run(
     runs = runs_root or (repo / "runs")
     cand_path = runs / run_id / "sow" / "sow-candidates.jsonl"
     cands = [json.loads(l) for l in cand_path.read_text().splitlines() if l.strip()]
-    if baseline_path is None:
-        # default tenant baseline for the synthetic run
-        baseline_path = repo / "client" / "snapshots" / "synth-acme-services" / "baseline.json"
     baseline = json.loads(Path(baseline_path).read_text())
     sbs = build_side_by_side(cands, baseline)
     write_artifact(sbs, runs / run_id / "presentation" / "side-by-side.json")
@@ -236,8 +238,9 @@ def _main() -> int:
 
     ap = argparse.ArgumentParser(description="Render a side-by-side SOW comparison for a run")
     ap.add_argument("--run-id", required=True)
+    ap.add_argument("--baseline", required=True, type=Path, help="tenant baseline.json")
     args = ap.parse_args()
-    sbs = from_run(args.run_id)
+    sbs = from_run(args.run_id, baseline_path=args.baseline)
     print(render_markdown(sbs))
     return 0 if sbs.columns else 1
 

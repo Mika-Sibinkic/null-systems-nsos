@@ -21,6 +21,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -29,6 +30,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "schemas" / "baseline.json"
 ADAPTER_VERSION = "1.0.0"
 SCHEMA_VERSION = 1
+TENANT_ID_RE = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")  # mirrors schemas/baseline.json
 
 
 class QuickBooksAdapter:
@@ -67,31 +69,29 @@ class QuickBooksAdapter:
         return out
 
     @staticmethod
-    def _status(inv: dict[str, Any]) -> str:
-        bal = inv.get("Balance", 0)
-        if bal and bal > 0:
-            due = inv.get("DueDate")
-            if due:
-                try:
-                    if datetime.fromisoformat(due).date() < datetime.now(timezone.utc).date():
-                        return "overdue"
-                except ValueError:
-                    pass
-            return "sent"
-        return "paid"
+    def _status(inv: dict[str, Any], as_of: Optional[str]) -> str:
+        """Status as of the export's end date, so one export maps the same way every day."""
+        if not inv.get("Balance"):
+            return "paid"
+        due = inv.get("DueDate")
+        if due and as_of and due < as_of:  # ISO dates compare as strings
+            return "overdue"
+        return "sent"
 
     def _map_invoices(self) -> list[dict[str, Any]]:
+        as_of = (self.export.get("report_period") or {}).get("end_date")
         out = []
         for inv in self.export.get("Invoices", []) or []:
             out.append({
                 "invoice_id": inv.get("Id", ""),
                 "customer": inv.get("CustomerRef", ""),
                 "amount_usd": float(inv.get("TotalAmt", 0)),
+                "balance_usd": float(inv.get("Balance", 0)),
                 "issued_at": inv.get("TxnDate"),
-                "paid_at": inv.get("TxnDate") if self._status(inv) == "paid" else None,
+                "paid_at": None,  # QBO invoices carry no payment date; it lives on Payment entities
                 "first_contact_at": inv.get("MetaData_FirstContact"),
                 "scope_sent_at": inv.get("MetaData_ScopeSent"),
-                "status": self._status(inv),
+                "status": self._status(inv, as_of),
             })
         return out
 
@@ -157,7 +157,13 @@ def build_baseline(
 
 
 def write_baseline(baseline: dict[str, Any], *, snapshots_root: Optional[Path] = None) -> Path:
-    """Write baseline.json to client/snapshots/{tenant_id}/baseline.json. Returns the path."""
+    """Write baseline.json to client/snapshots/{tenant_id}/baseline.json. Returns the path.
+
+    Validates first: tenant_id becomes a directory name, so a bad one must never reach disk.
+    """
+    errs = validate_baseline(baseline)
+    if errs:
+        raise ValueError("baseline invalid: " + "; ".join(errs))
     root = snapshots_root or (ROOT / "client" / "snapshots")
     out_dir = root / baseline["tenant_id"]
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -184,6 +190,8 @@ def validate_baseline(baseline: dict[str, Any]) -> list[str]:
         for k in ("tenant_id", "generated_at", "schema_version", "sources"):
             if k not in baseline:
                 errs.append(f"missing required key: {k}")
+        if not TENANT_ID_RE.fullmatch(str(baseline.get("tenant_id", ""))):
+            errs.append("tenant_id: must match ^[a-z0-9][a-z0-9-]{0,63}$")
         if not isinstance(baseline.get("sources"), list) or not baseline["sources"]:
             errs.append("sources must be a non-empty array")
         return errs

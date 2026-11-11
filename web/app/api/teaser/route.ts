@@ -14,7 +14,7 @@ import {
 // Calls the Python engine (engine/api) over HTTP with a scoped token. The browser
 // never sees the engine URL or any secret. Three outcomes:
 //   - engine answered 2xx        -> the engine's finding, untouched
-//   - engine answered non-2xx    -> 502 with the engine's JSON error (no fallback)
+//   - engine answered non-2xx    -> 502 naming the engine's status (details in the server log)
 //   - engine unreachable/timeout -> a finding labeled "engine unreachable", never a
 //                                   silent failure and never a fabricated number
 
@@ -23,12 +23,14 @@ export const runtime = "nodejs";
 const DEMO_TENANT = process.env.DEMO_TENANT_ID ?? "synth-acme-services";
 
 function engineUnreachableFallback(e: EngineUnreachableError): TeaserFinding {
+  // The address and reason go to the server log, never to the browser.
+  console.error(`teaser: engine unreachable at ${ENGINE_URL}: ${e.message}`);
   return {
     id: "teaser-engine-unreachable",
     headline: "Engine unreachable. No finding could be read.",
     impact_usd: 0,
     impact_hours: 0,
-    evidence: [`engine unreachable at ${ENGINE_URL}: ${e.message}`],
+    evidence: ["The diagnostic engine did not answer. Check that it is running, then try again."],
     confidence: 0,
     method: "engine_unreachable",
     team: "teaser",
@@ -55,8 +57,9 @@ export async function POST(): Promise<NextResponse> {
       return NextResponse.json(engineUnreachableFallback(e));
     }
     if (e instanceof EngineResponseError) {
+      console.error(`teaser: ${e.message}`);
       return NextResponse.json(
-        { error: e.message, engine_status: e.status },
+        { error: `the engine answered HTTP ${e.status}`, engine_status: e.status },
         { status: 502 }
       );
     }
