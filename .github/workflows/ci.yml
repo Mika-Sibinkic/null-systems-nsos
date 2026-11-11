@@ -4,25 +4,45 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   python:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.14"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
+          cache: pip
       - run: pip install -r requirements.txt
       - run: python -m pytest -q
+      - run: python scripts/probes/pillar5_security.py
       - name: engine API smoke (boot uvicorn, hit /health and /teaser)
         run: |
           python -m engine.api > engine.log 2>&1 &
           ENGINE_PID=$!
-          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/health && break; sleep 1; done
+          trap 'kill $ENGINE_PID || true; cat engine.log' EXIT  # || true: under bash -e a dead engine would skip the cat
+          for _ in $(seq 1 30); do curl -sf http://127.0.0.1:8000/health && break; sleep 1; done
+          curl -sf http://127.0.0.1:8000/health > /dev/null || { echo "::error::engine API never answered /health"; exit 1; }
           TOKEN=$(curl -sf -X POST http://127.0.0.1:8000/dev/scoped-token -H 'content-type: application/json' -d '{"tenant_id":"synth-acme-services"}' | python -c 'import json,sys; print(json.load(sys.stdin)["token"])')
           curl -sf "http://127.0.0.1:8000/teaser?tenant=synth-acme-services" -H "authorization: Bearer $TOKEN" | python -c 'import json,sys; f=json.load(sys.stdin); assert f["team"]=="teaser" and f["impact_usd"]>0, f; print(f["headline"])'
-          kill $ENGINE_PID
-          cat engine.log
+
+  docs-sync:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - name: source changes come with a docs/STATE.md or docs/ROADMAP.md update
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: python3 scripts/check_docs_sync.py "origin/$BASE_REF...HEAD"
 
   web:
     runs-on: ubuntu-latest
@@ -30,12 +50,37 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
+      - run: npm audit --audit-level=high
       - run: npm run typecheck
+      - run: npm test --if-present
       - run: npm run build
+
+  mcp:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp-servers/correction-server
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: mcp-servers/correction-server/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - name: stdio smoke (initialize + tools/list returns 10 tools)
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+          | CORRECTIONS_DIR="$RUNNER_TEMP/corr" timeout 30 node index.js \
+          | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=s.trim().split("\n").map(JSON.parse).find(m=>m.id===2);const n=r.result.tools.length;console.log("tools:",n);process.exit(n===10?0:1)})'
