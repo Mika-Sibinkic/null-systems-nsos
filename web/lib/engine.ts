@@ -133,9 +133,10 @@ export interface SOWColumn {
   objective: string;
   impact_usd: number;
   impact_hours: number;
+  exposure_usd: number; // at-risk dollars, never part of impact_usd
   confidence: number;
-  ebitda_uplift_pct: number;
-  payback_months: number;
+  ebitda_uplift_pct: number | null; // null when the EBITDA base is not positive
+  payback_months: number | null; // null when the SOW has no dollar impact
   wwod_score: number;
   wwod_confidence: number;
   grade: string;
