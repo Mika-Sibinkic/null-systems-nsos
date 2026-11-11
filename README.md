@@ -170,7 +170,7 @@ node index.js
 
 Coverage is by layer: adapter and schema, onboarding auth, teaser, council weights, financial findings, review gate, SOW assembly, scoring and metrics, side-by-side report, handoff packet, outcome ledger, durable execution, the docs-sync script, the engine HTTP API, and one end-to-end run through the real pipeline.
 
-On a clean clone, `python -m pytest -q` reports 193 passed. Over 5 runs on an Apple M4 the suite took 1.0 to 1.5 s. The web app has 4 `node --test` cases for the engine client (`cd web && npm test`).
+On a clean clone, `python -m pytest -q` reports 193 passed. I ran it 5 times in a row on an Apple M4 (10 cores, load average about 6 from other work): pytest's own timer said 0.83 to 1.29 s, median 0.90 s, with the first run the slowest. The demo run, `python scripts/run_synthetic.py`, took 0.12 s wall clock (`/usr/bin/time`, one run). The web app has 4 `node --test` cases for the engine client (`cd web && npm test`).
 
 CI (`.github/workflows/ci.yml`) runs the same commands on every push and pull request: pytest on Python 3.11 and 3.14, the secret scan, the demo run diffed against `examples/`, and the engine API smoke test. For `web/` it runs `npm ci`, `npm audit --audit-level=high`, typecheck, `npm test` and `npm run build`. It also installs the correction MCP server, audits it and checks that it lists its 10 tools. On pull requests it runs the docs-sync check. There is no linter; `tsc --noEmit` is the only static check.
 
