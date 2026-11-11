@@ -26,8 +26,8 @@ update that consumes these deltas is downstream (post-MVP).
 from __future__ import annotations
 
 import json
-import subprocess
 from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -37,7 +37,7 @@ DEFAULT_EVALSET = REPO / "learning" / "feedback" / "outcome-evalset.jsonl"
 
 
 def _utc_now() -> str:
-    return subprocess.check_output(["date", "-u", "+%FT%TZ"]).decode().strip()
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _attr(obj: Any, name: str, default=None):
