@@ -131,7 +131,7 @@ def test_e2e_pipe_produces_scored_sows(tmp_path):
     sbs = art["sbs"]
     # every SOW is scored on all three layers, real not fixture
     for c in sbs.columns:
-        assert c.impact_usd > 0
+        assert c.impact_usd > 0 or c.exposure_usd > 0
         assert c.grade in ("A", "B", "C", "D", "F")
         assert 0.0 <= c.wwod_score <= 1.0
         assert c.source
@@ -187,3 +187,20 @@ def test_e2e_flywheel_prediction_recorded(tmp_path):
     assert rows[0]["record_type"] == "prediction"
     assert rows[0]["run_id"] == RUN_ID
     assert rows[0]["predicted"]["impact_usd"] > 0
+
+
+EXPOSURE_METHODS = {"vendor_concentration", "customer_concentration", "ar_overdue"}
+
+
+def test_e2e_exposure_never_counts_as_annual_impact(tmp_path):
+    """Risk exposure (concentration, one-time AR) is not a yearly saving: it must
+    stay out of every SOW impact_usd, so EBITDA lift stays a sane number."""
+    art = _run_full_pipe(tmp_path)
+    metrics = importlib.import_module("engine.sow.metrics")
+    for s in art["sows"]:
+        for f in s.findings:
+            if f["method"] in EXPOSURE_METHODS:
+                assert f["impact_usd"] == 0, f"{f['id']} books exposure as impact"
+        assert s.impact_usd == sum(f["impact_usd"] for f in s.findings)
+        m = metrics.metrics_for(s, art["baseline"])
+        assert m.ebitda_uplift_pct is None or m.ebitda_uplift_pct < 100, (s.id, m.ebitda_uplift_pct)

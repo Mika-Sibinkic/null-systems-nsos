@@ -4,7 +4,9 @@ Turns a tenant `baseline.json` (QuickBooks-derived) into client-facing findings,
 each carrying a quantified, **source-traced, confidence-banded** impact so it
 survives the same gates the rest of the pipeline enforces:
 
-  - `impact_usd` / `impact_hours` — the dollars/time the finding moves
+  - `impact_usd` / `impact_hours` — the dollars/time the finding moves each year
+  - `exposure_usd` — dollars at risk (concentration, one-time overdue cash); never
+                     summed into impact, EBITDA or payback
   - `bottleneck`   — the one-line "what is actually constraining the business"
   - `evidence[]`   — every number traces to a baseline line (LeCun grounding;
                      `scripts/probes/grounded_numbers.py` enforces this)
@@ -93,21 +95,26 @@ def a_customer_concentration(baseline: dict) -> Optional[dict]:
     by_cust: dict[str, float] = {}
     for inv in invoices:
         by_cust[inv["customer"]] = by_cust.get(inv["customer"], 0.0) + float(inv.get("amount_usd", 0))
-    total = sum(by_cust.values())
+    top_cust, top_amt = max(by_cust.items(), key=lambda kv: kv[1])
+    # The invoice list is a sample; the P&L is the whole year. Use the P&L when we have it.
+    revenue = float((acct.get("profit_and_loss") or {}).get("TotalIncome", 0) or 0)
+    if revenue > 0:
+        total, of_what = revenue, "of revenue"
+        denom_src = f"accounting.profit_and_loss.TotalIncome={revenue:.0f}"
+    else:
+        total, of_what = sum(by_cust.values()), f"of invoiced sample ({len(invoices)} invoices)"
+        denom_src = f"accounting.invoices invoiced_total={total:.0f} (n={len(invoices)})"
     if total <= 0:
         return None
-    top_cust, top_amt = max(by_cust.items(), key=lambda kv: kv[1])
     share = top_amt / total
-    flagged = share > CUSTOMER_CONCENTRATION_FLAG
     return {
-        "summary": f"Top customer {top_cust} is {share:.0%} of booked revenue across {len(invoices)} invoices",
-        "flagged": flagged,
+        "summary": f"Top customer {top_cust} is {share:.0%} {of_what}",
+        "flagged": share > CUSTOMER_CONCENTRATION_FLAG,
         "top_customer": top_cust,
         "top_customer_share": round(share, 4),
         "top_customer_usd": float(top_amt),
-        "booked_revenue": float(total),
-        "source": [f"accounting.invoices[customer={top_cust}]={top_amt:.0f}",
-                   f"accounting.invoices booked_total={total:.0f}"],
+        "share_of": of_what,
+        "source": [f"accounting.invoices[customer={top_cust}]={top_amt:.0f}", denom_src],
     }
 
 
@@ -261,6 +268,7 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
     """
     impact_usd = 0.0
     impact_hours = 0.0
+    exposure_usd = 0.0  # at-risk dollars: shown, never summed into annual impact
     headline = analytic.get("summary", "")
     bottleneck = ""
 
@@ -270,16 +278,15 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
         bottleneck = "Proposal scoping cycle time"
         headline = f"Proposal scoping runs {analytic['avg_days']:.0f} days vs a {int(analytic['target_days'])}-day target"
     elif method == "vendor_concentration" and analytic.get("flagged"):
-        # Concentration risk: impact is the at-risk dependency dollar exposure.
-        impact_usd = float(analytic.get("top_vendor_usd", 0))
+        exposure_usd = float(analytic.get("top_vendor_usd", 0))
         bottleneck = "Single-vendor dependency / cost concentration"
         headline = f"{analytic['top_vendor']} is {analytic['top_vendor_share']:.0%} of vendor spend — concentration risk"
     elif method == "customer_concentration" and analytic.get("flagged"):
-        impact_usd = float(analytic.get("top_customer_usd", 0))
+        exposure_usd = float(analytic.get("top_customer_usd", 0))
         bottleneck = "Revenue concentration in one customer"
-        headline = f"{analytic['top_customer']} is {analytic['top_customer_share']:.0%} of revenue — concentration risk"
+        headline = f"{analytic['top_customer']} is {analytic['top_customer_share']:.0%} {analytic['share_of']} — concentration risk"
     elif method == "ar_overdue":
-        impact_usd = float(analytic.get("recoverable_usd", 0))
+        exposure_usd = float(analytic.get("recoverable_usd", 0))  # one-time cash, not /yr
         bottleneck = "Working capital trapped in overdue AR"
         headline = f"${analytic['exposure_usd']:,.0f} in overdue AR; ~${analytic['recoverable_usd']:,.0f} recoverable"
     elif method == "opex_benchmark" and analytic.get("flagged"):
@@ -292,7 +299,7 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
         bottleneck = "Gross margin below services benchmark"
         headline = f"Gross margin {analytic['gross_margin']:.0%}; 5pt recovery ≈ ${impact_usd:,.0f}/yr"
 
-    if impact_usd <= 0 and impact_hours <= 0:
+    if impact_usd <= 0 and impact_hours <= 0 and exposure_usd <= 0:
         return None
 
     # confidence: derive an honest band from how directly the number is measured
@@ -308,6 +315,7 @@ def finding_from_analytic(method: str, analytic: dict, idx: int) -> Optional[dic
         "bottleneck": bottleneck,
         "impact_usd": float(round(impact_usd)),
         "impact_hours": float(round(impact_hours, 1)),
+        "exposure_usd": float(round(exposure_usd)),
         "evidence": analytic.get("source", []),
         "source": analytic.get("source", []),
         "confidence": conf_table.get(method, 0.6),
@@ -331,7 +339,7 @@ def assert_grounded(finding: dict) -> dict:
     the wired-in enforcement point: `run_findings` calls it on every emitted
     finding, so the producer itself fails closed on an ungrounded number.
     """
-    has_impact = (finding.get("impact_usd") or 0) > 0 or (finding.get("impact_hours") or 0) > 0
+    has_impact = any((finding.get(k) or 0) > 0 for k in ("impact_usd", "impact_hours", "exposure_usd"))
     if not has_impact:
         return finding
     src = finding.get("evidence") or finding.get("source")
@@ -353,15 +361,14 @@ def run_findings(baseline: dict, *, out_path: Path | str | None = None) -> list[
     into the producer) before it is returned or written — fail-closed.
     """
     findings: list[dict] = []
-    idx = 1
-    for method, fn in ANALYTICS.items():
+    # id = the analytic's slot, so fin-fin-004 means opex_benchmark on every baseline
+    for idx, (method, fn) in enumerate(ANALYTICS.items(), start=1):
         analytic = fn(baseline)
         if not analytic:
             continue
         f = finding_from_analytic(method, analytic, idx)
         if f:
             findings.append(assert_grounded(f))
-            idx += 1
     findings.sort(key=lambda f: -(f.get("impact_usd", 0)))
     if out_path:
         p = Path(out_path)

@@ -62,6 +62,7 @@ class HandoffPacket:
     source: list[str] = field(default_factory=list)
     # success metrics the flywheel measures realized-vs-predicted on
     success_metrics: dict = field(default_factory=dict)
+    exposure_usd: float = 0.0  # at-risk dollars; not part of the quantified target
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -131,6 +132,7 @@ def build_packet(
         deployability_blockers=blockers,
         source=list(col.get("source", []) or []),
         success_metrics=success_metrics,
+        exposure_usd=float(col.get("exposure_usd", 0.0) or 0.0),
     )
 
 
@@ -150,6 +152,8 @@ def render_markdown(p: HandoffPacket) -> str:
     lines.append(f"{p.objective}\n")
     lines.append("## Quantified target (source-traced)\n")
     lines.append(f"- **Annual impact**: ${p.impact_usd:,.0f}/year")
+    if p.exposure_usd:
+        lines.append(f"- **At risk**: ${p.exposure_usd:,.0f} (exposure, not counted in the target)")
     lines.append(f"- **EBITDA lift**: +{p.ebitda_uplift_pct:.0f}%")
     if p.impact_hours:
         lines.append(f"- **Leadership hours freed**: {p.impact_hours:.0f} hours/year")

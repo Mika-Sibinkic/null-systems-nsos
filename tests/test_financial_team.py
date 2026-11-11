@@ -47,8 +47,8 @@ def test_findings_emitted_with_impact():
     fs = findings_mod.run_findings(BASELINE)
     assert fs, "financial engine produced no findings from a real baseline"
     for f in fs:
-        has_impact = f.get("impact_usd", 0) > 0 or f.get("impact_hours", 0) > 0
-        assert has_impact, f"finding {f['id']} has no impact"
+        has_number = any(f.get(k, 0) > 0 for k in ("impact_usd", "impact_hours", "exposure_usd"))
+        assert has_number, f"finding {f['id']} has no impact or exposure"
 
 
 def test_findings_carry_evidence_and_confidence():

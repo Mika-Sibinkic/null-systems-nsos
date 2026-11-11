@@ -15,7 +15,8 @@ Design (deterministic, offline, source-traced):
      `min(3, max(2, n_themes))` candidates so the operator gets the 2-3 the
      PRODUCT promises — never 1 (no choice) and never an overwhelming wall.
   3. A candidate's `impact_usd` / `impact_hours` is the sum of its findings'
-     impacts; its `source[]` is the union of its findings' source lines (so the
+     impacts (`exposure_usd`, the at-risk dollars, is summed separately and never
+     added to impact); its `source[]` is the union of its findings' source lines (so the
      grounded-numbers gate stays satisfied end-to-end — no number is invented at
      the SOW layer, it only aggregates grounded finding numbers).
   4. Candidate `confidence` is the impact-weighted mean of its findings'
@@ -76,6 +77,7 @@ class SOWCandidate:
     impact_hours: float
     confidence: float
     source: list[str] = field(default_factory=list)
+    exposure_usd: float = 0.0  # at-risk dollars; not part of impact_usd
     rank_score: float = 0.0  # aggregate council final (or impact fallback)
     findings: list[dict] = field(default_factory=list)
 
@@ -151,6 +153,7 @@ def assemble_sows(
                 impact_hours=round(impact_hours, 1),
                 confidence=_weighted_confidence(group),
                 source=source,
+                exposure_usd=round(sum(float(f.get("exposure_usd", 0.0)) for f in group), 2),
                 rank_score=round(rank_score, 4),
                 findings=list(group),
             )
@@ -167,7 +170,7 @@ def assemble_sows(
         out = Path(artifacts_dir)
         out.mkdir(parents=True, exist_ok=True)
         (out / "sow-candidates.jsonl").write_text(
-            "\n".join(json.dumps(c.to_dict()) for c in selected)
+            "\n".join(json.dumps(c.to_dict(), allow_nan=False) for c in selected)
             + ("\n" if selected else "")
         )
 

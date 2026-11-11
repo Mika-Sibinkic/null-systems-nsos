@@ -39,6 +39,7 @@ _metrics = importlib.import_module("engine.sow.metrics")
 ROWS: list[tuple[str, str]] = [
     ("title", "Growth thrust"),
     ("impact_usd", "Annual impact"),
+    ("exposure_usd", "At risk (not in totals)"),
     ("ebitda_uplift_pct", "EBITDA lift"),
     ("payback_months", "Payback"),
     ("impact_hours", "Leadership hours freed / yr"),
@@ -74,6 +75,7 @@ class SBSColumn:
     gaps: list[str] = field(default_factory=list)
     key_gap: str = ""
     source: list[str] = field(default_factory=list)
+    exposure_usd: float = 0.0  # at-risk dollars, shown apart from annual impact
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -99,6 +101,8 @@ def _format_cell(key: str, col: SBSColumn) -> str:
         return col.title
     if key == "impact_usd":
         return f"${col.impact_usd:,.0f}/yr"
+    if key == "exposure_usd":
+        return f"${col.exposure_usd:,.0f} at risk" if col.exposure_usd else "—"
     if key == "ebitda_uplift_pct":
         return f"+{col.ebitda_uplift_pct:.0f}% EBITDA"
     if key == "payback_months":
@@ -149,6 +153,7 @@ def build_columns(
                 gaps=gaps,
                 key_gap=key_gap,
                 source=list(_attr(s, "source", []) or []),
+                exposure_usd=float(_attr(s, "exposure_usd", 0.0) or 0.0),
             )
         )
     return cols

@@ -141,6 +141,8 @@ def render_sow_report(
         lines.append(f"{col.objective}\n")
         payback = "—" if col.payback_months in (None, float("inf")) else f"{col.payback_months:.0f} months"
         lines.append(f"- **Annual impact**: based on your QuickBooks data, ${col.impact_usd:,.0f}/year")
+        if col.exposure_usd:
+            lines.append(f"- **At risk**: ${col.exposure_usd:,.0f} (exposure, not counted in annual impact, EBITDA or payback)")
         lines.append(f"- **EBITDA lift**: +{col.ebitda_uplift_pct:.0f}%")
         if col.impact_hours:
             lines.append(f"- **Leadership hours freed**: {col.impact_hours:.0f} hours/year")
