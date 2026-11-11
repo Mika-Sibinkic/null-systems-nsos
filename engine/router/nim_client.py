@@ -58,7 +58,9 @@ def call_nim(
 def judge_pair(a: dict, b: dict, *, criterion: str = "higher client impact") -> str:
     """Pairwise judge for council protocol. Returns 'A', 'B', or 'TIE'.
 
-    Uses NIM with a tight contract; falls back to deterministic on failure.
+    Uses NIM with a tight contract. A failed call raises, so a dead provider never
+    passes as a real ranking. Only NSOS_JUDGE_OFFLINE_DETERMINISTIC=1 falls back to
+    the higher-impact_usd rule.
     """
     prompt = f"""Two consulting findings — pick the one with {criterion}. Respond with strict JSON: {{"winner":"A"|"B"|"TIE","reason":"<10 words>"}}.
 
@@ -76,7 +78,8 @@ B: {json.dumps({k: v for k, v in b.items() if k not in ('embedding','cluster')})
         w = str(obj.get("winner", "TIE")).upper()
         return w if w in ("A", "B", "TIE") else "TIE"
     except Exception:
-        # Fallback: deterministic
+        if os.environ.get("NSOS_JUDGE_OFFLINE_DETERMINISTIC", "") not in ("1", "true", "yes"):
+            raise
         if a.get("impact_usd", 0) > b.get("impact_usd", 0):
             return "A"
         if b.get("impact_usd", 0) > a.get("impact_usd", 0):
